@@ -28,9 +28,15 @@ pub fn check_positive_deltas<'a>(
     d_bad: Deltas,
     oracle: fn (&Delta) -> bool
 ) -> Option<Delta<'a>> {
-    let mut ds = d_bad.clone();
-    for delta in d_bad {
-        ds.append(delta);
+    let mut ds = c_good.clone();
+    for mut delta in d_bad {
+        let length = delta.len();
+        ds.append(&mut delta);
+        if ! oracle(&ds) {
+            // oracle said NO, ds contains breaking deltas
+            panic!("TODO: handle case");
+        }
+        panic!("TODO: Continue here: restore values to delta")
     }
     None
 }
