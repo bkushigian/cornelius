@@ -1,9 +1,9 @@
 pub mod expr;
-//pub mod delta;
+pub mod delta;
 
 use egg::*;
 use crate::expr::{RewriteSystem, Subject, Code, EGraph};
-//use crate::delta::minimize_buggy_rules;
+use crate::delta::minimize_buggy_rules;
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs::File;
