@@ -1,0 +1,21 @@
+[package]
+name = "cornelius"
+version = "0.1.0"
+authors = ["Ben Kushigian <benku@cs.washington.edu>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+roxmltree = "0.9.1"
+egg = "0.4"
+# serde
+serde = { version = "1.0", features = ["derive"] }
+serde-xml-rs = "0.3.1"
+# for "deserialize_number_from_string" 
+serde-aux = "0.6.1"
+
+# for "EnumFromStr"
+enum_derive = "0.1.7"
+custom_derive = "0.1.7"
+itertools = "0.7.8"
