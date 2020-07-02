@@ -87,18 +87,18 @@ impl Analysis<Peg> for VarAnalysis {
 
 fn is_const(v1: &'static str) -> impl Fn(&mut EGraph, Id, &Subst) -> bool {
     let v1: egg::Var = v1.parse().unwrap();
-    move |egraph, _, subst| egraph[subst[&v1]].data.has_const.is_some()
+    move |egraph, _, subst| egraph[subst[v1]].data.has_const.is_some()
 }
 
 fn is_var(v1: &'static str) -> impl Fn(&mut EGraph, Id, &Subst) -> bool {
     let v1: egg::Var = v1.parse().unwrap();
-    move |egraph, _, subst| egraph[subst[&v1]].data.has_var.is_some()
+    move |egraph, _, subst| egraph[subst[v1]].data.has_var.is_some()
 }
 
 fn is_not_same_var(v1: &'static str, v2: &'static str) -> impl Fn(&mut EGraph, Id, &Subst) -> bool {
     let v1: egg::Var = v1.parse().unwrap();
     let v2: egg::Var = v2.parse().unwrap();
-    move |egraph: &mut EGraph, _, subst: &Subst| egraph.find(subst[&v1]) != egraph.find(subst[&v2])
+    move |egraph: &mut EGraph, _, subst: &Subst| egraph.find(subst[v1]) != egraph.find(subst[v2])
 }
 
 
@@ -300,8 +300,8 @@ impl ConstProp {
 
 impl Applier<Peg, VarAnalysis> for ConstProp {
   fn apply_one(&self, egraph: &mut EGraph, _: Id, subst: &Subst) -> Vec<Id> {
-    let left_class = egraph[subst[&self.left]].clone();
-    let right_class = egraph[subst[&self.right]].clone();
+    let left_class = egraph[subst[self.left]].clone();
+    let right_class = egraph[subst[self.right]].clone();
     let mut result = vec![];
     for left in left_class
       .nodes

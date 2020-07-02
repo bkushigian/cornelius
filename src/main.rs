@@ -3,7 +3,6 @@ pub mod delta;
 
 use egg::*;
 use crate::expr::{RewriteSystem, Subject, Code, EGraph};
-use crate::delta::minimize_buggy_rules;
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs::File;
@@ -78,7 +77,7 @@ fn run_on_subject(subj: &Subject, rules: &RewriteSystem, mut equiv_file: &File) 
 
     let runner = Runner::default()
         .with_egraph(egraph)
-        .run(&rules);
+        .run(rules);
 
     let mut rev_can_id_lookup = HashMap::<Id, HashSet<Id>>::default();
 
@@ -127,7 +126,8 @@ fn run_on_subject(subj: &Subject, rules: &RewriteSystem, mut equiv_file: &File) 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::Rules;
+    use crate::expr::{Peg, VarAnalysis};
+    use crate::delta::dd;
     #[test]
     fn eq_refine_const_pass() {
         let start = "(phi (== (var a) 5) (var a) 5)";
@@ -328,15 +328,38 @@ mod tests {
         let end_expr = end.parse().unwrap();
         let mut eg = EGraph::default();
         eg.add_expr(&start_expr);
-        let rules = crate::expr::rw_rules();
+        let rules: Box<RewriteSystem> = crate::expr::rw_rules();
         let runner = Runner::default()
             .with_egraph(eg)
-            .run(&rules);
+            .run(rules.into_iter());
         !runner.egraph.equivs(&start_expr, &end_expr).is_empty()
     }
 
-    fn delta_debug(start: &str, end: &str, rules: Rules, oracle: fn(Rules) -> bool) -> Rules {
-        panic!("Not implemented")
-    }
+    /// Test if the current rewrite rules allow for start to be written to end,
+    /// and if so report error and a minimal subset of rewrite rules that allow
+    /// for this erroneous rewrite sequence to happen.
+    fn test_straight_no_rewrite(start: &str, end: &str) -> bool {
 
+        if test_straight_rewrite(start, end) {
+            let rules = crate::expr::rw_rules();
+            let start_expr = start.parse().unwrap();
+            let end_expr = end.parse().unwrap();
+            let oracle: dyn FnMut (_) -> bool =
+                move |config: &[&Rewrite<Peg,VarAnalysis>]| {
+                    let mut eg = EGraph::default();
+                    eg.add_expr(&start_expr);
+                    let runner = Runner::default()
+                        .with_egraph(eg)
+                        .run(config.iter());
+                    runner.egraph.equivs(&start_expr, &end_expr).is_empty()
+                };
+            let rules: Vec<_> = rules.iter().collect();
+            let min_config = dd(&rules, oracle);
+            //for (i, rule) in min_config.iter().enumerate() {
+            //    println!("{}) {}", i+1, rule.name());
+            //}
+            return false;
+        }
+        true
+    }
 }
