@@ -319,7 +319,7 @@ mod tests {
 
     #[test]
     fn neq_propagation_8() {
-        assert!(!test_straight_rewrite("(!= 1  (phi (var c) 1 2))", "1"));
+        assert!(test_no_straight_rewrite("(!= 1  (phi (var c) 3 2))", "true"));
     }
 
     fn test_straight_rewrite(start: &str, end: &str) -> bool {
@@ -331,33 +331,33 @@ mod tests {
         let rules: Box<RewriteSystem> = crate::expr::rw_rules();
         let runner = Runner::default()
             .with_egraph(eg)
-            .run(rules.into_iter());
+            .run(rules.iter());
         !runner.egraph.equivs(&start_expr, &end_expr).is_empty()
     }
 
     /// Test if the current rewrite rules allow for start to be written to end,
     /// and if so report error and a minimal subset of rewrite rules that allow
     /// for this erroneous rewrite sequence to happen.
-    fn test_straight_no_rewrite(start: &str, end: &str) -> bool {
+    fn test_no_straight_rewrite(start: &str, end: &str) -> bool {
 
         if test_straight_rewrite(start, end) {
             let rules = crate::expr::rw_rules();
             let start_expr = start.parse().unwrap();
             let end_expr = end.parse().unwrap();
-            let oracle: dyn FnMut (_) -> bool =
-                move |config: &[&Rewrite<Peg,VarAnalysis>]| {
+            let oracle =
+                move |config: &[&Rewrite<Peg,VarAnalysis>]| -> bool {
                     let mut eg = EGraph::default();
                     eg.add_expr(&start_expr);
                     let runner = Runner::default()
                         .with_egraph(eg)
-                        .run(config.iter());
+                        .run(config.iter().cloned());
                     runner.egraph.equivs(&start_expr, &end_expr).is_empty()
                 };
             let rules: Vec<_> = rules.iter().collect();
             let min_config = dd(&rules, oracle);
-            //for (i, rule) in min_config.iter().enumerate() {
-            //    println!("{}) {}", i+1, rule.name());
-            //}
+            for (i, rule) in min_config.iter().enumerate() {
+                println!("{}) {}", i+1, rule.name());
+            }
             return false;
         }
         true

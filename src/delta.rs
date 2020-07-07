@@ -15,22 +15,20 @@ fn ddmin2<'a, T>(
     mut oracle: impl FnMut (&[&'a T]) -> bool
 ) -> Vec<&'a T>
 where T: std::fmt::Debug {
-    println!("ddmin2(bad_config: {:?}, granularity: {}) ", bad_config, granularity);
 
     if granularity > bad_config.len() {
         panic!("Violation if recursion invariant: configs length less than split size")
     }
 
-    let batch_size = (bad_config.len() - 1) / granularity + 1;
+    let batch_size = bad_config.len() / granularity;
     let deltas: Vec<_> = bad_config.chunks(batch_size).collect();
+    let granularity = deltas.len();
 
     for delta in &deltas {
         if !oracle(delta) {
             if delta.len() == 1 {
-                println!("  Returning minimized bad config {:?}", delta);
                 return delta.to_vec();
             }
-            println!("  Recursing on delta {:?}", delta);
             return ddmin2(delta, 2, oracle);
         }
     }
@@ -40,13 +38,11 @@ where T: std::fmt::Debug {
         deltas.remove(i);
         let nabla = deltas.concat();
         if !oracle(&nabla) {
-            println!("  Recursing on nabla {:?}", nabla);
             return ddmin2(&nabla, 2.max(granularity-1), oracle);
         }
     }
 
     if granularity < bad_config.len() {
-        println!("  increasing granularity to {}", 2 * granularity);
         return ddmin2(bad_config, (2 * granularity).min(bad_config.len()), oracle);
     }
     bad_config.to_vec()
