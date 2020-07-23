@@ -1,365 +1,129 @@
 pub mod expr;
 pub mod delta;
+pub mod peg;
+pub mod rewrites;
+mod tests;
 
 use egg::*;
-use crate::expr::{RewriteSystem, Subject, Code, EGraph};
+use crate::expr::{Subject, Subjects};
+use crate::rewrites::RewriteSystem;
+use crate::peg::{Peg, VarAnalysis};
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
+use itertools::Itertools;
 
 //use egg;
 
-fn main() -> std::io::Result<()> {
-    let rules = crate::expr::rw_rules();
+fn main() -> Result<(), String> {
+    let rules = crate::rewrites::rw_rules();
     let args: Vec<String> = env::args().collect();
     let subject_files = &args[1..];
 
-    // read subject from a file
-    //let _subject_from_file = Subject::from_file("xmls/more_real_subjects.xml".to_string());
-    //println!("is_err? {}", _subject_from_file.is_err());
-
-    let mut total_num_equivs = 0;
     for subj_file in subject_files {
-        let equiv_file = File::create("equiv-classes")?;
         let subj_file = subj_file.trim();
-        let mut num_equivs = 0;
         println!("Running on subject file {}", subj_file);
 
-        for (i, subj) in Subject::from_file(subj_file.to_string())
-            .expect("Error reading subjects")
-            .iter()
-            .enumerate()
-        {
-            println!("---------------------------------------");
-            println!("Running on Subject {}", i + 1);
-            num_equivs += run_on_subject(subj, &rules, &equiv_file);
-            println!("---------------------------------------");
-        }
-        println!("    Found a total of {} equivalences in file", num_equivs);
-        total_num_equivs += num_equivs;
+        let subjects: Subjects = Subject::from_file(subj_file.to_string())
+            .expect("Error reading subjects");
+
+        run_on_subjects(&subjects, &rules)?;
     }
-    println!("Found a total of {} equivalences", total_num_equivs);
     Ok(())
 }
 
+fn run_on_subjects(subjects: &Subjects, rules: &RewriteSystem) -> Result<(), String> {
+    let rec_expr = subjects.compute_rec_expr()?;
+    //println!("rec_expr:\n{}", rec_expr.pretty(40));
+    let runner = Runner::default()
+        .with_expr(&rec_expr)
+        .run(rules);
+    let egraph = &runner.egraph;
+
+    for (i, subj) in subjects.subjects
+        .iter()
+        .enumerate()
+    {
+        println!("---------------------------------------");
+        println!("Analyzing results of subject {}", i + 1);
+        println!("    subject code = {}", subj.code);
+        println!("---------------------------------------");
+        let mut equiv_file = File::create("equiv-classes").map_err(|_| "Could not create file")?;
+        analyze_subject(subj, egraph, &rec_expr, &mut equiv_file);
+    }
+    Ok(())
+}
 /// Run on a subject and return number of identified equivalences.
 /// This is defined to be the sum over each equivalence class C
 /// the size |C| - 1:
 ///     sum_{C in Equiv Classes} |C| - 1
-fn run_on_subject(subj: &Subject, rules: &RewriteSystem, mut equiv_file: &File) -> u32 {
+/// # Args
+/// * `subj`: the subject to analyze
+/// * `rules`: the `RewriteSystem` to run while analyzing
+/// * `equiv_file`: a `&File` that we write the equivalence classes to
+///
+/// TODO We shouldn't be writing directly to a file---we should be returning a
+/// structure that summarizes the analysis.
+fn analyze_subject(subj: &Subject,
+                   egraph: &EGraph<Peg, VarAnalysis>,
+                   _expr: &RecExpr<Peg>,
+                   equiv_file: &mut File
+) -> u32 {
     println!("Running on subject {}:{}", subj.source_file, subj.method);
 
+    // Look up the set of ids associated with a canonical id.
+    let mut rev_can_id_lookup = HashMap::<Id, HashSet<Id>>::default();
     let mut num_equivalences = 0;
 
-    // mid_to_egg_id maps mutant_ids to egraph ids
-    let mut mid_to_egg_id = HashMap::<u32, Id>::default();
-
-    // egg_id_to_mid maps egg-ids to mutant ids
-    // let mut egg_id_to_mid = HashMap::<Id, u32>::default();
-
-    // Map mutant ids to their corresponding mutants
-    let mut mid_to_code = HashMap::<u32, &Code>::default();
-
-    // Create an EGraph and add the original code
-    let mut egraph = EGraph::default();
-    let id = egraph.add_expr(&subj.code.expr());
-
-    mid_to_egg_id.insert(0, id);
-
-    // Populate lookup tables
-    for m in &subj.mutants {
-        let id = egraph.add_expr(&m.code.expr());
-        mid_to_egg_id.insert(m.id, id);
-        // egg_id_to_mid.insert(id, m.id);
-        mid_to_code.insert(m.id, &m.code);
-    }
-
-    let runner = Runner::default()
-        .with_egraph(egraph)
-        .run(rules);
-
-    let mut rev_can_id_lookup = HashMap::<Id, HashSet<Id>>::default();
-
-    let egg_id = *mid_to_egg_id.get(&0).unwrap();
-    let canonical_id = runner.egraph.find(egg_id);
+    let id: u32 = subj.code.parse().unwrap();
+    // Get the canonical id in the egraph for the subject, and compute the
+    // set of equivalent ids (i.e., ids found to be equivalent to the subject)
+    let canonical_id = egraph.find(Id::from(id as usize));
     let equiv_ids = rev_can_id_lookup
         .entry(canonical_id)
         .or_insert_with(HashSet::default);
-    equiv_ids.insert(0);
-    // equiv_ids.insert(egg_id);
-    // egg_id_to_mid.insert(egg_id, 0);
-    mid_to_code.insert(0, &subj.code);
+    equiv_ids.insert(Id::from(0 as usize));
 
     for m in &subj.mutants {
-        let egg_id = *mid_to_egg_id.get(&m.id).unwrap();
-        let canonical_id = runner.egraph.find(egg_id);
+        let id: u32 = m.code.parse().unwrap();
+        let canonical_id = egraph.find(Id::from(id as usize));
+
         let equiv_ids = rev_can_id_lookup
             .entry(canonical_id)
             .or_insert_with(HashSet::default);
-        // equiv_ids.insert(egg_id);
-        equiv_ids.insert(m.id);
+        equiv_ids.insert(Id::from(m.id as usize));
     }
 
     for can_id in rev_can_id_lookup.keys() {
         let equiv_ids = rev_can_id_lookup.get(can_id).unwrap();
         let n = equiv_ids.len() as u32;
         num_equivalences += n - 1;
-        for mid in itertools::sorted(equiv_ids) {
-            if n > 1 {
-                print!("{} ", mid);
-            }
-            if equiv_file.write_all(format!("{} ", mid).as_bytes()).is_err() {
-                println!("Error writing to file!");
-            }
-        }
+
+        let equiv_class_as_string: String = itertools::sorted(equiv_ids)
+            .iter()
+            .map(|id| usize::from(**id).to_string())
+            .intersperse(" ".to_string())
+            .collect();
         if n > 1 {
-            println!();
+            println!("-> {}", equiv_class_as_string);
         }
-        if equiv_file.write_all(b"\n").is_err() {
+        if equiv_file.write_all(format!("{}\n", equiv_class_as_string).as_bytes()).is_err() {
             println!("Error writing to file!");
         }
     }
     num_equivalences
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::expr::{Peg, VarAnalysis};
-    use crate::delta::dd;
-    #[test]
-    fn eq_refine_const_pass() {
-        let start = "(phi (== (var a) 5) (var a) 5)";
-        let end = "5";
-        assert!(test_straight_rewrite(start, end));
-    }
-
-    #[test]
-    fn eq_refine_var_trigger() {
-        assert!(test_straight_rewrite("(phi (== (var a) (var b)) (var a) (var b))", "(var b)"));
-    }
-
-    #[test]
-    fn eq_refine_var_pass() {
-        assert!(test_straight_rewrite("(phi (== (var a) (var b)) (var c) (var c))", "(var c)"));
-    }
-
-    #[test]
-    fn push_plus_over_phi_1() {
-        assert!(test_straight_rewrite("(+ (phi (var a) 3 4) 1)", "(phi (var a) 4 5)"));
-    }
-
-    #[test]
-    fn push_plus_over_phi_2() {
-        assert!(test_straight_rewrite("(+ (phi (var a) (phi (var b) 1 2) 3) 1)", "(phi (var a) (phi (var b) 2 3) 4)"));
-    }
-
-    #[test]
-    fn push_ge_over_phi_1() {
-        assert!(test_straight_rewrite("(>= (phi (var a) (phi (var b) 0 2) 3) 1)", "false"));
-    }
-
-    #[test]
-    fn push_ge_over_phi_2() {
-        assert!(test_straight_rewrite("(>= (phi (var a) (phi (var b) 1 2) 3) 1)", "true"));
-    }
-
-    #[test]
-    fn push_ge_over_phi_3() {
-        assert!(test_straight_rewrite("(>=  2 (phi (var a) (phi (var b) 0 2) 3) )", "(var a)"));
-    }
-
-    #[test]
-    fn push_ge_over_phi_4() {
-        assert!(test_straight_rewrite("(>= 3 (phi (var a) (phi (var b) 1 2) 3))", "true"));
-    }
-
-    #[test]
-    fn push_le_over_phi_1() {
-        assert!(test_straight_rewrite("(<= 1 (phi (var a) (phi (var b) 0 2) 3))", "false"));
-    }
-
-    #[test]
-    fn push_le_over_phi_2() {
-        assert!(test_straight_rewrite("(<= 1 (phi (var a) (phi (var b) 1 2) 3))", "true"));
-    }
-
-    #[test]
-    fn push_le_over_phi_3() {
-        assert!(test_straight_rewrite("(<= (phi (var a) (phi (var b) 0 2) 3) 2)", "(var a)"));
-    }
-
-    #[test]
-    fn push_le_over_phi_4() {
-        assert!(test_straight_rewrite("(<= (phi (var a) (phi (var b) 1 2) 3) 3)", "true"));
-    }
-
-    #[test]
-    fn push_gt_over_phi_1() {
-        assert!(test_straight_rewrite("(> (phi (var a) (phi (var b) 1 2) 3) 1)", "false"));
-    }
-
-    #[test]
-    fn push_gt_over_phi_2() {
-        assert!(test_straight_rewrite("(> (phi (var a) (phi (var b) 1 2) 3) 0)", "true"));
-    }
-
-    #[test]
-    fn push_gt_over_phi_3() {
-        assert!(test_straight_rewrite("(>  3 (phi (var a) (phi (var b) 0 2) 3) )", "false"));
-    }
-
-    #[test]
-    fn push_gt_over_phi_4() {
-        assert!(test_straight_rewrite("(> 4 (phi (var a) (phi (var b) 1 2) 3))", "true"));
-    }
-
-    #[test]
-    fn push_lt_over_phi_1() {
-        assert!(test_straight_rewrite("(< 1 (phi (var a) (phi (var b) 1 2) 3))", "false"));
-    }
-
-    #[test]
-    fn push_lt_over_phi_2() {
-        assert!(test_straight_rewrite("(< 1 (phi (var a) (phi (var b) 2 3) 4))", "true"));
-    }
-
-    #[test]
-    fn push_lt_over_phi_3() {
-        assert!(test_straight_rewrite("(< (phi (var a) (phi (var b) 0 2) 3) 3)", "false"));
-    }
-
-    #[test]
-    fn push_lt_over_phi_4() {
-        assert!(test_straight_rewrite("(< (phi (var a) (phi (var b) 1 2) 3) 4)", "true"));
-    }
-
-    #[test]
-    fn eq_propagation_1() {
-        assert!(test_straight_rewrite("(== 0 0)", "true"));
-    }
-
-    #[test]
-    fn eq_propagation_2() {
-        assert!(test_straight_rewrite("(== 1 0)", "false"));
-    }
-
-    #[test]
-    fn eq_propagation_3() {
-        assert!(test_straight_rewrite("(== true  true )", "true"));
-    }
-
-    #[test]
-    fn eq_propagation_4() {
-        assert!(test_straight_rewrite("(== false false)", "true"));
-    }
-
-    #[test]
-    fn eq_propagation_5() {
-        assert!(test_straight_rewrite("(== 1  (phi (var c) 1 2))", "(phi (var c) true false)"));
-    }
-
-    #[test]
-    fn eq_propagation_6() {
-        assert!(!test_straight_rewrite("(== 1  (phi (var c) 1 2))", "true"));
-    }
-
-    #[test]
-    fn eq_propagation_7() {
-        assert!(test_straight_rewrite("(== 1  (phi (var c) 1 2))", "(var c)"));
-    }
-
-    #[test]
-    fn eq_propagation_8() {
-        assert!(test_straight_rewrite("(== 1  (phi (var c) 2 1))", "(! (var c))"));
-    }
-
-    #[test]
-    fn eq_propagation_9() {
-        assert!(test_straight_rewrite("(== 2  (phi (var c) 2 1))", "(var c)"));
-    }
-
-
-    #[test]
-    fn neq_propagation_1() {
-        assert!(test_straight_rewrite("(!= 0 0)", "false"));
-    }
-
-    #[test]
-    fn neq_propagation_2() {
-        assert!(test_straight_rewrite("(!= 1 0)", "true"));
-    }
-
-    #[test]
-    fn neq_propagation_3() {
-        assert!(test_straight_rewrite("(!= true  true )", "false"));
-    }
-
-    #[test]
-    fn neq_propagation_4() {
-        assert!(test_straight_rewrite("(!= false false)", "false"));
-    }
-
-    #[test]
-    fn neq_propagation_5() {
-        assert!(test_straight_rewrite("(!= 1  (phi (var c) 1 2))", "(phi (var c) false true)"));
-        assert!(test_straight_rewrite("(!= 1  (phi (var c) 1 2))", "(! (var c))"));
-    }
-
-    #[test]
-    fn neq_propagation_6() {
-        assert!(!test_straight_rewrite("(!= 1  (phi (var c) 1 2))", "true"));
-    }
-
-    #[test]
-    fn neq_propagation_7() {
-        assert!(!test_straight_rewrite("(!= 1  (phi (var c) 1 2))", "false"));
-    }
-
-    #[test]
-    fn neq_propagation_8() {
-        assert!(test_no_straight_rewrite("(!= 1  (phi (var c) 3 2))", "true"));
-    }
-
-    fn test_straight_rewrite(start: &str, end: &str) -> bool {
-
-        let start_expr = start.parse().unwrap();
-        let end_expr = end.parse().unwrap();
-        let mut eg = EGraph::default();
-        eg.add_expr(&start_expr);
-        let rules: Box<RewriteSystem> = crate::expr::rw_rules();
-        let runner = Runner::default()
-            .with_egraph(eg)
-            .run(rules.iter());
-        !runner.egraph.equivs(&start_expr, &end_expr).is_empty()
-    }
-
-    /// Test if the current rewrite rules allow for start to be written to end,
-    /// and if so report error and a minimal subset of rewrite rules that allow
-    /// for this erroneous rewrite sequence to happen.
-    fn test_no_straight_rewrite(start: &str, end: &str) -> bool {
-
-        if test_straight_rewrite(start, end) {
-            let rules = crate::expr::rw_rules();
-            let start_expr = start.parse().unwrap();
-            let end_expr = end.parse().unwrap();
-            let oracle =
-                move |config: &[&Rewrite<Peg,VarAnalysis>]| -> bool {
-                    let mut eg = EGraph::default();
-                    eg.add_expr(&start_expr);
-                    let runner = Runner::default()
-                        .with_egraph(eg)
-                        .run(config.iter().cloned());
-                    runner.egraph.equivs(&start_expr, &end_expr).is_empty()
-                };
-            let rules: Vec<_> = rules.iter().collect();
-            let min_config = dd(&rules, oracle);
-            for (i, rule) in min_config.iter().enumerate() {
-                println!("{}) {}", i+1, rule.name());
-            }
-            return false;
-        }
-        true
+pub fn to_sexp_string(expr: &RecExpr<Peg>, i: usize) -> String {
+    let expr_ref = expr.as_ref();
+    let node = expr_ref.get(i).unwrap();
+    let op = node.display_op().to_string();
+    if node.is_leaf() {
+        op
+    } else {
+        let mut vec = vec![op];
+        node.for_each(|id| vec.push(to_sexp_string(expr, id.into())));
+        format!("({})", vec.join(" "))
     }
 }

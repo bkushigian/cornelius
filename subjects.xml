@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<subjects>
+<subject method="Max@max(int,int)" sourcefile="../subjects/simple/max/regularized/Max.java">
+<egg>14</egg>
+<mutant id="3">
+<egg>23</egg>
+</mutant>
+<mutant id="1">
+<egg>33</egg>
+</mutant>
+<mutant id="4">
+<egg>38</egg>
+</mutant>
+<mutant id="2">
+<egg>48</egg>
+</mutant>
+</subject>
+<id_table>
+<dedup_entry id="0" peg="a"/>
+<dedup_entry id="1" peg="(var 0)"/>
+<dedup_entry id="2" peg="b"/>
+<dedup_entry id="3" peg="(var 2)"/>
+<dedup_entry id="4" peg="-2147483648"/>
+<dedup_entry id="5" peg="(int 4)"/>
+<dedup_entry id="6" peg="false"/>
+<dedup_entry id="7" peg="(bool 6)"/>
+<dedup_entry id="8" peg="true"/>
+<dedup_entry id="9" peg="(bool 8)"/>
+<dedup_entry id="10" peg="(&gt; 1 3)"/>
+<dedup_entry id="11" peg="(phi 10 1 4)"/>
+<dedup_entry id="12" peg="(phi 10 8 6)"/>
+<dedup_entry id="13" peg="(! 12)"/>
+<dedup_entry id="14" peg="(phi 13 3 11)"/>
+<dedup_entry id="15" peg="(phi 13 8 12)"/>
+<dedup_entry id="16" peg="a"/>
+<dedup_entry id="17" peg="(var 16)"/>
+<dedup_entry id="18" peg="b"/>
+<dedup_entry id="19" peg="(var 18)"/>
+<dedup_entry id="20" peg="(phi 6 17 4)"/>
+<dedup_entry id="21" peg="(phi 6 8 6)"/>
+<dedup_entry id="22" peg="(! 21)"/>
+<dedup_entry id="23" peg="(phi 22 19 20)"/>
+<dedup_entry id="24" peg="(phi 22 8 21)"/>
+<dedup_entry id="25" peg="a"/>
+<dedup_entry id="26" peg="(var 25)"/>
+<dedup_entry id="27" peg="b"/>
+<dedup_entry id="28" peg="(var 27)"/>
+<dedup_entry id="29" peg="(!= 26 28)"/>
+<dedup_entry id="30" peg="(phi 29 26 4)"/>
+<dedup_entry id="31" peg="(phi 29 8 6)"/>
+<dedup_entry id="32" peg="(! 31)"/>
+<dedup_entry id="33" peg="(phi 32 28 30)"/>
+<dedup_entry id="34" peg="(phi 32 8 31)"/>
+<dedup_entry id="35" peg="a"/>
+<dedup_entry id="36" peg="(var 35)"/>
+<dedup_entry id="37" peg="b"/>
+<dedup_entry id="38" peg="(var 37)"/>
+<dedup_entry id="39" peg="(&gt; 36 38)"/>
+<dedup_entry id="40" peg="a"/>
+<dedup_entry id="41" peg="(var 40)"/>
+<dedup_entry id="42" peg="b"/>
+<dedup_entry id="43" peg="(var 42)"/>
+<dedup_entry id="44" peg="(&gt;= 41 43)"/>
+<dedup_entry id="45" peg="(phi 44 41 4)"/>
+<dedup_entry id="46" peg="(phi 44 8 6)"/>
+<dedup_entry id="47" peg="(! 46)"/>
+<dedup_entry id="48" peg="(phi 47 43 45)"/>
+<dedup_entry id="49" peg="(phi 47 8 46)"/>
+</id_table>
+</subjects>

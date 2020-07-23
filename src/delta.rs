@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_variables)]
-use crate::expr::{Peg, VarAnalysis, RewriteSystem};
+use crate::peg::{Peg, VarAnalysis};
+use crate::rewrites::RewriteSystem;
 use egg::{Rewrite, rewrite as rw};
 
 /// ddmin2
