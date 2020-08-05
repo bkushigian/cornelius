@@ -32,7 +32,7 @@ define_language! {
     "swap" = Swap([Id; 3]),
     "cond-distr" = EqDistr([Id; 2]),
     "var"  = Var(Id),
-    Symbol(String),
+    Symbol(egg::Symbol),
   }
 }
 
