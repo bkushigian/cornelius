@@ -33,6 +33,11 @@ define_language! {
     "cond-distr" = EqDistr([Id; 2]),
     "var"  = Var(Id),
     Symbol(egg::Symbol),
+    // Heapy Stuff
+    FieldDeref(egg::Symbol, Id),
+    "heap" = Heap(Id),
+    "wr" = Wr([Id; 3]),
+    "rd" = Rd(Id),
   }
 }
 
