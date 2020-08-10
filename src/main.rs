@@ -14,7 +14,8 @@ use std::fs::File;
 use std::io::prelude::*;
 use itertools::Itertools;
 
-//use egg;
+#[macro_use] extern crate log;
+use log::Level;
 
 fn main() -> Result<(), String> {
     let _ = env_logger::builder().try_init();
@@ -39,8 +40,17 @@ fn run_on_subjects(subjects: &Subjects, rules: &RewriteSystem) -> Result<(), Str
     // expressions. This RecExpr contains the original program and every mutant,
     // as well as every sub-expression used
     let rec_expr = subjects.compute_rec_expr()?;
+
+    if log_enabled!(Level::Debug) {
+        let rec_expr_ref = rec_expr.as_ref();
+        for i in 0..rec_expr_ref.len(){
+            let v = rec_expr_ref[0..(i+1)].to_vec();
+            let re = RecExpr::from(v);
+            debug!("re {}:   {}", i, re.pretty(40));
+        }
+    }
+
     println!("rec_expr total_size: {}", rec_expr.as_ref().len());
-    //println!("rec_expr:\n{}", rec_expr.pretty(40));
     let runner = Runner::default()
         .with_expr(&rec_expr)
         .run(rules);
