@@ -33,11 +33,25 @@ define_language! {
     "cond-distr" = EqDistr([Id; 2]),
     "var"  = Var(Id),
     Symbol(egg::Symbol),
-    // Heapy Stuff
-    FieldDeref(egg::Symbol, Id),
+
+    /***                       Heapy Stuff                       ***/
+
+    // An access path consists of a base node and a chain of derefs
+    "path" = AccessPath([Id; 2]),
+    // (derefs ".a.b.c")
+    // derefs consists of a string (Symbol) representation of a chain of derefs
+    // ".a.b.c"
+    "derefs" = Derefs(Id),
+    // a heap represents an unknown heap state. it is indexed to syntactically
+    // differentiate unknown heaps
     "heap" = Heap(Id),
+    // (wr path value heap)
+    // represent the heap `heap'` that is equal to `heap` at all points save for
+    // `path`, which now has value `value`
     "wr" = Wr([Id; 3]),
-    "rd" = Rd(Id),
+    // (rd path heap)
+    // read the value stored at an access path `path` in a heap `heap`
+    "rd" = Rd([Id; 2]),
   }
 }
 
