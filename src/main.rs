@@ -34,12 +34,17 @@ fn main() -> Result<(), String> {
 }
 
 fn run_on_subjects(subjects: &Subjects, rules: &RewriteSystem) -> Result<(), String> {
+    // We compute a RecExpr<Peg> from the lookup table mapping ids to Peg
+    // expressions. This RecExpr contains the original program and every mutant,
+    // as well as every sub-expression used
     let rec_expr = subjects.compute_rec_expr()?;
+    println!("rec_expr total_size: {}", rec_expr.as_ref().len());
     //println!("rec_expr:\n{}", rec_expr.pretty(40));
     let runner = Runner::default()
         .with_expr(&rec_expr)
         .run(rules);
     let egraph = &runner.egraph;
+    println!("egraph total_size: {}", egraph.total_size());
 
     for (i, subj) in subjects.subjects
         .iter()
@@ -72,11 +77,13 @@ fn analyze_subject(subj: &Subject,
 ) -> u32 {
     println!("Running on subject {}:{}", subj.source_file, subj.method);
 
-    // Look up the set of ids associated with a canonical id.
+    // Map canonical_ids (from egg) to mutant ids (from Major)
     let mut rev_can_id_lookup = HashMap::<Id, HashSet<Id>>::default();
     let mut num_equivalences = 0;
 
+    // the PEG id
     let id: u32 = subj.code.parse().unwrap();
+
     // Get the canonical id in the egraph for the subject, and compute the
     // set of equivalent ids (i.e., ids found to be equivalent to the subject)
     let canonical_id = egraph.find(Id::from(id as usize));
@@ -86,6 +93,7 @@ fn analyze_subject(subj: &Subject,
     equiv_ids.insert(Id::from(0 as usize));
 
     for m in &subj.mutants {
+        // PEG id
         let id: u32 = m.code.parse().unwrap();
         let canonical_id = egraph.find(Id::from(id as usize));
 
