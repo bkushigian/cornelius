@@ -17,6 +17,7 @@ use itertools::Itertools;
 //use egg;
 
 fn main() -> Result<(), String> {
+    let _ = env_logger::builder().try_init();
     let rules = crate::rewrites::rw_rules();
     let args: Vec<String> = env::args().collect();
     let subject_files = &args[1..];
