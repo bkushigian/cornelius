@@ -462,8 +462,35 @@ mod misc {
     fn eq_distr_eq_1() {
         //assert!(test_straight_rewrite("(eq-distr (var a) (var b) (== (var a) (var b)))", "true"));
     }
+
+    #[test]
+    fn add_ac_overflow(){
+        // The following are regression tests to prevent against overflow bugs. More details here:
+        // https://bkushigian.github.io/2020/08/10/debugging-rewrites-1.html
+        assert!(rewrites_do_not_panic(&["(+ (phi C 1 0) 2)", "(phi true 0 -2147483648)"]));
+        assert!(rewrites_do_not_panic(&["(+ (phi C 1 1) 2)", "(phi true 0 -2147483648)"]));
+        assert!(rewrites_do_not_panic(&["(+ (phi C 1 1) 0)", "(phi true 0 -2147483648)"]));
+        assert!(rewrites_do_not_panic(&["(+ 1 0)", "(phi true 0 -2147483648)"]));
+        assert!(rewrites_do_not_panic(&["(+ (phi C 0 0) 0)", "(phi true 0 -2147483648)"]));
+        assert!(rewrites_do_not_panic(&["(+ (phi C 1 0) 1)", "(phi true 0 -76650000)"]));
+        assert!(rewrites_do_not_panic(&["(+ (phi C 1 0) 1)", "(phi true 0 -76700000)"]));
+        assert!(rewrites_do_not_panic(&["(+ (phi C 1 0) 1)", "(phi true 0 -76695844)"]));
+        assert!(rewrites_do_not_panic(&["(+ (phi C 1 0) 1)", "(phi true 0 -76695845)"]));
+        assert!(rewrites_do_not_panic(&["(+ (phi C 0 0) 1)", "(phi true 1 -2147483648)"]));
+        assert!(rewrites_do_not_panic(&["(+ (phi C 1 0) 1)", "(phi true 1 -2147483648)"]));
+        assert!(rewrites_do_not_panic(&["(+ (phi true 0 -2147483647) 0)", "(phi true 0 -2147483647)"]));
+    }
+
 }
 
+#[cfg(test)]
+mod heap {
+    use super::*;
+    #[test]
+    fn rd_wr() {
+        assert!(test_straight_rewrite("(rd (path (var a) (derefs .a.b)) (wr (path (var a) (derefs .a.b)) 3 (heap 0)))", "3"));
+    }
+}
 
 #[allow(dead_code)]
 fn test_straight_rewrite(start: &str, end: &str) -> bool {
@@ -548,5 +575,20 @@ fn test_no_straight_rewrite(start: &str, end: &str, other: &[&str]) -> bool {
         }
         return false;
     }
+    true
+}
+
+
+#[allow(dead_code)]
+fn rewrites_do_not_panic(exprs: &[&str]) -> bool{
+
+    let mut egraph: EGraph<Peg, VarAnalysis> = EGraph::default();
+    let rules = crate::rewrites::rw_rules();
+    let runner = Runner::default();
+    for expr in exprs {
+        egraph.add_expr(&expr.parse().unwrap());
+    }
+    runner.with_egraph(egraph).run(rules.iter());
+
     true
 }
