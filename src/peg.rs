@@ -1,4 +1,5 @@
 use egg::*;
+use std::num::Wrapping;
 
 pub type EGraph = egg::EGraph<Peg, VarAnalysis>;
 
@@ -297,9 +298,9 @@ fn eval(egraph: &EGraph, enode: &Peg) -> Option<Peg> {
   match enode {
     // Arithmetic
     Peg::Num(_) | Peg::Bool(_) => Some(enode.clone()),
-    Peg::Add([a, b]) => Some(Peg::Num(x(a)?.as_int()? + x(b)?.as_int()?)),
-    Peg::Sub([a, b]) => Some(Peg::Num(x(a)?.as_int()? - x(b)?.as_int()?)),
-    Peg::Mul([a, b]) => Some(Peg::Num(x(a)?.as_int()? * x(b)?.as_int()?)),
+    Peg::Add([a, b]) => Some(Peg::Num((Wrapping(x(a)?.as_int()?) + Wrapping(x(b)?.as_int()?)).0)),
+    Peg::Sub([a, b]) => Some(Peg::Num((Wrapping(x(a)?.as_int()?) - Wrapping(x(b)?.as_int()?)).0)),
+    Peg::Mul([a, b]) => Some(Peg::Num((Wrapping(x(a)?.as_int()?) * Wrapping(x(b)?.as_int()?)).0)),
     Peg::Div([a, b]) => {
       let d = x(b)?.as_int()?;
       if d == 0 {
