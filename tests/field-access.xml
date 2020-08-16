@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<subjects>
+<subject method="FieldAccess@test(int,int)" sourcefile="../subjects/heapy/field-access/FieldAccess.java">
+<egg>28</egg>
+<mutant id="8">
+<egg>30</egg>
+</mutant>
+<mutant id="5">
+<egg>33</egg>
+</mutant>
+<mutant id="9">
+<egg>35</egg>
+</mutant>
+<mutant id="7">
+<egg>37</egg>
+</mutant>
+<mutant id="6">
+<egg>40</egg>
+</mutant>
+<mutant id="3">
+<egg>41</egg>
+</mutant>
+<mutant id="2">
+<egg>41</egg>
+</mutant>
+<mutant id="1">
+<egg>28</egg>
+</mutant>
+<mutant id="4">
+<egg>44</egg>
+</mutant>
+</subject>
+<id_table>
+<dedup_entry id="0" peg="1"/>
+<dedup_entry id="1" peg="(heap 0)"/>
+<dedup_entry id="2" peg="this"/>
+<dedup_entry id="3" peg="(var 2)"/>
+<dedup_entry id="4" peg="ex"/>
+<dedup_entry id="5" peg="(var 4)"/>
+<dedup_entry id="6" peg="y"/>
+<dedup_entry id="7" peg="(var 6)"/>
+<dedup_entry id="8" peg="0"/>
+<dedup_entry id="9" peg="(heap 8)"/>
+<dedup_entry id="10" peg="x"/>
+<dedup_entry id="11" peg="(derefs 10)"/>
+<dedup_entry id="12" peg="(path 3 11)"/>
+<dedup_entry id="13" peg="(rd 12 9)"/>
+<dedup_entry id="14" peg="fa"/>
+<dedup_entry id="15" peg="(derefs 14)"/>
+<dedup_entry id="16" peg="(path 3 15)"/>
+<dedup_entry id="17" peg="(rd 16 9)"/>
+<dedup_entry id="18" peg=".yy"/>
+<dedup_entry id="19" peg="(derefs 18)"/>
+<dedup_entry id="20" peg="(path 17 19)"/>
+<dedup_entry id="21" peg="(rd 20 9)"/>
+<dedup_entry id="22" peg="(derefs 6)"/>
+<dedup_entry id="23" peg="(path 3 22)"/>
+<dedup_entry id="24" peg="(wr 23 7 9)"/>
+<dedup_entry id="25" peg="(wr 23 7 24)"/>
+<dedup_entry id="26" peg="(+ 13 7)"/>
+<dedup_entry id="27" peg="(+ 26 21)"/>
+<dedup_entry id="28" peg="(mutant-root 27 25)"/>
+<dedup_entry id="29" peg="(- 26 21)"/>
+<dedup_entry id="30" peg="(mutant-root 29 25)"/>
+<dedup_entry id="31" peg="(- 13 7)"/>
+<dedup_entry id="32" peg="(+ 31 21)"/>
+<dedup_entry id="33" peg="(mutant-root 32 25)"/>
+<dedup_entry id="34" peg="(/ 26 21)"/>
+<dedup_entry id="35" peg="(mutant-root 34 25)"/>
+<dedup_entry id="36" peg="(* 26 21)"/>
+<dedup_entry id="37" peg="(mutant-root 36 25)"/>
+<dedup_entry id="38" peg="(/ 13 7)"/>
+<dedup_entry id="39" peg="(+ 38 21)"/>
+<dedup_entry id="40" peg="(mutant-root 39 25)"/>
+<dedup_entry id="41" peg="(mutant-root 27 24)"/>
+<dedup_entry id="42" peg="(* 13 7)"/>
+<dedup_entry id="43" peg="(+ 42 21)"/>
+<dedup_entry id="44" peg="(mutant-root 43 25)"/>
+</id_table>
+</subjects>
