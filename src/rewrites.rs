@@ -146,7 +146,7 @@ pub fn rw_rules() -> Box<RewriteSystem> {
     //rw!("cond-distr-const"; "(cond-distr ?c ?n)"    => "?n" if is_const("?n")),
 
     /***                       Heapy Stuff                       ***/
-    //rw!("rd-wr"; "(rd ?path (wr ?path ?val ?heap))"  => "?val"),
+    rw!("rd-wr"; "(rd ?path (wr ?path ?val ?heap))"  => "?val"),
 
   ];
   Box::new(rules)
