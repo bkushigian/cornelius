@@ -57,6 +57,7 @@ fn run_on_subjects(subjects: &Subjects, rules: &RewriteSystem) -> Result<(), Str
     let egraph = &runner.egraph;
     println!("egraph total_size: {}", egraph.total_size());
 
+    let mut equiv_file = File::create("equiv-classes").map_err(|_| "Could not create file")?;
     for (i, subj) in subjects.subjects
         .iter()
         .enumerate()
@@ -65,7 +66,6 @@ fn run_on_subjects(subjects: &Subjects, rules: &RewriteSystem) -> Result<(), Str
         println!("Analyzing results of subject {}", i + 1);
         println!("    subject code = {}", subj.code);
         println!("---------------------------------------");
-        let mut equiv_file = File::create("equiv-classes").map_err(|_| "Could not create file")?;
         analyze_subject(subj, egraph, &rec_expr, &mut equiv_file);
     }
     Ok(())
