@@ -4,10 +4,6 @@ use serde_aux::prelude::*;
 use serde_xml_rs::from_reader;
 use crate::peg::*;
 
-pub fn subjects() -> Result<Subjects, String> {
-  Subject::from_file("xmls/subjects.xml".to_string())
-}
-
 /// `Subjects` represents a collection of methods and associated mutants for
 /// Cornelius to run on as well as associated lookup information.
 #[derive(Debug, Deserialize)]
