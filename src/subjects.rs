@@ -133,21 +133,6 @@ impl Subject {
 
 }
 
-#[derive(Debug, Deserialize, Hash, Eq, PartialEq, Clone)]
-pub struct Code {
-  #[serde(rename = "$value")]
-  pub source: String,
-}
-
-impl Code {
-  pub fn expr(&self) -> RecExpr<Peg> {
-    self.source.parse().unwrap()
-  }
-  pub fn new(source: String) -> Code {
-    Code { source }
-  }
-}
-
 #[derive(Debug, Deserialize)]
 pub struct Mutant {
   #[serde(deserialize_with = "deserialize_number_from_string")]
