@@ -372,3 +372,23 @@ impl Analysis<Peg> for VarAnalysis {
         }
     }
 }
+
+/// Convert a `RecExpr<Peg>` to an S-expression `String`. For instance,
+/// `[Var("a"), Var("b"), Plus([0, 1])]` will be converted to
+/// `(+ (var a) (var b))``
+///
+/// WARNING: This can blow up if there is a lot of node sharing/duplication in
+/// the RecExpr. Also, if for whatever reason the RecExpr is malformed (cyclic),
+/// this will loop infinitely.
+pub fn to_sexp_string(expr: &RecExpr<Peg>, i: usize) -> String {
+    let expr_ref = expr.as_ref();
+    let node = expr_ref.get(i).unwrap();
+    let op = node.display_op().to_string();
+    if node.is_leaf() {
+        op
+    } else {
+        let mut vec = vec![op];
+        node.for_each(|id| vec.push(to_sexp_string(expr, id.into())));
+        format!("({})", vec.join(" "))
+    }
+}
