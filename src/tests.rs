@@ -452,6 +452,80 @@ mod heap {
     fn rd_wr() {
         assert!(test_straight_rewrite("(rd (path (var a) (derefs .a.b)) (wr (path (var a) (derefs .a.b)) 3 (heap 0)))", "3"));
     }
+
+    #[test]
+    fn test_field_write_1() {
+        assert!(test_straight_rewrite(
+            // Original program
+            // public class MyClass {
+            //     int x = 0;
+            //
+            //     int test1(int a) {
+            //         int result = 0;
+            //         x = a - a;
+            //         result = x;
+            //         return result;
+            //     }
+            // }
+
+            "(mutant-root (rd (path (var this) (derefs x)) (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0))) (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0)))",
+            // Mutant
+            // public class MyClass {
+            //     int x = 0;
+            //
+            //     int test1(int a) {
+            //         int result = 0;
+            //         x = a - a;
+            //         ;
+            //         return result;
+            //     }
+            // }
+
+            "(mutant-root 0 (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0)))"))
+    }
+
+    #[test]
+    #[ignore]
+    // The folowing test is IGNORED until Equality Refinement is implemented
+    fn test_field_write_2() {
+        assert!(test_straight_rewrite(
+        // Original Program
+        // public class MyClass
+        //     int x = 0;
+        //      int test_heapy_max(int a, int b) {
+        //           x = a > b ? a : b;
+        //           int result = x;
+        //           return result;
+        //      }
+        // }
+"(mutant-root \
+    (rd (path (var this) (derefs x))\
+        (wr (path (var this) (derefs x))\
+            (phi (> (var a) (var b)) (var a) (var b))\
+            (heap 0)))\
+    (wr (path (var this) (derefs x))\
+        (phi (> (var a) (var b)) (var a) (var b))\
+        (heap 0)))",
+        // Mutant Program
+        // public class MyClass
+        //     int x = 0;
+        //      int test_heapy_max(int a, int b) {
+        //           x = a >= b ? a : b;
+        //           int result = x;
+        //           return result;
+        //      }
+        // }
+"(mutant-root
+    (rd (path (var this) (derefs x))\
+        (wr (path (var this) (derefs x))\
+            (phi (>= (var a) (var b)) (var a) (var b))\
+            (heap 0)))\
+    (wr (path (var this) (derefs x))\
+        (phi (>= (var a) (var b)) (var a) (var b))\
+        (heap 0)))"))
+
+    }
+
 }
 
 #[allow(dead_code)]
