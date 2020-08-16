@@ -412,13 +412,17 @@ mod misc {
     }
 
     #[test]
+    #[ignore]
     fn eq_distr_var_1() {
-        //assert!(test_straight_rewrite("(eq-distr (var a) (var b) (var c))", "(var c)"));
+        // Ignored until equality distribution is restored
+        assert!(test_straight_rewrite("(eq-distr (var a) (var b) (var c))", "(var c)"));
     }
 
     #[test]
+    #[ignore]
     fn eq_distr_eq_1() {
-        //assert!(test_straight_rewrite("(eq-distr (var a) (var b) (== (var a) (var b)))", "true"));
+        // Ignored until equality distribution is restored
+        assert!(test_straight_rewrite("(eq-distr (var a) (var b) (== (var a) (var b)))", "true"));
     }
 
     #[test]
