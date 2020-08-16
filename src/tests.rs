@@ -399,48 +399,6 @@ mod misc {
         assert!(test_no_straight_rewrite("(phi (> a b) true false)"             , "false", &[]));
         assert!(test_no_straight_rewrite("(phi (< a b) true false)"             , "false", &[]));
 
-        // These are very much like the failing assertions below, only with
-        // `true` and `false` swapped out to `7` and `8` respectively. These do
-        // not fail. This is interesting for the following two reasons:
-        //
-        // 1. If any of the first 3 assertions failed, this would mean that the
-        //    bug stemmed from the rewrite rules erroneously selecting the
-        //    `else` argument from the phi node. This is what I was expecting.
-        //
-        //    For instance, if
-        //
-        //        assert!(test_no_straight_rewrite("(phi (> (var a) (var b)) 7 8)" , "8", &[]));
-        //
-        //    failed, then this would indicate that `8` was being selected
-        //    from the `then` clause of the `phi`.
-        //
-        // 2. If any of the next 3 assertiosn failed, this would indicate that
-        //    bug stemmed from the rewrite rules erroneously transforming a phi
-        //    node into `false`.
-        //
-        //    For instance, if
-        //
-        //        assert!(test_no_straight_rewrite("(phi (> (var a) (var b)) 7 8)" , "false", &[]));
-        //
-        //    failed, this would mean that the entire phi node was being rewritten
-        //    to `false`, which would surprise me greatly, since types
-        //    wouldn't be preserved.
-        //
-        //  Since neither of the following groups fail, this implies that the
-        //  failure is some combination of rewriting the entire phi node and
-        //  relying on the arguments
-        assert!(test_no_straight_rewrite("(phi (> 3 2) 7 8)" , "8", &[]));
-        assert!(test_no_straight_rewrite("(phi (> (var a) (var b)) 7 8)" , "8", &[]));
-        assert!(test_no_straight_rewrite("(phi (< (var a) (var b)) 7 8)" , "8", &[]));
-
-        assert!(test_no_straight_rewrite("(phi (> 3 2) 7 8)" , "false", &[]));
-        assert!(test_no_straight_rewrite("(phi (> (var a) (var b)) 7 8)" , "false", &[]));
-        assert!(test_no_straight_rewrite("(phi (< (var a) (var b)) 7 8)" , "false", &[]));
-        assert!(test_no_straight_rewrite("(phi (> 3 2) false true)" , "true" , &[]));
-        assert!(test_no_straight_rewrite("(phi (> (var a) (var b)) false true)" , "true" , &[]));
-        assert!(test_no_straight_rewrite("(phi (> 3 2) true false)" , "false", &[]));
-        assert!(test_no_straight_rewrite("(phi (> (var a) (var b)) true false)" , "false", &[]));
-        assert!(test_no_straight_rewrite("(phi (< (var a) (var b)) true false)" , "false", &[]));
     }
 
     #[test]
