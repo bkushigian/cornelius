@@ -206,7 +206,7 @@ fn analyze_subject(subj: &Subject,
                    _expr: &RecExpr<Peg>,
                    equiv_file: &mut File
 ) -> u32 {
-    println!("Running on subject {}:{}", subj.source_file, subj.method);
+    info!("Running on subject {}:{}", subj.source_file, subj.method);
 
     // Map canonical_ids (from egg) to mutant ids (from Major)
     let mut rev_can_id_lookup = HashMap::<Id, HashSet<Id>>::default();
