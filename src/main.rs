@@ -1,11 +1,11 @@
-pub mod expr;
+pub mod subjects;
 pub mod delta;
 pub mod peg;
 pub mod rewrites;
 mod tests;
 
 use egg::*;
-use crate::expr::{Subject, Subjects};
+use crate::subjects::{Subject, Subjects};
 use crate::rewrites::RewriteSystem;
 use crate::peg::{Peg, VarAnalysis};
 use std::collections::{HashMap, HashSet};
