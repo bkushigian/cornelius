@@ -141,6 +141,16 @@ pub struct Mutant {
   pub code: String,
 }
 
+pub struct SubjectAnalysisResult<'a> {
+  /// The subject that got analyzed
+  pub subject: &'a Subject,
+  /// The total number of equivalences between mutants/original program that
+  /// were discovered
+  pub num_equivalences_discovered: u32,
+  /// A Vec of the equivalence classes discovered during analysis
+  pub equivalence_classes: Vec<HashSet<u32>>
+}
+
 /// Read in serialized info as a `Subjects` instance and run equality saturation
 /// on each `Subject` in the deserialized `Subjects`
 pub fn run_on_subjects_file(subj_file: &str) -> Result<(), String> {
