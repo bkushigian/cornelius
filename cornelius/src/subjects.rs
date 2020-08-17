@@ -4,6 +4,8 @@ use crate::rewrites::RewriteSystem;
 use serde_aux::prelude::*;
 use serde_xml_rs::from_reader;
 use crate::peg::{Peg, VarAnalysis};
+use std::fs::File;
+use std::io::prelude::*;
 use itertools::Itertools;
 use std::collections::{HashMap, HashSet};
 
@@ -139,23 +141,6 @@ pub struct Mutant {
   pub code: String,
 }
 
-/// Store all the analysis results of a `Subjects`; this takes ownership of the
-/// `Subjects`
-pub struct SubjectsAnalysisResult<'a> {
-  subjects: Subjects,
-  analysis_results: Vec<SubjectAnalysisResult<'a>>
-}
-
-impl From<Subjects> for SubjectsAnalysisResult<'_> {
-  fn from(subjects: Subjects) -> Self {
-    SubjectsAnalysisResult {
-      subjects,
-      analysis_results: vec![],
-    }
-  }
-}
-
-/// Track the results of analyzing a single `Subject`
 pub struct SubjectAnalysisResult<'a> {
   /// The subject that got analyzed
   pub subject: &'a Subject,
@@ -168,7 +153,7 @@ pub struct SubjectAnalysisResult<'a> {
 
 /// Read in serialized info as a `Subjects` instance and run equality saturation
 /// on each `Subject` in the deserialized `Subjects`
-pub fn run_on_subjects_file(subj_file: &str) -> Result<SubjectsAnalysisResult, String> {
+pub fn run_on_subjects_file(subj_file: &str) -> Result<(), String> {
     let subj_file = subj_file.trim();
     let rules = crate::rewrites::rw_rules();
     info!("Running on subject file {}", subj_file);
@@ -176,17 +161,15 @@ pub fn run_on_subjects_file(subj_file: &str) -> Result<SubjectsAnalysisResult, S
     let subjects: Subjects = Subject::from_file(subj_file.to_string())
         .expect("Error reading subjects");
 
-    run_on_subjects(subjects, &rules)
+    run_on_subjects(&subjects, &rules)
 }
 
-pub fn run_on_subjects<'a>(
-  subjects: Subjects,
-  rules: &RewriteSystem
-) -> Result<SubjectsAnalysisResult<'a>, String> {
+pub fn run_on_subjects(subjects: &Subjects, rules: &RewriteSystem) -> Result<(), String> {
     // We compute a RecExpr<Peg> from the lookup table mapping ids to Peg
     // expressions. This RecExpr contains the original program and every mutant,
     // as well as every sub-expression used
     let rec_expr = subjects.compute_rec_expr()?;
+
     if log_enabled!(Level::Debug) {
         let rec_expr_ref = rec_expr.as_ref();
         for i in 0..rec_expr_ref.len(){
@@ -203,11 +186,18 @@ pub fn run_on_subjects<'a>(
     let egraph = &runner.egraph;
     println!("egraph total_size: {}", egraph.total_size());
 
-    let mut results = SubjectsAnalysisResult::from(subjects);
-    for subj in results.subjects.subjects.iter() {
-        results.analysis_results.push(analyze_subject(&subj, egraph, &rec_expr));
+    let mut equiv_file = File::create("equiv-classes").map_err(|_| "Could not create file")?;
+    for (i, subj) in subjects.subjects
+        .iter()
+        .enumerate()
+    {
+        println!("---------------------------------------");
+        println!("Analyzing results of subject {}", i + 1);
+        println!("    subject code = {}", subj.code);
+        println!("---------------------------------------");
+        analyze_subject(subj, egraph, &rec_expr, &mut equiv_file);
     }
-    Ok(results)
+    Ok(())
 }
 
 /// Run on a subject and return number of identified equivalences.
@@ -221,11 +211,11 @@ pub fn run_on_subjects<'a>(
 ///
 /// TODO We shouldn't be writing directly to a file---we should be returning a
 /// structure that summarizes the analysis.
-fn analyze_subject<'a>(
-  subj: &'a Subject,
-  egraph: &EGraph<Peg, VarAnalysis>,
-  _expr: &RecExpr<Peg>
-) -> SubjectAnalysisResult<'a> {
+fn analyze_subject(subj: &Subject,
+                   egraph: &EGraph<Peg, VarAnalysis>,
+                   _expr: &RecExpr<Peg>,
+                   equiv_file: &mut File
+) -> u32 {
     info!("Running on subject {}:{}", subj.source_file, subj.method);
 
     // Map canonical_ids (from egg) to mutant ids (from Major)
@@ -267,12 +257,9 @@ fn analyze_subject<'a>(
         if n > 1 {
             println!("-> {}", equiv_class_as_string);
         }
+        if equiv_file.write_all(format!("{}\n", equiv_class_as_string).as_bytes()).is_err() {
+            println!("Error writing to file!");
+        }
     }
-
-    SubjectAnalysisResult
-    {
-        subject:subj,
-        num_equivalences_discovered:num_equivalences,
-        equivalence_classes:vec![]
-    }
+    num_equivalences
 }
