@@ -96,10 +96,6 @@ while (( "$#" )); do
         base="$(basename "$1")"
         shift
         regdir="$dir/regularized"
-        echo "original: $dir/$base"
-        echo "dir:      $dir"
-        echo "base:     $base"
-        echo "regdir:   $regdir"
         if [ -d "$dir" ]
         then
             if [ -e "$regdir"  ]
@@ -119,10 +115,6 @@ while (( "$#" )); do
         base="$(basename "$1")"
         shift
         regdir="$dir/regularized"
-        echo "original: $dir/$base"
-        echo "dir:      $dir"
-        echo "base:     $base"
-        echo "regdir:   $regdir"
         if [ -d "$dir" ]
         then
             if [ -e "$regdir"  ]

@@ -30,3 +30,7 @@ export MML
 ./regularize.sh --subject "$tmp/$base"
 ./serialize.sh "$tmp/regularized/$base"
 mv subjects.xml "$tmp"
+./cornelius.sh "$tmp/subjects.xml"
+equiv_classes="$tmp/${base%.*}.equiv-classes"
+mv equiv-classes "$equiv_classes"
+green "$(bold "Equiv Classes: $(blue "$equiv_classes")")"
