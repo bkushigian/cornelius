@@ -176,13 +176,13 @@ pub fn run_on_subjects_file(subj_file: &str) -> Result<(), String> {
     let rules = crate::rewrites::rw_rules();
     info!("Running on subject file {}", subj_file);
 
-    let subjects: Subjects = Subject::from_file(subj_file.to_string())
+    let mut subjects: Subjects = Subject::from_file(subj_file.to_string())
         .expect("Error reading subjects");
 
-    run_on_subjects(&subjects, &rules)
+    run_on_subjects(&mut subjects, &rules)
 }
 
-pub fn run_on_subjects(subjects: &Subjects, rules: &RewriteSystem) -> Result<(), String> {
+pub fn run_on_subjects(subjects: &mut Subjects, rules: &RewriteSystem) -> Result<(), String> {
     // We compute a RecExpr<Peg> from the lookup table mapping ids to Peg
     // expressions. This RecExpr contains the original program and every mutant,
     // as well as every sub-expression used
@@ -205,15 +205,14 @@ pub fn run_on_subjects(subjects: &Subjects, rules: &RewriteSystem) -> Result<(),
     println!("egraph total_size: {}", egraph.total_size());
 
     let mut equiv_file = File::create("equiv-classes").map_err(|_| "Could not create file")?;
-    for (i, subj) in subjects.subjects
-        .iter()
-        .enumerate()
-    {
-        println!("---------------------------------------");
-        println!("Analyzing results of subject {}", i + 1);
-        println!("    subject peg = {}", subj.peg);
-        println!("---------------------------------------");
-        analyze_subject(subj, egraph, &rec_expr, &mut equiv_file);
+    let mut i: u32 = 1;
+    for mut subj in &mut subjects.subjects {
+        info!("---------------------------------------");
+        info!("Analyzing results of subject {}", i);
+        info!("    subject peg = {}", subj.peg);
+        info!("---------------------------------------");
+        analyze_subject(&mut subj, egraph, &rec_expr, &mut equiv_file);
+        i += 1;
     }
     Ok(())
 }
@@ -229,15 +228,15 @@ pub fn run_on_subjects(subjects: &Subjects, rules: &RewriteSystem) -> Result<(),
 ///
 /// TODO We shouldn't be writing directly to a file---we should be returning a
 /// structure that summarizes the analysis.
-fn analyze_subject(subj: &Subject,
+fn analyze_subject(subj: &mut Subject,
                    egraph: &EGraph<Peg, VarAnalysis>,
                    _expr: &RecExpr<Peg>,
                    equiv_file: &mut File
-) -> u32 {
+) {
     info!("Running on subject {}:{}", subj.source_file, subj.method);
 
     // Map canonical_ids (from egg) to mutant ids (from Major)
-    let mut rev_can_id_lookup = HashMap::<Id, HashSet<Id>>::default();
+    let mut rev_can_id_lookup = HashMap::<Id, HashSet<u32>>::default();
     let mut num_equivalences = 0;
 
     // the PEG id
@@ -249,7 +248,7 @@ fn analyze_subject(subj: &Subject,
     let equiv_ids = rev_can_id_lookup
         .entry(canonical_id)
         .or_insert_with(HashSet::default);
-    equiv_ids.insert(Id::from(0 as usize));
+    equiv_ids.insert(0);
 
     for m in &subj.mutants {
         // PEG id
@@ -259,17 +258,19 @@ fn analyze_subject(subj: &Subject,
         let equiv_ids = rev_can_id_lookup
             .entry(canonical_id)
             .or_insert_with(HashSet::default);
-        equiv_ids.insert(Id::from(m.id as usize));
+        equiv_ids.insert(m.id);
     }
 
+    let mut equiv_classes: Vec<HashSet<u32>> = vec![];
     for can_id in rev_can_id_lookup.keys() {
         let equiv_ids = rev_can_id_lookup.get(can_id).unwrap();
         let n = equiv_ids.len() as u32;
         num_equivalences += n - 1;
+        equiv_classes.push(equiv_ids.clone());
 
         let equiv_class_as_string: String = itertools::sorted(equiv_ids)
             .iter()
-            .map(|id| usize::from(**id).to_string())
+            .map(|id| (**id).to_string())
             .intersperse(" ".to_string())
             .collect();
         if n > 1 {
@@ -279,5 +280,9 @@ fn analyze_subject(subj: &Subject,
             println!("Error writing to file!");
         }
     }
-    num_equivalences
+
+    subj.analysis_result = AnalysisResult {
+      num_equivs: num_equivalences,
+      equiv_classes,
+    };
 }
