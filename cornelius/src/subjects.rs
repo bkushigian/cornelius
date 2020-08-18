@@ -94,7 +94,7 @@ pub struct Subject {
 
   #[serde(rename = "egg")]
   /// The source code in an egg-readable format
-  pub code: String,
+  pub peg: String,
 
   #[serde(rename = "mutant")]
   /// Each of the mutants associated with this subject
@@ -113,7 +113,7 @@ impl Subject {
     for (id, src) in inputs[1..].iter() {
       let m = Mutant {
         id: *id,
-        code: (*src).parse().unwrap(),
+        peg: (*src).parse().unwrap(),
       };
       mutants.push(m);
     }
@@ -121,7 +121,7 @@ impl Subject {
     Subject {
       source_file,
       method,
-      code: String::from(inputs[0].1).parse().unwrap(),
+      peg: String::from(inputs[0].1).parse().unwrap(),
       mutants,
       analysis_result: AnalysisResult::default(),
     }
@@ -156,7 +156,7 @@ pub struct Mutant {
   pub id: u32,
   /// The PEG expression of the mutant
   #[serde(rename = "egg")]
-  pub code: String,
+  pub peg: String,
 }
 
 pub struct SubjectAnalysisResult<'a> {
@@ -211,7 +211,7 @@ pub fn run_on_subjects(subjects: &Subjects, rules: &RewriteSystem) -> Result<(),
     {
         println!("---------------------------------------");
         println!("Analyzing results of subject {}", i + 1);
-        println!("    subject code = {}", subj.code);
+        println!("    subject peg = {}", subj.peg);
         println!("---------------------------------------");
         analyze_subject(subj, egraph, &rec_expr, &mut equiv_file);
     }
@@ -241,7 +241,7 @@ fn analyze_subject(subj: &Subject,
     let mut num_equivalences = 0;
 
     // the PEG id
-    let id: u32 = subj.code.parse().unwrap();
+    let id: u32 = subj.peg.parse().unwrap();
 
     // Get the canonical id in the egraph for the subject, and compute the
     // set of equivalent ids (i.e., ids found to be equivalent to the subject)
@@ -253,7 +253,7 @@ fn analyze_subject(subj: &Subject,
 
     for m in &subj.mutants {
         // PEG id
-        let id: u32 = m.code.parse().unwrap();
+        let id: u32 = m.peg.parse().unwrap();
         let canonical_id = egraph.find(Id::from(id as usize));
 
         let equiv_ids = rev_can_id_lookup
