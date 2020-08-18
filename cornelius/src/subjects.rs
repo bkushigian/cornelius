@@ -99,6 +99,10 @@ pub struct Subject {
   #[serde(rename = "mutant")]
   /// Each of the mutants associated with this subject
   pub mutants: Vec<Mutant>,
+
+  #[serde(default)]
+  /// The results of analyizing this subject
+  pub analysis_result: AnalysisResult,
 }
 
 impl Subject {
@@ -119,6 +123,7 @@ impl Subject {
       method,
       code: String::from(inputs[0].1).parse().unwrap(),
       mutants,
+      analysis_result: AnalysisResult::default(),
     }
   }
 
@@ -131,6 +136,16 @@ impl Subject {
     Ok(subjects)
   }
 
+}
+
+/// The results of running an analysis. This is deriving Deserialize to make the
+/// compiler happy, but an AnalysisResult is never actually deserialized.
+#[derive(Debug, Default, Deserialize)]
+pub struct AnalysisResult {
+  /// Number of equivalences discovered
+  num_equivs: u32,
+  /// The equivalence classes discovered
+  equiv_classes: Vec<HashSet<u32>>,
 }
 
 #[derive(Debug, Deserialize)]
