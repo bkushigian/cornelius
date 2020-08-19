@@ -144,9 +144,9 @@ impl Subject {
 #[derive(Debug, Default, Deserialize)]
 pub struct AnalysisResult {
   /// Number of equivalences discovered
-  score: u32,
+  pub score: u32,
   /// The equivalence classes discovered
-  equiv_classes: Vec<HashSet<u32>>,
+  pub equiv_classes: Vec<HashSet<u32>>,
 }
 
 /// Represent a mutant of a subject's original code
