@@ -3,6 +3,7 @@ use std::hash::Hash;
 use std::str::FromStr;
 use crate::subjects::AnalysisResult;
 
+#[derive(Debug)]
 /// Track an equality relation
 pub struct EqRel<T: Eq + Hash> {
     /// A vec of the equivalence classes
@@ -49,9 +50,9 @@ impl<'a, T: FromStr + Eq + Hash + Copy> From<&str> for EqRel<T>
         let mut elem_map = HashMap::default();
         for line in s.split('\n') {
             let mut class = HashSet::default();
-            let idx = classes.len() - 1;
-            for elem in line.split(' ') {
-                let elem = elem.parse().unwrap();
+            let idx = classes.len();
+            for elem in line.split_whitespace() {
+                let elem = elem.parse().expect(format!("Element {} is not a valid T", elem).as_str());
                 class.insert(elem);
                 elem_map.insert(elem, idx);
             }
@@ -71,5 +72,45 @@ impl From<&AnalysisResult> for EqRel<u32> {
             }
         }
         EqRel{classes, elem_map}
+    }
+}
+
+
+#[cfg(test)]
+mod eq_rel {
+    use super::EqRel;
+    #[test]
+    fn test_from_str() {
+        let rel: EqRel<u32> = EqRel::from("1 2
+3
+4
+5");
+        assert!(rel.classes().len() == 4);
+        let class1 = rel.lookup(&1).unwrap();
+        let class2 = rel.lookup(&2).unwrap();
+        let class3 = rel.lookup(&3).unwrap();
+        let class4 = rel.lookup(&4).unwrap();
+        let class5 = rel.lookup(&5).unwrap();
+        assert!(class1 == class2);
+        assert!(class1.len() == 2);
+        assert!(class3.len() == 1);
+        assert!(class4.len() == 1);
+        assert!(class5.len() == 1);
+    }
+
+    #[test]
+    fn test_refines() {
+        let course: EqRel<u32> = EqRel::from("1 2 3
+4 5
+6 7 8
+9 10");
+        let fine: EqRel<u32> = EqRel::from("1 2 3
+4
+5
+6
+7 8
+9
+10");
+        assert!(fine.is_refinement_of(&course));
     }
 }

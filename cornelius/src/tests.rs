@@ -1,10 +1,13 @@
 use egg::*;
 use crate::rewrites::RewriteSystem;
 use crate::peg::{Peg, VarAnalysis};
+use crate::util::EqRel;
 use std::env;
 
 use crate::delta::dd;
 use std::time::Instant;
+
+use std::fs::{read_to_string};
 
 #[cfg(test)]
 mod const_prop {
@@ -528,6 +531,20 @@ mod heap {
 
 }
 
+#[cfg(test)]
+mod serialization {
+    use super::*;
+    #[test]
+    fn field_write() {
+        ensure_serialized_subject_meets_specs("../tests/field-write.xml", "../tests/field-write.gt", 1);
+    }
+
+    #[test]
+    fn field_access() {
+        ensure_serialized_subject_meets_specs("../tests/field-access.xml", "../tests/field-access.gt", 1);
+    }
+}
+
 #[allow(dead_code)]
 fn test_straight_rewrite(start: &str, end: &str) -> bool {
     let start_expr = start.parse().unwrap();
@@ -627,4 +644,29 @@ fn rewrites_do_not_panic(exprs: &[&str]) -> bool{
     runner.with_egraph(egraph).run(rules.iter());
 
     true
+}
+
+/// Read in a serialized subject and run Cornelius on it. Check it against the
+/// ground truth file, ensuring there are no soundness violations. Finally,
+/// ensure that Cornelius detected _at least_ `min_score` equivalences.
+#[allow(dead_code)]
+fn ensure_serialized_subject_meets_specs(
+    subjects_file: &str,
+    ground_truth_file: &str,
+    min_score: u32
+) {
+
+    let subjects = crate::subjects::run_on_subjects_file(subjects_file).unwrap();
+    let mut score = 0;
+    for subject in subjects.subjects {
+        let eq_rel = EqRel::from(&subject.analysis_result);
+        let gt_rel: EqRel<u32> = read_to_string(ground_truth_file)
+            .map(|cs| EqRel::from(cs.as_str()))
+            .unwrap();
+
+        assert!(eq_rel.is_refinement_of(&gt_rel),
+                format!("{:?} does not refine {:?}", eq_rel.classes(), gt_rel.classes()));
+        score += subject.analysis_result.score;
+    }
+    assert!(score >= min_score, format!("score = {} < min_score = {}", score, min_score));
 }
