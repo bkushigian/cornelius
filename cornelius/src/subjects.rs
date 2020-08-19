@@ -160,30 +160,20 @@ pub struct Mutant {
   pub peg: String,
 }
 
-pub struct SubjectAnalysisResult<'a> {
-  /// The subject that got analyzed
-  pub subject: &'a Subject,
-  /// The total number of equivalences between mutants/original program that
-  /// were discovered
-  pub num_equivalences_discovered: u32,
-  /// A Vec of the equivalence classes discovered during analysis
-  pub equivalence_classes: Vec<HashSet<u32>>
-}
-
 /// Read in serialized info as a `Subjects` instance and run equality saturation
 /// on each `Subject` in the deserialized `Subjects`
-pub fn run_on_subjects_file(subj_file: &str) -> Result<(), String> {
+pub fn run_on_subjects_file(subj_file: &str) -> Result<Subjects, String> {
     let subj_file = subj_file.trim();
     let rules = crate::rewrites::rw_rules();
     info!("Running on subject file {}", subj_file);
 
-    let mut subjects: Subjects = Subject::from_file(subj_file.to_string())
+    let subjects: Subjects = Subject::from_file(subj_file.to_string())
         .expect("Error reading subjects");
 
-    run_on_subjects(&mut subjects, &rules)
+    run_on_subjects(subjects, &rules)
 }
 
-pub fn run_on_subjects(subjects: &mut Subjects, rules: &RewriteSystem) -> Result<(), String> {
+pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<Subjects, String> {
     // We compute a RecExpr<Peg> from the lookup table mapping ids to Peg
     // expressions. This RecExpr contains the original program and every mutant,
     // as well as every sub-expression used
@@ -205,17 +195,42 @@ pub fn run_on_subjects(subjects: &mut Subjects, rules: &RewriteSystem) -> Result
     let egraph = &runner.egraph;
     println!("egraph total_size: {}", egraph.total_size());
 
-    let mut equiv_file = File::create("equiv-classes").map_err(|_| "Could not create file")?;
     let mut i: u32 = 1;
     for mut subj in &mut subjects.subjects {
         info!("---------------------------------------");
         info!("Analyzing results of subject {}", i);
         info!("    subject peg = {}", subj.peg);
         info!("---------------------------------------");
-        analyze_subject(&mut subj, egraph, &rec_expr, &mut equiv_file);
+        analyze_subject(&mut subj, egraph, &rec_expr);
         i += 1;
     }
-    Ok(())
+    Ok(subjects)
+}
+
+/// Write the results to file
+pub fn write_results_to_file(subjects: &Subjects, file: &str) -> Result<(), Error> {
+  let mut file = File::create(file)?;
+
+  // A list of subject content. Each entry should track a single file's contents
+  let mut equiv_file_contents = vec![];
+  for subject in &subjects.subjects {
+    let ar = &subject.analysis_result;
+
+    let mut equiv_classes_as_strings = vec![];
+    for equiv_class in &ar.equiv_classes {
+      let equiv_class_as_string: String = itertools::sorted(equiv_class)
+          .iter()
+          .map(|id| (**id).to_string())
+          .intersperse(" ".to_string())
+          .collect();
+      equiv_classes_as_strings.push(equiv_class_as_string);
+    }
+    equiv_file_contents.push(equiv_classes_as_strings.join("\n"));
+
+  }
+
+  let file_contents = equiv_file_contents.join("\n");
+  file.write_all(file_contents.as_bytes())
 }
 
 /// Run on a subject and return number of identified equivalences.
@@ -225,14 +240,12 @@ pub fn run_on_subjects(subjects: &mut Subjects, rules: &RewriteSystem) -> Result
 /// # Args
 /// * `subj`: the subject to analyze
 /// * `rules`: the `RewriteSystem` to run while analyzing
-/// * `equiv_file`: a `&File` that we write the equivalence classes to
 ///
 /// TODO We shouldn't be writing directly to a file---we should be returning a
 /// structure that summarizes the analysis.
 fn analyze_subject(subj: &mut Subject,
                    egraph: &EGraph<Peg, VarAnalysis>,
-                   _expr: &RecExpr<Peg>,
-                   equiv_file: &mut File
+                   _expr: &RecExpr<Peg>
 ) {
     info!("Running on subject {}:{}", subj.source_file, subj.method);
 
@@ -268,22 +281,10 @@ fn analyze_subject(subj: &mut Subject,
         let n = equiv_ids.len() as u32;
         num_equivalences += n - 1;
         equiv_classes.push(equiv_ids.clone());
-
-        let equiv_class_as_string: String = itertools::sorted(equiv_ids)
-            .iter()
-            .map(|id| (**id).to_string())
-            .intersperse(" ".to_string())
-            .collect();
-        if n > 1 {
-            println!("-> {}", equiv_class_as_string);
-        }
-        if equiv_file.write_all(format!("{}\n", equiv_class_as_string).as_bytes()).is_err() {
-            println!("Error writing to file!");
-        }
     }
 
     subj.analysis_result = AnalysisResult {
-      num_equivs: num_equivalences,
+      score: num_equivalences,
       equiv_classes,
     };
 }
