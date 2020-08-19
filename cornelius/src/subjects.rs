@@ -6,6 +6,7 @@ use serde_xml_rs::from_reader;
 use crate::peg::{Peg, VarAnalysis};
 use std::fs::File;
 use std::io::prelude::*;
+use std::io::Error;
 use itertools::Itertools;
 use std::collections::{HashMap, HashSet};
 
@@ -143,7 +144,7 @@ impl Subject {
 #[derive(Debug, Default, Deserialize)]
 pub struct AnalysisResult {
   /// Number of equivalences discovered
-  num_equivs: u32,
+  score: u32,
   /// The equivalence classes discovered
   equiv_classes: Vec<HashSet<u32>>,
 }
