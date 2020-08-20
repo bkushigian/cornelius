@@ -226,7 +226,6 @@ pub fn write_results_to_file(subjects: &Subjects, file: &str) -> Result<(), Erro
       equiv_classes_as_strings.push(equiv_class_as_string);
     }
     equiv_file_contents.push(equiv_classes_as_strings.join("\n"));
-
   }
 
   let file_contents = equiv_file_contents.join("\n");
