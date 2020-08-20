@@ -21,3 +21,5 @@ then
 fi
 
 ./install_all.sh
+cd "$BASE/cornelius"
+cargo build --release
