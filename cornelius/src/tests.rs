@@ -634,7 +634,6 @@ fn test_no_straight_rewrite(start: &str, end: &str, other: &[&str]) -> bool {
 
 #[allow(dead_code)]
 fn rewrites_do_not_panic(exprs: &[&str]) -> bool{
-
     let mut egraph: EGraph<Peg, VarAnalysis> = EGraph::default();
     let rules = crate::rewrites::rw_rules();
     let runner = Runner::default();
