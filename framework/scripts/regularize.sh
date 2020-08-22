@@ -56,10 +56,7 @@ function regularize_subject  {
     dir="$1"
     filename="$2"
     regdir=$(realpath "$dir/regularized")
-    echo "----------------------------"
-    echo "dir:         $dir"
-    echo "filename:    $filename"
-    echo "regularized: $regdir"
+    yellow "Regularizing subject $(bold "$dir/$filename") $(yellow "to $(bold "$dir/regularized")")\n"
 
     if [ -e "$regdir" ]
     then
@@ -67,7 +64,6 @@ function regularize_subject  {
     fi
     mkdir -p "$regdir"
 
-    printf "Copying $dir/mutants.log to $regdir/mutants.log\n"
     cp "$dir/mutants.log" "$regdir"
 
     regularize "$dir/$filename" "$regdir/$filename"
