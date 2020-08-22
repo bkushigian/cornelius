@@ -13,7 +13,6 @@ function run_on_subject {
     "$cornelius" "$xml"
 }
 
-clean_old_data
 compile_binary
 cornelius=$(realpath "$CORNELIUS/target/release/cornelius")
 
