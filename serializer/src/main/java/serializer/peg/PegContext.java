@@ -15,7 +15,6 @@ public class PegContext {
     final private Set<String> fieldNames;
     final PegNode heap;
     static final PegContext empty = new PegContext();
-    String returnVar = null;
     PegNode returnNode = null;
 
     private PegContext() {

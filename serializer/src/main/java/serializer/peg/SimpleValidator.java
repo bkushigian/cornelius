@@ -11,7 +11,9 @@ import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -19,12 +21,16 @@ import java.util.Set;
  * AST via the Vistior pattern and collects all validated Simple Java methods
  */
 public class SimpleValidator extends VoidVisitorAdapter<Set<MethodDeclaration>> {
+    // Track valid method declarations
+    private final Set<MethodDeclaration> validMethods = new HashSet<>();
+    // Map invalid method decls to the reason they are invalid
+    private final Map<MethodDeclaration, String> invalidMethods = new HashMap<MethodDeclaration, String>();
+
     public SimpleValidator() {
         super();
     }
 
     public boolean validate(MethodDeclaration n) {
-        Set<MethodDeclaration> validMethods = new HashSet<>();
         n.accept(this, validMethods);
         return validMethods.contains(n);
     }
@@ -37,16 +43,21 @@ public class SimpleValidator extends VoidVisitorAdapter<Set<MethodDeclaration>> 
         returns = 0;
         try {
             super.visit(n, arg);
+            arg.add(n);
         } catch (SimpleValidationException e) {
-            System.out.println(e);
-            return;
+            invalidMethods.put(n, e.getMessage());
+            System.err.printf("Invalid SIMPLE method `%s`: reason: \"%s\"\n", n.getDeclarationAsString(false, false,
+                    true),
+                    e.getMessage());
         }
-        if (returns == 1) arg.add(n);
     }
 
     @Override
     public void visit(ReturnStmt n, Set<MethodDeclaration> arg) {
         ++returns;
+        if (returns != 1) {
+            throw new SimpleValidationException("Multiple Return Values");
+        }
         if (! n.getExpression().isPresent()) {
             throw new SimpleValidationException("Empty return");
         }

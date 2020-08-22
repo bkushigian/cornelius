@@ -76,6 +76,9 @@ public class PegSubjectSerializer {
             for (String sig : mutantsLog.methodNameMap.keySet()){
                 final String canonical = Util.canonicalName(sig);
                 final String sourceFile = sig.substring(0, sig.indexOf('@')).replace('.', '/') + ".java";
+                if (!methodMap.containsKey(canonical)) {
+                    continue;
+                }
                 xmlGen.addSubject(origPath, sig, methodMap.get(canonical).id);
 
                 System.out.println("================================================================================");

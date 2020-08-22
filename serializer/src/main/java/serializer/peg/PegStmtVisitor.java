@@ -101,18 +101,10 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
         final Optional<Expression> optExpr = n.getExpression();
         if (optExpr.isPresent()) {
             final Expression expr = optExpr.get();
-            if (!expr.isNameExpr()) {
-                throw new IllegalStateException();
-            }
-            final NameExpr retVar = expr.toNameExpr()
-                    .orElseThrow(() -> new IllegalStateException( "SIMPLE programs must return a designated RETURN" +
-                            " variable but " + expr.toString() + " was found instead"));
-            if (ctx.returnVar != null) {
+            if (ctx.returnNode != null) {
                 throw new IllegalStateException("SIMPLE programs cannot return multiple times");
             }
-            final PegNode retNode = expr.accept(pev, ctx);
-            ctx.returnVar = retVar.getNameAsString();
-            ctx.returnNode = retNode;
+            ctx.returnNode = expr.accept(pev, ctx);
         }
         return ctx;
     }
