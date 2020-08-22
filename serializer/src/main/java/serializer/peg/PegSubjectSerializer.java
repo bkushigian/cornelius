@@ -137,10 +137,13 @@ public class PegSubjectSerializer {
      */
     static void usage(final String msg) {
         System.err.println(msg);
-        System.err.println("usage: Main dir java_file");
+        System.err.println("usage: Main dir java_file [ARGS...]");
         System.err.println("    - dir: Base directory of subject. This should contain the java file, mutants, and " +
                 "mutants.log");
         System.err.println("    - java_file: name of the java file to be compiled");
+        System.err.println("ARGS");
+        System.err.println("----");
+        System.err.println("    --print-pegs: Print each PEG");
 
         System.exit(1);
     }
