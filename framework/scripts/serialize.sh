@@ -12,4 +12,3 @@ function serialize_subject {
 
 dir="$(realpath "$(dirname "$1")")"
 base="$(basename "$1")"
-time serialize_subject "$dir" "$base"
