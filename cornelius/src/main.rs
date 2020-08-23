@@ -5,7 +5,8 @@ pub mod rewrites;
 mod tests;
 mod util;
 
-use crate::subjects::{run_on_subjects_file, write_results_to_file};
+use crate::subjects::{run_on_subjects_file};
+use crate::util::io::{write_subjects_to_separate_files};
 use std::env;
 
 #[macro_use] extern crate log;
@@ -21,7 +22,7 @@ fn main() -> Result<(), String> {
                 let mut equiv_file = String::from(subj_file);
                 equiv_file.push_str(".equiv-class");
 
-                match  write_results_to_file(&subjects, equiv_file.as_str()) {
+                match  write_subjects_to_separate_files(&subjects, ".") {
                     Err(e) => {
                         println!("Error writing results of subject file {} to equiv-class file {}.",
                             subj_file, equiv_file);

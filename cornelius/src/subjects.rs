@@ -4,10 +4,6 @@ use crate::rewrites::RewriteSystem;
 use serde_aux::prelude::*;
 use serde_xml_rs::from_reader;
 use crate::peg::{Peg, VarAnalysis};
-use std::fs::File;
-use std::io::prelude::*;
-use std::io::Error;
-use itertools::Itertools;
 use std::collections::{HashMap, HashSet};
 
 use log::Level;
@@ -205,31 +201,6 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
         i += 1;
     }
     Ok(subjects)
-}
-
-/// Write the results to file
-pub fn write_results_to_file(subjects: &Subjects, file: &str) -> Result<(), Error> {
-  let mut file = File::create(file)?;
-
-  // A list of subject content. Each entry should track a single file's contents
-  let mut equiv_file_contents = vec![];
-  for subject in &subjects.subjects {
-    let ar = &subject.analysis_result;
-
-    let mut equiv_classes_as_strings = vec![];
-    for equiv_class in &ar.equiv_classes {
-      let equiv_class_as_string: String = itertools::sorted(equiv_class)
-          .iter()
-          .map(|id| (**id).to_string())
-          .intersperse(" ".to_string())
-          .collect();
-      equiv_classes_as_strings.push(equiv_class_as_string);
-    }
-    equiv_file_contents.push(equiv_classes_as_strings.join("\n"));
-  }
-
-  let file_contents = equiv_file_contents.join("\n");
-  file.write_all(file_contents.as_bytes())
 }
 
 /// Run on a subject and return number of identified equivalences.
