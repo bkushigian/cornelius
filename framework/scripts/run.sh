@@ -34,5 +34,10 @@ mv subjects.xml "$xml"
 echo "Serialized subjects file: $xml"
 ./cornelius.sh "$xml"
 equiv_classes="$xml.equiv-class"
-green "$(bold "Equiv Classes: $(blue "$equiv_classes")")"
-echo "$(cat "$equiv_classes")"
+green "$(bold "Equiv Classes:")"
+for file in $(ls "${base%.*}"*".equiv-class")
+do
+    mv $file $tmp
+    bold "    $tmp/$(green $file)"
+    # echo "$(cat "$tmp/$file")"
+done
