@@ -52,7 +52,7 @@ impl<'a, T: FromStr + Eq + Hash + Copy> From<&str> for EqRel<T>
             let mut class = HashSet::default();
             let idx = classes.len();
             for elem in line.split_whitespace() {
-                let elem = elem.parse().expect(format!("Element {} is not a valid T", elem).as_str());
+                let elem = elem.parse().unwrap_or_else(|_| panic!("Element {} is not a valid T", elem));
                 class.insert(elem);
                 elem_map.insert(elem, idx);
             }
@@ -112,5 +112,61 @@ mod eq_rel {
 9
 10");
         assert!(fine.is_refinement_of(&course));
+    }
+}
+
+pub mod io {
+    use std::fs::File;
+    use std::io::prelude::*;
+    use std::io::Error;
+    use itertools::Itertools;
+    use crate::subjects::{Subject, Subjects};
+
+    /// Write the results to a single file
+    #[allow(dead_code)]
+    pub fn write_subjects_to_single_file(subjects: &Subjects, file: &str) -> Result<(), Error> {
+        let mut file = File::create(file)?;
+
+        // A list of subject content. Each entry should track a single file's contents
+        let mut equiv_file_contents = vec![];
+        for subject in &subjects.subjects {
+            equiv_file_contents.push(get_equiv_file_contents_for_subject(subject));
+        }
+
+        let file_contents = equiv_file_contents.join("\n");
+        file.write_all(file_contents.as_bytes())
+    }
+
+    /// Write results to individual files, one for each subject
+    pub fn write_subjects_to_separate_files(subjects: &Subjects, dir: &str) -> Result<(), Error> {
+        for subject in &subjects.subjects {
+            write_subject_to_file(subject, dir)?;
+            debug!("Successfully wrote subject {}", subject.method);
+        }
+        Ok(())
+    }
+
+    pub fn write_subject_to_file(subject: &Subject, _dir: &str) -> Result<(), Error> {
+        let mut file_name = String::from(&subject.method);
+        file_name.push_str(".equiv-class");
+        let mut file = File::create(&file_name)?;
+        info!("Writing subject to file {}", &file_name);
+        let contents=get_equiv_file_contents_for_subject(subject);
+        debug!("Contents:\n{}\n", &contents);
+        file.write_all(contents.as_bytes())
+    }
+
+    fn get_equiv_file_contents_for_subject(subject: &Subject) -> String {
+        let ar = &subject.analysis_result;
+        let mut equiv_classes_as_strings = vec![];
+        for equiv_class in &ar.equiv_classes {
+            let equiv_class_as_string: String = itertools::sorted(equiv_class)
+                .iter()
+                .map(|id| (**id).to_string())
+                .intersperse(" ".to_string())
+                .collect();
+            equiv_classes_as_strings.push(equiv_class_as_string);
+        }
+        equiv_classes_as_strings.join("\n")
     }
 }
