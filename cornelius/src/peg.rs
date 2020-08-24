@@ -14,6 +14,8 @@ define_language! {
     // The return value of void methods (can never actually use this in
     // computation)
     "unit" = Unit,
+    // Here I reintroduce null values to Rust
+    "null" = Null,
     "+"    = Add([Id; 2]),
     "*"    = Mul([Id; 2]),
     "/"    = Div([Id; 2]),
@@ -77,6 +79,8 @@ define_language! {
     "proj-val" = ProjVal(Id),
     // Method name that is being invoked
     "method" = MethodName(Id),
+    // Actual paramters passed to a method
+    "actuals" = Actuals(Box<[Id]>),
   }
 }
 
