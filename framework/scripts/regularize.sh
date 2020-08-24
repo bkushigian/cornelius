@@ -13,6 +13,20 @@
 
 source util.sh
 
+################################################################################
+# Print a usage screen with an optional message
+function usage {
+  printf "$(bold "usage:") $1\n"
+  printf "$(bold Forms)\n"
+  printf "$(bold -----)\n"
+  printf "    ./regularize.sh --help: print this help message\n"
+  printf "    ./regularize.sh --subject SUBJECT: regularize the subject whose original\n"
+  printf "            source code is at path SUBJECT\n"
+  printf "    ./regularize.sh --single-source SOURCE: regularize the SOURCE Java file\n"
+
+  exit 1
+}
+
 ###############################################################################
 # regularize: given a source file $1 and a target file $2, regularize the file
 # and save it to disk at location target.
@@ -79,8 +93,7 @@ function regularize_subject  {
 while (( "$#" )); do
   case "$1" in
     --help)
-      printf "Error\n(todo: write usage message :D)"
-      exit 1
+      usage
       ;;
     --subject)
         shift

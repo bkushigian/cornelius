@@ -24,7 +24,7 @@ public class SimpleValidator extends VoidVisitorAdapter<Set<MethodDeclaration>> 
     // Track valid method declarations
     private final Set<MethodDeclaration> validMethods = new HashSet<>();
     // Map invalid method decls to the reason they are invalid
-    private final Map<MethodDeclaration, String> invalidMethods = new HashMap<MethodDeclaration, String>();
+    private final Map<MethodDeclaration, String> invalidMethods = new HashMap<>();
 
     public SimpleValidator() {
         super();
@@ -39,10 +39,22 @@ public class SimpleValidator extends VoidVisitorAdapter<Set<MethodDeclaration>> 
 
     @Override
     public void visit(MethodDeclaration n, Set<MethodDeclaration> arg) {
-        //todo
-        returns = 0;
         try {
+            returns = 0;
             super.visit(n, arg);
+            // check return values. For any method with non-void return type we only need to ensure that there
+            // is exactly 1 return node. For void, it's a bit trickier, since there might be an early explicit
+            // return and no explicit return at the end of the method.
+            if (n.getBody().isPresent()) {
+                final NodeList<Statement> body = n.getBody().get().getStatements();
+                if (body.isNonEmpty() && !body.get(body.size() - 1).isReturnStmt()) {
+                    if (!n.getType().isVoidType()) {
+                        throw new SimpleValidationException("non-void method " + n.getNameAsString()
+                                + "has no final return statement") ;
+                    }
+                    returns++;
+                }
+            }
             arg.add(n);
         } catch (SimpleValidationException e) {
             invalidMethods.put(n, e.getMessage());
@@ -50,17 +62,12 @@ public class SimpleValidator extends VoidVisitorAdapter<Set<MethodDeclaration>> 
                     true),
                     e.getMessage());
         }
+        returns = 0;
     }
 
     @Override
     public void visit(ReturnStmt n, Set<MethodDeclaration> arg) {
         ++returns;
-        if (returns != 1) {
-            throw new SimpleValidationException("Multiple Return Values");
-        }
-        if (! n.getExpression().isPresent()) {
-            throw new SimpleValidationException("Empty return");
-        }
         super.visit(n, arg);
     }
 
@@ -478,7 +485,6 @@ public class SimpleValidator extends VoidVisitorAdapter<Set<MethodDeclaration>> 
     @Override
     public void visit(VoidType n, Set<MethodDeclaration> arg) {
         super.visit(n, arg);
-        throw new SimpleValidationException(n.toString());
     }
 
     @Override
@@ -598,7 +604,9 @@ public class SimpleValidator extends VoidVisitorAdapter<Set<MethodDeclaration>> 
     }
 
     static class SimpleValidationException extends RuntimeException {
-        public SimpleValidationException(String msg) { super(msg); }
+        public SimpleValidationException(String msg) {
+            super(msg);
+        }
         //public SimpleValidationException() { super(); }
     }
 }

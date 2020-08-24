@@ -7,7 +7,13 @@ define_language! {
   pub enum Peg {
     Num(i32),
     Bool(bool),
+    // A generic error. This is a stand in for all exceptional behavior and is
+    // unsound.
+    // TODO: handle exceptions explicitly
     "error" = Error,
+    // The return value of void methods (can never actually use this in
+    // computation)
+    "unit" = Unit,
     "+"    = Add([Id; 2]),
     "*"    = Mul([Id; 2]),
     "/"    = Div([Id; 2]),
@@ -57,6 +63,20 @@ define_language! {
     // represent the returned value from a mutant (or original program)---this
     // is used as the root of a program we are comparing for equality
     "mutant-root" = MutantRoot([Id; 2]),
+
+    /***                       Method Stuff                      ***/
+
+    // (invoke heap receiver method actuals)
+    // A normal (i.e., non-static), method invocation
+    "invoke" = Invoke([Id; 4]),
+    // A normal (i.e., non-static), method invocation
+    "invoke-static" = InvokeStatic([Id; 4]),
+    // Project the heap from a method invocation
+    "proj-heap" = ProjHeap(Id),
+    // Project the return value from a method invocation
+    "proj-val" = ProjVal(Id),
+    // Method name that is being invoked
+    "method" = MethodName(Id),
   }
 }
 

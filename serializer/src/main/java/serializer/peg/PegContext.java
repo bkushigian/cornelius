@@ -166,6 +166,9 @@ public class PegContext {
      * @return a {@code method-result} node tracking the returned value and the updated heap
      */
     public Optional<PegNode> asPeg() {
+        if (returnNode == null) {
+            returnNode = PegNode.unit();
+        }
         return Optional.ofNullable(PegNode.opNodeFromPegs("mutant-root", returnNode, heap));
     }
 

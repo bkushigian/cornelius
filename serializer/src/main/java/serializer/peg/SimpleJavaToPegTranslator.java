@@ -77,9 +77,6 @@ public class SimpleJavaToPegTranslator {
         if (!validator.validate(n)) {
             return Optional.empty();
         }
-        if (n.getType().isVoidType()) {
-            return Optional.empty();
-        }
         final NodeList<Parameter> parameters = n.getParameters();
 
         final List<String> params =

@@ -210,9 +210,9 @@ public abstract class PegNode {
      * OpNode if needed (i.e., if one with the same sym and children doesn't
      * already exist) and adds it's id to the idLookup table and adds its
      * symbol to the symbolLookup table.
-     * @param sym
-     * @param children
-     * @return
+     * @param sym operator symbol
+     * @param children child PEG ids
+     * @return a peg node representing (sym *children)
      */
     public static PegNode opNode(String sym, Integer...children) {
         final List<Integer> childs = Arrays.asList(children);
@@ -238,6 +238,10 @@ public abstract class PegNode {
             return new BoolLit(b);
         }
         return litLookup.get(b);
+    }
+
+    public static PegNode unit() {
+        return opNode("unit");
     }
 
     public static PegNode phi(Integer guard, Integer then, Integer els) {
