@@ -65,6 +65,11 @@ public class PegContext {
         return PegContext.initMap(domain, k -> f.apply(new Pair<>(c1.get(k), c2.get(k))), c1.fieldNames, heap);
     }
 
+    public static PegContext combine(PegContext c1, PegContext c2, Integer guardId) {
+        return PegContext.combine(c1, c2, p -> p.fst.equals(p.snd) ? p.fst : PegNode.phi(guardId, p.fst.id, p.snd.id));
+
+    }
+
     /**
      * @param key name of variable to look up
      * @return if there is a field in this class with the name {@code key}. NOTE that this doesn't account for
@@ -172,16 +177,7 @@ public class PegContext {
         return Optional.ofNullable(PegNode.opNodeFromPegs("mutant-root", returnNode, heap));
     }
 
-    public static class Pair<U, V> {
-        public final U fst;
-        public final V snd;
-        public Pair(U f, V s) {
-            fst = f;
-            snd = s;
-        }
-
-        public static <U,V> Pair<U,V> of(U f, V s) {
-            return new Pair<>(f,s);
-        }
+    public ExpressionResult exprResult(final PegNode peg) {
+        return new ExpressionResult(peg, this);
     }
 }

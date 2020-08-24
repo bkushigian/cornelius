@@ -18,7 +18,9 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
 
     @Override
     public PegContext visit(AssignExpr n, PegContext ctx) {
-        final PegNode value = n.getValue().accept(pev, ctx);
+        final ExpressionResult er = n.getValue().accept(pev, ctx);
+        ctx = er.context;
+        final PegNode value = er.peg;
         if (n.getTarget().isNameExpr()) {
             final String nameString = n.getTarget().asNameExpr().getNameAsString();
 
@@ -41,7 +43,9 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
 
     // Helper function to produce a new Context storing the write
     private PegContext performWrite(FieldAccessExpr fieldAccess, PegNode value, PegContext ctx) {
-        final PegNode target = pev.getPathFromFieldAccessExpr(fieldAccess, ctx);
+        final ExpressionResult er = pev.getPathFromFieldAccessExpr(fieldAccess, ctx);
+        ctx = er.context;
+        final PegNode target = er.peg;
         return ctx.withHeap(PegNode.wr(target.id, value.id, ctx.heap.id));
 
     }
@@ -65,7 +69,9 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
                 final Optional<Expression> initializer = vd.getInitializer();
                 if (initializer.isPresent()) {
                     final Expression expr = initializer.get();
-                    final PegNode node = expr.accept(pev, ctx);
+                    final ExpressionResult er = expr.accept(pev, ctx);
+                    ctx = er.context;
+                    final PegNode node = er.peg;
                     ctx = ctx.set(name, node);
                 }
             }
@@ -76,10 +82,12 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
 
     @Override
     public PegContext visit(IfStmt n, PegContext ctx) {
+        final ExpressionResult er = n.getCondition().accept(pev, ctx);
+        ctx = er.context;
+        final PegNode guard = er.peg;
         final PegContext c1 = n.getThenStmt().accept(this, ctx);
         final PegContext c2 = n.getElseStmt().isPresent() ? n.getElseStmt().get().accept(this, ctx)
                                                           : ctx;
-        final PegNode guard = n.getCondition().accept(pev, ctx);
         return PegContext.combine(c1, c2, p -> p.fst.equals(p.snd) ? p.fst : PegNode.phi(guard.id, p.fst.id, p.snd.id));
     }
 
@@ -104,7 +112,9 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
             if (ctx.returnNode != null) {
                 throw new IllegalStateException("SIMPLE programs cannot return multiple times");
             }
-            ctx.returnNode = expr.accept(pev, ctx);
+            final ExpressionResult er = expr.accept(pev, ctx);
+            ctx = er.context;
+            ctx.returnNode = er.peg;
         }
         return ctx;
     }

@@ -272,6 +272,26 @@ public abstract class PegNode {
         return opNode("wr", path, val, heap);
     }
 
+    public static PegNode invoke(Integer heap, Integer receiver, String method, Integer actuals) {
+        return opNode("invoke", heap, receiver, opNode(method).id, actuals);
+    }
+
+    public static PegNode actuals(Integer...actuals) {
+        return opNode("actuals", actuals);
+    }
+
+    public static PegNode projectVal(Integer invocation) {
+        return opNode("proj-val", invocation);
+    }
+
+    public static PegNode projectHeap(Integer invocation) {
+        return opNode("proj-heap", invocation);
+    }
+
+    public static PegNode nullLit() {
+        return opNode("null");
+    }
+
     // differentiate between heaps
     private static int heapIndex = 1;
     public static PegNode heap() {
@@ -288,5 +308,9 @@ public abstract class PegNode {
      */
     public static PegNode initialHeap() {
         return opNode("heap", intLit(0).id);
+    }
+
+    public ExpressionResult exprResult(final PegContext context) {
+        return new ExpressionResult(this, context);
     }
 }

@@ -321,7 +321,6 @@ public class SimpleValidator extends VoidVisitorAdapter<Set<MethodDeclaration>> 
     @Override
     public void visit(MethodCallExpr n, Set<MethodDeclaration> arg) {
         super.visit(n, arg);
-        throw new SimpleValidationException("MethodCallExpr");
     }
 
     @Override
@@ -338,7 +337,6 @@ public class SimpleValidator extends VoidVisitorAdapter<Set<MethodDeclaration>> 
     @Override
     public void visit(NullLiteralExpr n, Set<MethodDeclaration> arg) {
         super.visit(n, arg);
-        throw new SimpleValidationException("NullLiteralExpr");
     }
 
     @Override
