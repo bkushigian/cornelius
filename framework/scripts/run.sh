@@ -35,9 +35,25 @@ echo "Serialized subjects file: $xml"
 ./cornelius.sh "$xml"
 equiv_classes="$xml.equiv-class"
 green "$(bold "Equiv Classes:")"
+
+equiv_classes="$tmp/equiv-classes"
+mkdir "$equiv_classes"
+bold "Writing equivalence classes to $(green "$equiv_classes"):"
 for file in $(ls "${base%.*}"*".equiv-class")
 do
-    mv $file $tmp
-    bold "    $tmp/$(green $file)"
+    mv "$file" $tmp/equiv-classes
+    bold "    $tmp/$(green "equiv-classes/$file")"
     # echo "$(cat "$tmp/$file")"
 done
+
+echo "base: $BASE"
+linked_equiv_classes="$BASE/${base%.*}-equiv-classes"
+bold "Linking to equivalence classes: $(green "$linked_equiv_classes")"
+
+if [ -e "$linked_equiv_classes" ]
+then
+    echo "Removing old link"
+    rm "$linked_equiv_classes"
+fi
+
+ln -s "$equiv_classes" "$linked_equiv_classes"
