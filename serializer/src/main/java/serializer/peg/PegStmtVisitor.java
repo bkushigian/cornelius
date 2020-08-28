@@ -54,30 +54,16 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
     public PegContext visit(BlockStmt n, PegContext ctx) {
         for (Statement s : n.getStatements()) {
             ctx = s.accept(this, ctx);
+            if (ctx == null) {
+                throw new IllegalStateException();
+            }
         }
         return ctx;
     }
 
     @Override
     public PegContext visit(ExpressionStmt n, PegContext ctx) {
-        if (n.getExpression().isAssignExpr()) {
-            return visit((AssignExpr)n.getExpression(), ctx);
-        } else if (n.getExpression().isVariableDeclarationExpr()) {
-            final VariableDeclarationExpr vde = n.getExpression().asVariableDeclarationExpr();
-            for (VariableDeclarator vd : vde.getVariables()) {
-                final String name = vd.getNameAsString();
-                final Optional<Expression> initializer = vd.getInitializer();
-                if (initializer.isPresent()) {
-                    final Expression expr = initializer.get();
-                    final ExpressionResult er = expr.accept(pev, ctx);
-                    ctx = er.context;
-                    final PegNode node = er.peg;
-                    ctx = ctx.set(name, node);
-                }
-            }
-            return ctx;
-        }
-        throw new IllegalStateException("Non-assignment ExpressionStatement: " + n.toString());
+        return n.accept(pev, ctx).context;
     }
 
     @Override

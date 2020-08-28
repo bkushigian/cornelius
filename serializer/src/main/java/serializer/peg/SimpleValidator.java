@@ -233,11 +233,7 @@ public class SimpleValidator extends VoidVisitorAdapter<Set<MethodDeclaration>> 
 
     @Override
     public void visit(ExpressionStmt n, Set<MethodDeclaration> arg) {
-        if (n.getExpression().isAssignExpr() || n.getExpression().isVariableDeclarationExpr()) {
-            super.visit(n, arg);
-        } else {
-            throw new SimpleValidationException("Simple only supports assignment ExpressionStmts: " + n.toString());
-        }
+      super.visit(n, arg);
     }
 
     @Override

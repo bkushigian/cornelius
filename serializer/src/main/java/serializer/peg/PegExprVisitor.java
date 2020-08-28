@@ -1,5 +1,6 @@
 package serializer.peg;
 
+import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 
 import java.util.ArrayList;
@@ -188,9 +189,49 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     }
 
     @Override
-    public ExpressionResult visit(AssignExpr n, PegContext context) {
-        throw new IllegalStateException("Peg doesn't currently handle assignment expressions that are not also " +
-                "assignment statements" );
+    public ExpressionResult visit(VariableDeclarationExpr n, PegContext arg) {
+        ExpressionResult er = arg.exprResult(PegNode.unit());
+        for (VariableDeclarator vd : n.getVariables()) {
+            er = vd.accept(this, er.context);
+        }
+        return er;
+    }
+
+    @Override
+    public ExpressionResult visit(VariableDeclarator n, PegContext arg) {
+        final String name = n.getNameAsString();
+        final Optional<Expression> initializer = n.getInitializer();
+        if (initializer.isPresent()) {
+            final ExpressionResult er = initializer.get().accept(this, arg);
+            arg = er.context.set(name, er.peg);
+        }
+        return arg.exprResult(PegNode.unit());
+    }
+
+
+    @Override
+    public ExpressionResult visit(AssignExpr n, PegContext ctx) {
+        final ExpressionResult er = n.getValue().accept(this, ctx);
+        ctx = er.context;
+        final PegNode value = er.peg;
+        if (n.getTarget().isNameExpr()) {
+            final String nameString = n.getTarget().asNameExpr().getNameAsString();
+
+            if (ctx.isUnshadowedField(nameString)) {
+                final FieldAccessExpr fieldAccess = new FieldAccessExpr(new ThisExpr(), nameString);
+                return performWrite(fieldAccess, value, ctx);
+            }
+
+            return er.withContext(ctx.set(n.getTarget().asNameExpr().getNameAsString(), value));
+        }
+        else if (n.getTarget().isFieldAccessExpr()) {
+            // todo: update heap
+            final FieldAccessExpr fieldAccess = n.getTarget().asFieldAccessExpr();
+            return performWrite(fieldAccess, value, ctx);
+        }
+        else {
+            throw new RuntimeException("Unrecognized assignment target: " + n.getTarget().toString());
+        }
     }
 
     @Override
@@ -276,5 +317,11 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         final ExpressionResult base = fa.getScope().accept(this, ctx);
         return PegNode.path(base.peg.id, derefs.toString()).exprResult(ctx);
 
+    }
+
+    // Helper function to produce a new Context storing the write
+    ExpressionResult performWrite(FieldAccessExpr fieldAccess, PegNode value, PegContext ctx) {
+        final ExpressionResult er = getPathFromFieldAccessExpr(fieldAccess, ctx);
+        return er.withHeap(PegNode.wr(er.peg.id, value.id, er.context.heap.id));
     }
 }
