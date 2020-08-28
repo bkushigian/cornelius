@@ -76,45 +76,6 @@ impl From<&AnalysisResult> for EqRel<u32> {
 }
 
 
-#[cfg(test)]
-mod eq_rel {
-    use super::EqRel;
-    #[test]
-    fn test_from_str() {
-        let rel: EqRel<u32> = EqRel::from("1 2
-3
-4
-5");
-        assert!(rel.classes().len() == 4);
-        let class1 = rel.lookup(&1).unwrap();
-        let class2 = rel.lookup(&2).unwrap();
-        let class3 = rel.lookup(&3).unwrap();
-        let class4 = rel.lookup(&4).unwrap();
-        let class5 = rel.lookup(&5).unwrap();
-        assert!(class1 == class2);
-        assert!(class1.len() == 2);
-        assert!(class3.len() == 1);
-        assert!(class4.len() == 1);
-        assert!(class5.len() == 1);
-    }
-
-    #[test]
-    fn test_refines() {
-        let course: EqRel<u32> = EqRel::from("1 2 3
-4 5
-6 7 8
-9 10");
-        let fine: EqRel<u32> = EqRel::from("1 2 3
-4
-5
-6
-7 8
-9
-10");
-        assert!(fine.is_refinement_of(&course));
-    }
-}
-
 pub mod io {
     use std::fs::File;
     use std::io::prelude::*;
@@ -168,5 +129,59 @@ pub mod io {
             equiv_classes_as_strings.push(equiv_class_as_string);
         }
         equiv_classes_as_strings.join("\n")
+    }
+}
+
+pub mod helpers {
+    #[macro_export]
+    macro_rules! map(
+        { $($key:expr => $value:expr),+ } => {
+            {
+                let mut m = ::std::collections::HashMap::new();
+                $(
+                    m.insert($key, $value);
+                )+
+                m
+            }
+        };
+    );
+}
+
+#[cfg(test)]
+mod eq_rel {
+    use super::EqRel;
+    #[test]
+    fn test_from_str() {
+        let rel: EqRel<u32> = EqRel::from("1 2
+3
+4
+5");
+        assert!(rel.classes().len() == 4);
+        let class1 = rel.lookup(&1).unwrap();
+        let class2 = rel.lookup(&2).unwrap();
+        let class3 = rel.lookup(&3).unwrap();
+        let class4 = rel.lookup(&4).unwrap();
+        let class5 = rel.lookup(&5).unwrap();
+        assert!(class1 == class2);
+        assert!(class1.len() == 2);
+        assert!(class3.len() == 1);
+        assert!(class4.len() == 1);
+        assert!(class5.len() == 1);
+    }
+
+    #[test]
+    fn test_refines() {
+        let course: EqRel<u32> = EqRel::from("1 2 3
+4 5
+6 7 8
+9 10");
+        let fine: EqRel<u32> = EqRel::from("1 2 3
+4
+5
+6
+7 8
+9
+10");
+        assert!(fine.is_refinement_of(&course));
     }
 }
