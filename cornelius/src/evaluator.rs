@@ -36,15 +36,15 @@ pub fn eval(expr: &RecExpr<Peg>, var_bindings: HashMap<&str, Peg>) -> Result<Peg
         }
     }
 
-    EvalContext{expr, bindings}.evaluate_expr_at(expr_ref.len() - 1)
+    Evaluator{expr, bindings}.evaluate_expr_at(expr_ref.len() - 1)
 }
 
-pub struct EvalContext<'a> {
+pub struct Evaluator<'a> {
     expr: &'a RecExpr<Peg>,
     bindings: HashMap<Id, Peg>,
 }
 
-impl<'a> EvalContext<'a> {
+impl<'a> Evaluator<'a> {
     pub fn evaluate_expr_at(&'a self, idx: usize) -> Result<Peg, String> {
         use crate::peg::Peg::*;
         let array = self.expr.as_ref();
@@ -230,7 +230,17 @@ impl<'a> EvalContext<'a> {
             Var(id) => {
                 Ok(self.bindings.get(id)
                    .ok_or(format!("Var (id={}) was not found in lookup\nbindings={:?}", id, self.bindings))?.clone())
-            }
+            },
+            AccessPath(_) => Err("Cannot evaluate access path directly".to_owned()),
+            Derefs(_) => Err("Cannot evaluate derefs directly".to_owned()),
+            Heap(_) => Err("Cannot evaluate heap directly".to_owned()),
+            Wr(_) => Err("Cannot evaluate wr node directly directly".to_owned()),
+            Rd(_) => Err("Cannot evaluate rd node directly directly".to_owned()),
+            // MethodRoot([val, heap]) => {
+            //     let result = self.evaluate_expr_at(usize::from(*val))?;
+            //     Ok(MethodRoot([, heap]))
+            // }
+
 
 
             _ => panic!("todo")
