@@ -2,6 +2,7 @@ pub mod subjects;
 pub mod delta;
 pub mod peg;
 pub mod rewrites;
+mod evaluator;
 mod tests;
 mod util;
 
