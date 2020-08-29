@@ -61,10 +61,10 @@ define_language! {
     // (rd path heap)
     // read the value stored at an access path `path` in a heap `heap`
     "rd" = Rd([Id; 2]),
-    // (MutantRoot return heap)
+    // (MethodRoot return heap)
     // represent the returned value from a mutant (or original program)---this
     // is used as the root of a program we are comparing for equality
-    "mutant-root" = MutantRoot([Id; 2]),
+    "mutant-root" = MethodRoot([Id; 2]),
 
     /***                       Method Stuff                      ***/
 
