@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<subjects>
+<subject method="MethodInvocation@doNothing()" sourcefile="/private/var/folders/90/zz7ry2qd3m12wlsvjwr37kvh0000gn/T/cornelius-.QiDO6XMU/regularized/MethodInvocation.java">
+<egg>9</egg>
+<mutant id="1">
+<egg>9</egg>
+</mutant>
+</subject>
+<subject method="MethodInvocation@branching(boolean,int)" sourcefile="/private/var/folders/90/zz7ry2qd3m12wlsvjwr37kvh0000gn/T/cornelius-.QiDO6XMU/regularized/MethodInvocation.java">
+<egg>38</egg>
+<mutant id="11">
+<egg>38</egg>
+</mutant>
+<mutant id="10">
+<egg>38</egg>
+</mutant>
+</subject>
+<subject method="MethodInvocation@branchingWithInvocation2(boolean,int)" sourcefile="/private/var/folders/90/zz7ry2qd3m12wlsvjwr37kvh0000gn/T/cornelius-.QiDO6XMU/regularized/MethodInvocation.java">
+<egg>61</egg>
+<mutant id="16">
+<egg>78</egg>
+</mutant>
+<mutant id="17">
+<egg>38</egg>
+</mutant>
+<mutant id="15">
+<egg>81</egg>
+</mutant>
+</subject>
+<subject method="MethodInvocation@updateField(int)" sourcefile="/private/var/folders/90/zz7ry2qd3m12wlsvjwr37kvh0000gn/T/cornelius-.QiDO6XMU/regularized/MethodInvocation.java">
+<egg>75</egg>
+<mutant id="18">
+<egg>83</egg>
+</mutant>
+<mutant id="19">
+<egg>75</egg>
+</mutant>
+<mutant id="20">
+<egg>75</egg>
+</mutant>
+<mutant id="21">
+<egg>85</egg>
+</mutant>
+</subject>
+<subject method="MethodInvocation@branchingWithInvocation1(boolean,int)" sourcefile="/private/var/folders/90/zz7ry2qd3m12wlsvjwr37kvh0000gn/T/cornelius-.QiDO6XMU/regularized/MethodInvocation.java">
+<egg>49</egg>
+<mutant id="12">
+<egg>88</egg>
+</mutant>
+<mutant id="13">
+<egg>91</egg>
+</mutant>
+<mutant id="14">
+<egg>38</egg>
+</mutant>
+</subject>
+<subject method="MethodInvocation@add(int,int)" sourcefile="/private/var/folders/90/zz7ry2qd3m12wlsvjwr37kvh0000gn/T/cornelius-.QiDO6XMU/regularized/MethodInvocation.java">
+<egg>19</egg>
+<mutant id="3">
+<egg>93</egg>
+</mutant>
+<mutant id="2">
+<egg>95</egg>
+</mutant>
+<mutant id="4">
+<egg>97</egg>
+</mutant>
+</subject>
+<subject method="MethodInvocation@invoke(int,int)" sourcefile="/private/var/folders/90/zz7ry2qd3m12wlsvjwr37kvh0000gn/T/cornelius-.QiDO6XMU/regularized/MethodInvocation.java">
+<egg>29</egg>
+<mutant id="5">
+<egg>99</egg>
+</mutant>
+<mutant id="7">
+<egg>101</egg>
+</mutant>
+<mutant id="6">
+<egg>103</egg>
+</mutant>
+</subject>
+<id_table>
+<dedup_entry id="0" peg="1"/>
+<dedup_entry id="1" peg="(heap 0)"/>
+<dedup_entry id="2" peg="this"/>
+<dedup_entry id="3" peg="(var 2)"/>
+<dedup_entry id="4" peg="0"/>
+<dedup_entry id="5" peg="(heap 4)"/>
+<dedup_entry id="6" peg="unit"/>
+<dedup_entry id="7" peg="false"/>
+<dedup_entry id="8" peg="true"/>
+<dedup_entry id="9" peg="(mutant-root 6 5)"/>
+<dedup_entry id="10" peg="x"/>
+<dedup_entry id="11" peg="(var 10)"/>
+<dedup_entry id="12" peg="-2147483648"/>
+<dedup_entry id="13" peg="(mutant-root 11 5)"/>
+<dedup_entry id="14" peg="a"/>
+<dedup_entry id="15" peg="(var 14)"/>
+<dedup_entry id="16" peg="b"/>
+<dedup_entry id="17" peg="(var 16)"/>
+<dedup_entry id="18" peg="(+ 15 17)"/>
+<dedup_entry id="19" peg="(mutant-root 18 5)"/>
+<dedup_entry id="20" peg="(actuals 15 17)"/>
+<dedup_entry id="21" peg="add"/>
+<dedup_entry id="22" peg="(invoke 5 3 21 20)"/>
+<dedup_entry id="23" peg="(proj-heap 22)"/>
+<dedup_entry id="24" peg="(proj-val 22)"/>
+<dedup_entry id="25" peg="(invoke 23 3 21 20)"/>
+<dedup_entry id="26" peg="(proj-heap 25)"/>
+<dedup_entry id="27" peg="(proj-val 25)"/>
+<dedup_entry id="28" peg="(+ 24 27)"/>
+<dedup_entry id="29" peg="(mutant-root 28 26)"/>
+<dedup_entry id="30" peg="null"/>
+<dedup_entry id="31" peg="c"/>
+<dedup_entry id="32" peg="(var 31)"/>
+<dedup_entry id="33" peg="(actuals 11)"/>
+<dedup_entry id="34" peg="identity"/>
+<dedup_entry id="35" peg="(invoke 5 3 34 33)"/>
+<dedup_entry id="36" peg="(proj-heap 35)"/>
+<dedup_entry id="37" peg="(proj-val 35)"/>
+<dedup_entry id="38" peg="(mutant-root 37 36)"/>
+<dedup_entry id="39" peg="actuals"/>
+<dedup_entry id="40" peg="doNothing"/>
+<dedup_entry id="41" peg="(invoke 5 3 40 39)"/>
+<dedup_entry id="42" peg="(proj-heap 41)"/>
+<dedup_entry id="43" peg="(proj-val 41)"/>
+<dedup_entry id="44" peg="(invoke 42 3 34 33)"/>
+<dedup_entry id="45" peg="(proj-heap 44)"/>
+<dedup_entry id="46" peg="(proj-val 44)"/>
+<dedup_entry id="47" peg="(phi 32 36 45)"/>
+<dedup_entry id="48" peg="(phi 32 37 46)"/>
+<dedup_entry id="49" peg="(mutant-root 48 47)"/>
+<dedup_entry id="50" peg="2"/>
+<dedup_entry id="51" peg="(actuals 0 50)"/>
+<dedup_entry id="52" peg="aSmallList"/>
+<dedup_entry id="53" peg="(invoke 5 3 52 51)"/>
+<dedup_entry id="54" peg="(proj-heap 53)"/>
+<dedup_entry id="55" peg="(proj-val 53)"/>
+<dedup_entry id="56" peg="(invoke 54 3 34 33)"/>
+<dedup_entry id="57" peg="(proj-heap 56)"/>
+<dedup_entry id="58" peg="(proj-val 56)"/>
+<dedup_entry id="59" peg="(phi 32 36 57)"/>
+<dedup_entry id="60" peg="(phi 32 37 58)"/>
+<dedup_entry id="61" peg="(mutant-root 60 59)"/>
+<dedup_entry id="62" peg="(derefs 10)"/>
+<dedup_entry id="63" peg="(path 3 62)"/>
+<dedup_entry id="64" peg="(rd 63 5)"/>
+<dedup_entry id="65" peg="(actuals 8 64)"/>
+<dedup_entry id="66" peg="branchingWithInvocation2"/>
+<dedup_entry id="67" peg="(invoke 5 3 66 65)"/>
+<dedup_entry id="68" peg="(proj-heap 67)"/>
+<dedup_entry id="69" peg="(proj-val 67)"/>
+<dedup_entry id="70" peg="(rd 63 68)"/>
+<dedup_entry id="71" peg="(actuals 8 70)"/>
+<dedup_entry id="72" peg="(invoke 68 3 66 71)"/>
+<dedup_entry id="73" peg="(proj-heap 72)"/>
+<dedup_entry id="74" peg="(proj-val 72)"/>
+<dedup_entry id="75" peg="(mutant-root 4 73)"/>
+<dedup_entry id="76" peg="(phi 8 36 57)"/>
+<dedup_entry id="77" peg="(phi 8 37 58)"/>
+<dedup_entry id="78" peg="(mutant-root 77 76)"/>
+<dedup_entry id="79" peg="(phi 7 36 57)"/>
+<dedup_entry id="80" peg="(phi 7 37 58)"/>
+<dedup_entry id="81" peg="(mutant-root 80 79)"/>
+<dedup_entry id="82" peg="(+ 74 74)"/>
+<dedup_entry id="83" peg="(mutant-root 82 73)"/>
+<dedup_entry id="84" peg="(/ 4 4)"/>
+<dedup_entry id="85" peg="(mutant-root 84 73)"/>
+<dedup_entry id="86" peg="(phi 7 36 45)"/>
+<dedup_entry id="87" peg="(phi 7 37 46)"/>
+<dedup_entry id="88" peg="(mutant-root 87 86)"/>
+<dedup_entry id="89" peg="(phi 8 36 45)"/>
+<dedup_entry id="90" peg="(phi 8 37 46)"/>
+<dedup_entry id="91" peg="(mutant-root 90 89)"/>
+<dedup_entry id="92" peg="(- 15 17)"/>
+<dedup_entry id="93" peg="(mutant-root 92 5)"/>
+<dedup_entry id="94" peg="(* 15 17)"/>
+<dedup_entry id="95" peg="(mutant-root 94 5)"/>
+<dedup_entry id="96" peg="(/ 15 17)"/>
+<dedup_entry id="97" peg="(mutant-root 96 5)"/>
+<dedup_entry id="98" peg="(* 24 27)"/>
+<dedup_entry id="99" peg="(mutant-root 98 26)"/>
+<dedup_entry id="100" peg="(/ 24 27)"/>
+<dedup_entry id="101" peg="(mutant-root 100 26)"/>
+<dedup_entry id="102" peg="(- 24 27)"/>
+<dedup_entry id="103" peg="(mutant-root 102 26)"/>
+</id_table>
+</subjects>
