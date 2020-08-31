@@ -3,9 +3,9 @@ use std::hash::Hash;
 use std::str::FromStr;
 use crate::subjects::AnalysisResult;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 /// Track an equality relation
-pub struct EqRel<T: Eq + Hash> {
+pub struct EqRel<T: PartialEq + Eq + Hash + std::fmt::Debug> {
     /// A vec of the equivalence classes
     classes: Vec<HashSet<T>>,
     /// A lookup map from elements to the index of containing equivalence class
@@ -36,19 +36,66 @@ impl<T: Eq + Hash + std::fmt::Debug> EqRel<T> {
     pub fn is_refinement_of(&self, other: &Self) -> bool {
         self.elems().is_subset(&other.elems()) &&
         self.elems().iter().all(|x| {
-            let my_class = self.lookup(*x).expect("Error: EqRel has element unassociated with a class");
+            let my_class = self.lookup(*x)
+                               .unwrap_or_else(|| panic!("Error: EqRel has element unassociated with a class: {:?}\nSelf: {:?}", x, self));
             let their_class = other.lookup(*x).expect("Error: EqRel has element unassociated with a class");
             my_class.is_subset(their_class)
         })
     }
+
+    /// Restrict this EqRel to a subdomain
+    /// # Examples
+    ///
+    /// ```rust
+    /// let domain: HashSet<u32> = vec![1, 3, 5, 7, 9].iter().collect();
+    /// let rel = EqRel::<u32>::from("0 1 2|3 4 5|6 7 8");
+    /// let restricted = rel.restrict_to_domain(domain);
+    /// let expected = EqRel::<u32>::from("1|3 5|7");
+    /// assert_eq("restricted, actual");
+    /// ```
+    pub fn restrict_to_domain(&self, domain: HashSet<T>) -> Self
+    where T: Clone {
+        let mut classes = vec![];
+        let mut elem_map: HashMap<T, usize> = HashMap::default();
+        for class in self.classes.iter() {
+            let class: HashSet<T> = class.intersection(&domain).map(|x| x.clone()).collect();
+            let idx = classes.len();
+            for e in class.iter() {
+                elem_map.insert(e.clone(), idx);
+            }
+            if ! class.is_empty() {
+                classes.push(class);
+            }
+        }
+        EqRel{classes, elem_map}
+    }
+
+    /// Count the number of equivalences in this equivalence relation. This is
+    /// calculated to be the number of elements minus the number of equivalence
+    /// classes. Thus if an equivalnce class has size N, it counts as N-1
+    /// equivalences. This is because at least N-1 equivalences must be
+    /// witnessed for all N elements to be in the same equivalnce class.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let eq_rel = EqRel::<u32>::from("0 1 2|3 4|5 6 7");
+    /// assert_eq!(eq_rel.num_equivalences(), 5);
+    /// let eq_rel = EqRel::<u32>::from("0|1|2|3|4|5");
+    /// assert_eq!(eq_rel.num_equivalences(), 0);
+    /// assert!(false);
+    /// ```
+    pub fn num_equivalences(&self) -> usize {
+        self.elems().len() - self.classes.len()
+    }
 }
 
-impl<'a, T: FromStr + Eq + Hash + Copy> From<&str> for EqRel<T>
+impl<'a, T: FromStr + Eq + Hash + Copy + std::fmt::Debug> From<&str> for EqRel<T>
     where <T as std::str::FromStr>::Err : std::fmt::Debug {
     fn from(s: &str) -> Self {
         let mut classes = vec![];
         let mut elem_map = HashMap::default();
-        for line in s.split('\n') {
+        for line in s.split(|c| c == '\n' || c == '|') {
             let mut class = HashSet::default();
             let idx = classes.len();
             for elem in line.split_whitespace() {
@@ -74,6 +121,12 @@ impl From<&AnalysisResult> for EqRel<u32> {
         EqRel{classes, elem_map}
     }
 }
+
+// impl From<Vec<Vec<u32>>> for EqRel<u32> {
+//     fn from(vec: &Vec<Vec<u32>>) -> EqRel<u32> {
+//         let classes = vec.iter().map(|x| x.)
+//     }
+// }
 
 
 pub mod io {
@@ -151,11 +204,8 @@ pub mod helpers {
 mod eq_rel {
     use super::EqRel;
     #[test]
-    fn test_from_str() {
-        let rel: EqRel<u32> = EqRel::from("1 2
-3
-4
-5");
+    fn from_str() {
+        let rel: EqRel<u32> = EqRel::from("1 2 | 3 | 4 | 5");
         assert!(rel.classes().len() == 4);
         let class1 = rel.lookup(&1).unwrap();
         let class2 = rel.lookup(&2).unwrap();
@@ -167,21 +217,87 @@ mod eq_rel {
         assert!(class3.len() == 1);
         assert!(class4.len() == 1);
         assert!(class5.len() == 1);
+
+        let eq_rel1: EqRel<u32> = EqRel::from("0 1 2 3 4 | 5 6 7 8 9| 10 11 | 12 13");
+        let eq_rel2: EqRel<u32> = EqRel::from("0 1 2 3 4
+5 6 7 8 9
+10 11
+12 13");
+        assert!(eq_rel1 == eq_rel2);
     }
 
     #[test]
-    fn test_refines() {
-        let course: EqRel<u32> = EqRel::from("1 2 3
-4 5
-6 7 8
-9 10");
-        let fine: EqRel<u32> = EqRel::from("1 2 3
-4
-5
-6
-7 8
-9
-10");
+    fn refines() {
+        let course: EqRel<u32> = EqRel::from("1 2 3 | 4 5 | 6 7 8 | 9 10");
+        let fine: EqRel<u32> = EqRel::from("1 2 3 | 4 | 5 | 6 | 7 8 | 9 | 10");
         assert!(fine.is_refinement_of(&course));
+    }
+
+    #[test]
+    fn restrict_to_domain() {
+        let eq_rel1: EqRel<u32> = EqRel::from("0 1 | 2 3 4 | 5 ");
+        let eq_rel2: EqRel<u32> = EqRel::from("0 1 2 3 4");
+
+        let restricted = eq_rel1.restrict_to_domain(eq_rel2.elems().iter().map(|x| **x).collect());
+
+        assert!(restricted.elems().contains(&0));
+        assert!(restricted.elems().contains(&1));
+        assert!(restricted.elems().contains(&2));
+        assert!(restricted.elems().contains(&3));
+        assert!(restricted.elems().contains(&4));
+        assert!(!restricted.elems().contains(&5));
+        assert!(restricted.is_refinement_of(&eq_rel1));
+        assert!(restricted.lookup(&0) == restricted.lookup(&1) && restricted.lookup(&0).is_some());
+        assert!(restricted.lookup(&2) == restricted.lookup(&3) && restricted.lookup(&2).is_some());
+        assert!(restricted.lookup(&2) == restricted.lookup(&4));
+        assert!(restricted.lookup(&1) != restricted.lookup(&4));
+
+        let eq_rel1: EqRel<u32> = EqRel::from("0 1 2 3 4|5 6 7 8 9| 10 11| 12 13");
+        let eq_rel2: EqRel<u32> = EqRel::from("1 3 5 7 9 11 13");
+        let restricted = eq_rel1.restrict_to_domain(eq_rel2.elems().iter().map(|x| **x).collect());
+        assert!(restricted.elems().contains(&1));
+        assert!(restricted.elems().contains(&3));
+        assert!(restricted.elems().contains(&5));
+        assert!(restricted.elems().contains(&7));
+        assert!(restricted.elems().contains(&9));
+        assert!(restricted.elems().contains(&11));
+        assert!(!restricted.elems().contains(&0));
+        assert!(!restricted.elems().contains(&2));
+        assert!(!restricted.elems().contains(&4));
+        assert!(!restricted.elems().contains(&6));
+        assert!(!restricted.elems().contains(&8));
+        assert!(!restricted.elems().contains(&10));
+
+        assert!(   restricted.lookup(&0 ).is_none()
+                && restricted.lookup(&2 ).is_none()
+                && restricted.lookup(&4 ).is_none()
+                && restricted.lookup(&6 ).is_none()
+                && restricted.lookup(&8 ).is_none()
+                && restricted.lookup(&10).is_none()
+                && restricted.lookup(&12).is_none()
+        );
+        assert!(   restricted.lookup(&1 ).is_some()
+                && restricted.lookup(&3 ).is_some()
+                && restricted.lookup(&5 ).is_some()
+                && restricted.lookup(&7 ).is_some()
+                && restricted.lookup(&9 ).is_some()
+                && restricted.lookup(&11).is_some()
+                && restricted.lookup(&13).is_some()
+        );
+        assert!(restricted.lookup(&1) == restricted.lookup(&3));
+        assert!(restricted.lookup(&5) == restricted.lookup(&7) && restricted.lookup(&7) == restricted.lookup(&9));
+        assert!(restricted.lookup(&1) != restricted.lookup(&5));
+        assert!(restricted.lookup(&1) != restricted.lookup(&11));
+        assert!(restricted.lookup(&1) != restricted.lookup(&113));
+        assert!(restricted.lookup(&5) != restricted.lookup(&11));
+        assert!(restricted.lookup(&5) != restricted.lookup(&13));
+        assert!(restricted.lookup(&11) != restricted.lookup(&13));
+    }
+
+    #[test]
+    fn num_equivalences() {
+        assert!(EqRel::<u32>::from("0 1 2 3 4 | 5 6 7 8 9| 10 11 | 12 13").num_equivalences() == 10);
+        assert!(EqRel::<u32>::from("0 1 2 3 4 5 6 7 8 9 10 11 12 13").num_equivalences() == 13);
+        assert!(EqRel::<u32>::from("0|1|2|3|4|5|6|7|8|9|10|11|12|13").num_equivalences() == 0);
     }
 }
