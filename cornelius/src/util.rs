@@ -4,7 +4,9 @@ use std::str::FromStr;
 use crate::subjects::AnalysisResult;
 
 #[derive(Debug, PartialEq, Eq)]
-/// Track an equality relation
+/// Track an equality relation. This is used to test equivalence class files
+/// output by a cornelius run, and to test against hand-crafted ground truth
+/// files.
 pub struct EqRel<T: PartialEq + Eq + Hash + std::fmt::Debug> {
     /// A vec of the equivalence classes
     classes: Vec<HashSet<T>>,
@@ -21,18 +23,47 @@ impl<T: Eq + Hash + std::fmt::Debug> EqRel<T> {
     }
 
     /// Lookup an element
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cornelius::util::EqRel;
+    /// use std::collections::HashSet;
+    /// use std::iter::FromIterator;
+    ///
+    /// let rel = EqRel::<u32>::from("0 1 2|3 4|5 6 7");
+    /// assert_eq!(rel.lookup(&0), Some(&HashSet::from_iter(vec![0, 1, 2])));
+    /// assert_eq!(rel.lookup(&1), Some(&HashSet::from_iter(vec![0, 1, 2])));
+    /// assert_eq!(rel.lookup(&2), Some(&HashSet::from_iter(vec![0, 1, 2])));
+    /// assert_eq!(rel.lookup(&3), Some(&HashSet::from_iter(vec![3, 4])));
+    /// assert_eq!(rel.lookup(&4), Some(&HashSet::from_iter(vec![3, 4])));
+    /// assert_eq!(rel.lookup(&5), Some(&HashSet::from_iter(vec![5, 6, 7])));
+    /// assert_eq!(rel.lookup(&6), Some(&HashSet::from_iter(vec![5, 6, 7])));
+    /// assert_eq!(rel.lookup(&7), Some(&HashSet::from_iter(vec![5, 6, 7])));
+    /// ```
     pub fn lookup(&self, elem: &T) -> Option<&HashSet<T>> {
         self.classes.get(*self.elem_map.get(&elem)?)
     }
 
     /// Get the elements tracked by this `EqRel`
+    ///
+    /// # Examples
+    ///
     pub fn elems(&self) -> HashSet<&T> {
         self.elem_map.keys().collect()
     }
 
     /// Check if this EqRel is a refinement of another EqRel. This means that:
-    /// 1. self.elems().is_subset(&other.elems())
-    /// 2. For each elem in self.elems(), self.lookup(elem).is_subset(other.lookup(elem))
+    /// 1. `self.elems().is_subset(&other.elems())`
+    /// 2. For each `elem` in `self.elems()`, `self.lookup(elem).is_subset(other.lookup(elem))`
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use cornelius::util::EqRel;
+    /// assert!(EqRel::<u32>::from("0|1|2|3|4").is_refinement_of(&EqRel::<u32>::from("0 1 2 3 4")));
+    /// assert!(EqRel::<u32>::from("0 1 2|3|4").is_refinement_of(&EqRel::<u32>::from("0 1 2|3 4")));
+    /// ```
     pub fn is_refinement_of(&self, other: &Self) -> bool {
         self.elems().is_subset(&other.elems()) &&
         self.elems().iter().all(|x| {
@@ -47,18 +78,21 @@ impl<T: Eq + Hash + std::fmt::Debug> EqRel<T> {
     /// # Examples
     ///
     /// ```rust
-    /// let domain: HashSet<u32> = vec![1, 3, 5, 7, 9].iter().collect();
+    /// use cornelius::util::EqRel;
+    /// use std::collections::HashSet;
+    /// use std::iter::FromIterator;
+    /// let domain: HashSet<u32> = HashSet::from_iter(vec![1, 3, 5, 7, 9]);
     /// let rel = EqRel::<u32>::from("0 1 2|3 4 5|6 7 8");
     /// let restricted = rel.restrict_to_domain(domain);
     /// let expected = EqRel::<u32>::from("1|3 5|7");
-    /// assert_eq("restricted, actual");
+    /// assert_eq!(restricted, expected);
     /// ```
     pub fn restrict_to_domain(&self, domain: HashSet<T>) -> Self
     where T: Clone {
         let mut classes = vec![];
         let mut elem_map: HashMap<T, usize> = HashMap::default();
         for class in self.classes.iter() {
-            let class: HashSet<T> = class.intersection(&domain).map(|x| x.clone()).collect();
+            let class: HashSet<T> = class.intersection(&domain).cloned().collect();
             let idx = classes.len();
             for e in class.iter() {
                 elem_map.insert(e.clone(), idx);
@@ -79,11 +113,11 @@ impl<T: Eq + Hash + std::fmt::Debug> EqRel<T> {
     /// # Example
     ///
     /// ```
+    /// use cornelius::util::EqRel;
     /// let eq_rel = EqRel::<u32>::from("0 1 2|3 4|5 6 7");
     /// assert_eq!(eq_rel.num_equivalences(), 5);
     /// let eq_rel = EqRel::<u32>::from("0|1|2|3|4|5");
     /// assert_eq!(eq_rel.num_equivalences(), 0);
-    /// assert!(false);
     /// ```
     pub fn num_equivalences(&self) -> usize {
         self.elems().len() - self.classes.len()
@@ -121,13 +155,6 @@ impl From<&AnalysisResult> for EqRel<u32> {
         EqRel{classes, elem_map}
     }
 }
-
-// impl From<Vec<Vec<u32>>> for EqRel<u32> {
-//     fn from(vec: &Vec<Vec<u32>>) -> EqRel<u32> {
-//         let classes = vec.iter().map(|x| x.)
-//     }
-// }
-
 
 pub mod io {
     use std::fs::File;

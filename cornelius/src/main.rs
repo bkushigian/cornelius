@@ -1,16 +1,6 @@
-pub mod subjects;
-pub mod delta;
-pub mod peg;
-pub mod rewrites;
-mod evaluator;
-mod tests;
-mod util;
-
-use crate::subjects::{run_on_subjects_file};
-use crate::util::io::{write_subjects_to_separate_files};
+use cornelius::subjects::{run_on_subjects_file};
+use cornelius::util::io::{write_subjects_to_separate_files};
 use std::env;
-
-#[macro_use] extern crate log;
 
 fn main() -> Result<(), String> {
     let _ = env_logger::builder().try_init();

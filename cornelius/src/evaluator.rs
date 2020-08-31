@@ -2,8 +2,43 @@ use crate::peg::Peg;
 use egg::{RecExpr, Id};
 use std::collections::HashMap;
 
+/// Evaluate a `RecExpr<Peg>` using mappings from variable names to `Peg`s.
+/// The bindings should all be grounded terms (literals, null, etc).
+///
+/// # Example
+///
+/// ```rust
+/// # use cornelius::peg::Peg;
+/// # use cornelius::evaluator::eval;
+/// # use egg::RecExpr;
+/// # use std::collections::HashMap;
+/// let expr: RecExpr<Peg> = "(+ (var a) (var b))".parse().unwrap();
+///
+/// let mut bindings: HashMap<&str, Peg> = HashMap::default();
+/// bindings.insert("a", Peg::Num(5));
+/// bindings.insert("b", Peg::Num(9));
+///
+/// let result = eval(&expr, bindings);
+/// assert_eq!(result, Ok(Peg::Num(14)));
+/// ```
+///
+/// ```rust
+/// # use cornelius::peg::Peg;
+/// # use cornelius::evaluator::eval;
+/// # use egg::RecExpr;
+/// # use std::collections::HashMap;
+/// let expr: RecExpr<Peg> = "(phi (var a) (var b) (var c))".parse().unwrap();
+///
+/// let mut bindings: HashMap<&str, Peg> = HashMap::default();
+/// bindings.insert("a", Peg::Bool(true));
+/// bindings.insert("b", Peg::Num(1));
+/// bindings.insert("c", Peg::Num(0));
+///
+/// let result = eval(&expr, bindings);
+/// assert_eq!(result, Ok(Peg::Num(1)));
+/// ```
 #[allow(dead_code)]
-pub fn eval(expr: &RecExpr<Peg>, var_bindings: HashMap<&str, Peg>) -> Result<Peg, String>{
+pub fn eval<S: std::hash::BuildHasher>(expr: &RecExpr<Peg>, var_bindings: HashMap<&str, Peg, S>) -> Result<Peg, String>{
     // set up bindings
     let mut bindings: HashMap<Id, Peg> = HashMap::default();
     let expr_ref = expr.as_ref();
@@ -61,6 +96,8 @@ pub struct Evaluator<'a> {
 }
 
 impl<'a> Evaluator<'a> {
+    /// Evaluate the `Evaluator`'s `RecExpr` at index `idx`, memoizing the
+    /// results.
     pub fn evaluate_expr_at(&mut self, idx: usize) -> Result<Peg, String> {
         use crate::peg::Peg::*;
         let root = self.expr.as_ref().get(idx).expect("index out of bounds").clone();
