@@ -543,6 +543,11 @@ mod serialization {
     fn field_access() {
         ensure_serialized_subject_meets_specs("../tests/field-access.xml", "../tests/field-access.gt", 1);
     }
+
+    #[test]
+    fn method_invocation() {
+        ensure_serialized_subject_meets_specs("../tests/method-invocation.xml", "../tests/method-invocation.gt", 1);
+    }
 }
 
 #[allow(dead_code)]
@@ -664,7 +669,7 @@ fn ensure_serialized_subject_meets_specs(
             .unwrap();
 
         assert!(eq_rel.is_refinement_of(&gt_rel),
-                format!("{:?} does not refine {:?}", eq_rel.classes(), gt_rel.classes()));
+                format!("{:?} does not refine {:?}", eq_rel, gt_rel));
         score += subject.analysis_result.score;
     }
     assert!(score >= min_score, format!("score = {} < min_score = {}", score, min_score));

@@ -13,7 +13,7 @@ pub struct EqRel<T: Eq + Hash> {
     elem_map: HashMap<T, usize>
 }
 
-impl<T: Eq + Hash> EqRel<T> {
+impl<T: Eq + Hash + std::fmt::Debug> EqRel<T> {
     /// Get a vec of equiv classes
     #[allow(dead_code)]
     pub fn classes(&self) -> &Vec<HashSet<T>> {
