@@ -71,8 +71,9 @@ define_language! {
     // (invoke heap receiver method actuals)
     // A normal (i.e., non-static), method invocation
     "invoke" = Invoke([Id; 4]),
+    // (invoke-static heap method actuals)
     // A normal (i.e., non-static), method invocation
-    "invoke-static" = InvokeStatic([Id; 4]),
+    "invoke-static" = InvokeStatic([Id; 3]),
     // Project the heap from a method invocation
     "proj-heap" = ProjHeap(Id),
     // Project the return value from a method invocation
