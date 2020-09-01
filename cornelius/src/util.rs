@@ -78,9 +78,9 @@ impl<T: Eq + Hash + std::fmt::Debug> EqRel<T> {
     /// # Examples
     ///
     /// ```rust
-    /// use cornelius::util::EqRel;
-    /// use std::collections::HashSet;
-    /// use std::iter::FromIterator;
+    /// # use cornelius::util::EqRel;
+    /// # use std::collections::HashSet;
+    /// # use std::iter::FromIterator;
     /// let domain: HashSet<u32> = HashSet::from_iter(vec![1, 3, 5, 7, 9]);
     /// let rel = EqRel::<u32>::from("0 1 2|3 4 5|6 7 8");
     /// let restricted = rel.restrict_to_domain(domain);
