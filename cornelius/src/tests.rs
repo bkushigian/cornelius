@@ -501,13 +501,13 @@ mod heap {
         //           return result;
         //      }
         // }
-"(mutant-root \
-    (rd (path (var this) (derefs x))\
-        (wr (path (var this) (derefs x))\
-            (phi (> (var a) (var b)) (var a) (var b))\
-            (heap 0)))\
-    (wr (path (var this) (derefs x))\
-        (phi (> (var a) (var b)) (var a) (var b))\
+"(mutant-root
+    (rd (path (var this) (derefs x))
+        (wr (path (var this) (derefs x))
+            (phi (> (var a) (var b)) (var a) (var b))
+            (heap 0)))
+    (wr (path (var this) (derefs x))
+        (phi (> (var a) (var b)) (var a) (var b))
         (heap 0)))",
         // Mutant Program
         // public class MyClass
@@ -519,12 +519,12 @@ mod heap {
         //      }
         // }
 "(mutant-root
-    (rd (path (var this) (derefs x))\
-        (wr (path (var this) (derefs x))\
-            (phi (>= (var a) (var b)) (var a) (var b))\
-            (heap 0)))\
-    (wr (path (var this) (derefs x))\
-        (phi (>= (var a) (var b)) (var a) (var b))\
+    (rd (path (var this) (derefs x))
+        (wr (path (var this) (derefs x))
+            (phi (>= (var a) (var b)) (var a) (var b))
+            (heap 0)))
+    (wr (path (var this) (derefs x))
+        (phi (>= (var a) (var b)) (var a) (var b))
         (heap 0)))"))
 
     }
