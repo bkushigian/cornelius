@@ -227,7 +227,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         else if (n.getTarget().isFieldAccessExpr()) {
             // todo: update heap
             final FieldAccessExpr fieldAccess = n.getTarget().asFieldAccessExpr();
-            return performWrite(fieldAccess, value, ctx);
+            return performWrite(fieldAccess, value, ctx).withPeg(value);
         }
         else {
             throw new RuntimeException("Unrecognized assignment target: " + n.getTarget().toString());
@@ -277,24 +277,30 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
 
     @Override
     public ExpressionResult visit(FieldAccessExpr n, PegContext arg) {
-        final ExpressionResult er = getPathFromFieldAccessExpr(n, arg);
-        return PegNode.rd(er.peg.id, arg.heap.id).exprResult(arg);
+        final ExpressionResult scope = n.getScope().accept(this, arg);
+        final PegNode path = PegNode.path(scope.peg.id, n.getNameAsString());
+        return scope.withPeg(PegNode.rd(path.id, scope.context.heap.id));
     }
 
     @Override
-    public ExpressionResult visit(MethodCallExpr n, PegContext context) {
-        List<Integer> actualsPegs = new ArrayList<>();
+    public ExpressionResult visit(MethodCallExpr n, final PegContext context) {
+        // YUCK: The following Expression result handles two cases: if n has a scope, visit it and capture the
+        // resulting ExpressionResult. Otherwise, make  new ExpressionResult from context and "this".
+        final ExpressionResult scope = n.getScope().map(x -> x.accept(this, context)).orElse(context.exprResult(context.get("this")));
+        final List<Integer> actualsPegs = new ArrayList<>();
+
+        // The following variable keeps track of the updated context as we visit arguments
+        PegContext ctx = scope.context;
         for (final Expression actual : n.getArguments()) {
-            final ExpressionResult er = actual.accept(this, context);
-            final PegNode peg = er.peg;
-            context = er.context;
-            actualsPegs.add(peg.id);
+            final ExpressionResult er = actual.accept(this, ctx);
+            ctx = er.context;
+            actualsPegs.add(er.peg.id);
         }
         final PegNode actuals = PegNode.actuals(actualsPegs.toArray(new Integer[]{}));
 
-        final PegNode invocation = PegNode.invoke(context.heap.id, context.get("this").id, n.getNameAsString(), actuals.id);
+        final PegNode invocation = PegNode.invoke(ctx.heap.id, scope.peg.id, n.getNameAsString(), actuals.id);
         // We also need to update the context's heap since we've called a method which may have changed heap state
-        context = context.withHeap(PegNode.projectHeap(invocation.id));
+        ctx = context.withHeap(PegNode.projectHeap(invocation.id));
         return PegNode.projectVal(invocation.id).exprResult(context);
     }
 

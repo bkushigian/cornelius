@@ -174,7 +174,7 @@ public class PegContext {
         if (returnNode == null) {
             returnNode = PegNode.unit();
         }
-        return Optional.ofNullable(PegNode.opNodeFromPegs("mutant-root", returnNode, heap));
+        return Optional.ofNullable(PegNode.opNodeFromPegs("method-root", returnNode, heap));
     }
 
     public ExpressionResult exprResult(final PegNode peg) {

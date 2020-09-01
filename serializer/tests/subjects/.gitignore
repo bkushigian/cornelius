@@ -1,0 +1,5 @@
+!mutants.log
+**/*.class
+**/mutants/
+**/mutants.log
+**/regularized/
