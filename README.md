@@ -1,3 +1,14 @@
+```
+:'######:::'#######::'########::'##::: ##:'########:'##:::::::'####:'##::::'##::'######::
+'##... ##:'##.... ##: ##.... ##: ###:: ##: ##.....:: ##:::::::. ##:: ##:::: ##:'##... ##:
+ ##:::..:: ##:::: ##: ##:::: ##: ####: ##: ##::::::: ##:::::::: ##:: ##:::: ##: ##:::..::
+ ##::::::: ##:::: ##: ########:: ## ## ##: ######::: ##:::::::: ##:: ##:::: ##:. ######::
+ ##::::::: ##:::: ##: ##.. ##::: ##. ####: ##...:::: ##:::::::: ##:: ##:::: ##::..... ##:
+ ##::: ##: ##:::: ##: ##::. ##:: ##:. ###: ##::::::: ##:::::::: ##:: ##:::: ##:'##::: ##:
+. ######::. #######:: ##:::. ##: ##::. ##: ########: ########:'####:. #######::. ######::
+:......::::.......:::..:::::..::..::::..::........::........::....:::.......::::......:::
+```
+
 # Cornelius
 Cornelius is an equivalent mutant detection framework for Java. Written in Rust, 
 Cornelius uses the [egg](https://github.com/mwillsey/egg) Egraph framework to
@@ -37,5 +48,9 @@ path/to/File.java`. This will:
 5. output discovered equivalence classes to disk
 
 Each method in the input file is treated as its own subject.
+
+## Sample Inputs
+Cornelius has several sample input programs in `serializer/tests/subjects/`.
+For instance, running 
 
 
