@@ -13,6 +13,8 @@ function run_on_subject {
     "$cornelius" "$xml"
 }
 
+echo "================================================================================"
+echo "Running Cornelius! Oh boy!!"
 compile_binary
 cornelius=$(realpath "$CORNELIUS/target/release/cornelius")
 

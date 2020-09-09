@@ -4,6 +4,9 @@ source util.sh
 
 function serialize_subject {
 
+    echo "================================================================================"
+    echo "Serializing subject $1/$2"
+
     base="$1"
     file="$2"
 

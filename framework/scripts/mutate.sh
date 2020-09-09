@@ -46,7 +46,8 @@ fi
 function generate_mutants {
   dir=$(realpath "$1")
   java_file="$2"
-  echo "Generating mutants for $dir/$java_file"
+  echo "================================================================================"
+  echo "Running Major to generate mutants for $dir/$java_file"
   PUSHD "$dir"
   rm -rf mutants mutants.log major.log
   javac -Xplugin:"MajorPlugin mml:$MML export.mutants" -cp "$MAJOR_JAR" "$java_file"

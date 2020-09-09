@@ -11,12 +11,12 @@ fi
 dir="$(realpath "$(dirname $1)")"
 base="$(basename "$1")"
 tmp=$(mktemp -d -t cornelius-)
-green "Created temp working directory $(yellow $tmp)"
+echo "Created temp working directory $(green $tmp)"
 cp "$1" "$tmp"
 
 if [ -z "$MML" ]
 then
-    MML="$dir/mml/all.mml.bin"
+    MML="$BASE/mml/all.mml.bin"
     if [ ! -e "$MML" ]
     then
         red "$(bold "ERROR: No MML env variable specified, and no mml/all.mml.bin directory found in $dir")"
@@ -34,26 +34,31 @@ mv subjects.xml "$xml"
 echo "Serialized subjects file: $xml"
 ./cornelius.sh "$xml"
 equiv_classes="$xml.equiv-class"
-green "$(bold "Equiv Classes:")"
 
 equiv_classes="$tmp/equiv-classes"
 mkdir "$equiv_classes"
-bold "Writing equivalence classes to $(green "$equiv_classes"):"
+echo "Writing equivalence classes to $(green "$equiv_classes"):"
 for file in $(ls "${base%.*}"*".equiv-class")
 do
     mv "$file" $tmp/equiv-classes
-    bold "    $tmp/$(green "equiv-classes/$file")"
+    echo "    $tmp/$(green "equiv-classes/$file")"
     # echo "$(cat "$tmp/$file")"
 done
 
-echo "base: $BASE"
 linked_equiv_classes="$BASE/${base%.*}-equiv-classes"
-bold "Linking to equivalence classes: $(green "$linked_equiv_classes")"
+
 
 if [ -e "$linked_equiv_classes" ]
 then
     echo "Removing old link"
     rm "$linked_equiv_classes"
 fi
+
+echo
+echo
+echo "Working Directory ......... $(green "$tmp")"
+echo "Generated mutants ......... $(green "$tmp/mutants")"
+echo "Serialized ................ $(green "$xml")"
+echo "Equivalence classes ....... $(green "$linked_equiv_classes")"
 
 ln -s "$equiv_classes" "$linked_equiv_classes"

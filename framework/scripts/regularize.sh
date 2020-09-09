@@ -70,7 +70,8 @@ function regularize_subject  {
     dir="$1"
     filename="$2"
     regdir=$(realpath "$dir/regularized")
-    yellow "Regularizing subject $(bold "$dir/$filename") $(yellow "to $(bold "$dir/regularized")")\n"
+    echo "================================================================================"
+    echo "Regularizing subject $(green "$dir/$filename") to $(green "$dir/regularized")\n"
 
     if [ -e "$regdir" ]
     then
