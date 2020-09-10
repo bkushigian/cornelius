@@ -14,7 +14,7 @@ function usage {
   printf "\n"
   printf "$(bold "Environment Variables")\n"
   printf "%s\n" "---------------------"
-  printf "   MML: path of the compiled MML file. Default: 'mml/all.mml.bin'\n"
+  printf "   MML: path of the compiled MML file. Default: 'cornelius/mml/all.mml.bin'\n"
   printf "   MAJOR_JAR: path to the Major Javac Plugin jar file\n"
   exit 1
 }
@@ -33,7 +33,7 @@ fi
 
 if [ -z "$MML" ]
 then
-  MML="mml/all.mml.bin"
+  MML="$BASE/mml/all.mml.bin"
 fi
 
 if [ -z "$MAJOR_JAR" ]
@@ -50,10 +50,20 @@ function generate_mutants {
   echo "Running Major to generate mutants for $dir/$java_file"
   PUSHD "$dir"
   rm -rf mutants mutants.log major.log
-  javac -Xplugin:"MajorPlugin mml:$MML export.mutants" -cp "$MAJOR_JAR" "$java_file"
+  $JAVA_HOME/bin/javac -Xplugin:"MajorPlugin mml:$MML export.mutants" -cp "$MAJOR_JAR" "$java_file"
   POPD
 }
 
+function ensure_java_8 {
+  if ! $JAVA_HOME/bin/java -version 2>&1 | grep "1\.8\..*" >/dev/null
+  then
+    red "$(bold "Please make sure that JAVA_HOME points to a Java 1.8 installation")"
+    echo "currently JAVA_HOME=$JAVA_HOME"
+    exit 1
+  fi
+}
+
+ensure_java_8
 dir=$(dirname "$1")
 base=$(basename "$1")
 generate_mutants "$dir" "$base"
