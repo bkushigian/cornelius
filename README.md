@@ -73,8 +73,6 @@ Done creating XML File at: /Users/benku/Projects/cornelius/framework/scripts/sub
 Serialized subjects file: /var/folders/90/zz7ry2qd3m12wlsvjwr37kvh0000gn/T/cornelius-.2fh5oVQV/Triangle.xml
     Finished release [optimized] target(s) in 0.23s
 Reading from path /var/folders/90/zz7ry2qd3m12wlsvjwr37kvh0000gn/T/cornelius-.2fh5oVQV/Triangle.xml
-rec_expr total_size: 2349
-egraph total_size: 10271
 Equiv Classes:
 Writing equivalence classes to /var/folders/90/zz7ry2qd3m12wlsvjwr37kvh0000gn/T/cornelius-.2fh5oVQV/equiv-classes:
     /var/folders/90/zz7ry2qd3m12wlsvjwr37kvh0000gn/T/cornelius-.2fh5oVQV/equiv-classes/Triangle@classify(int,int,int).equiv-class
