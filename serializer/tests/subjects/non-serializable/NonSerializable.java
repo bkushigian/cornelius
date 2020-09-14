@@ -14,6 +14,10 @@ public class NonSerializable {
         return x;
     }
 
+    Integer createNewIntegers() {
+        return new java.lang.Integer(x) + new Integer(2);
+    }
+
     int add(int x, int y) {
         return x + y;
     }

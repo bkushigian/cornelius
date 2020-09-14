@@ -30,4 +30,15 @@ public class FieldWrite {
         return result;
     }
 
+    /**
+     * This test case tests that void methods return unit and that field updates work.
+     * Expected PEG:
+     * <pre>
+     * (method-root unit (wr (path (var this) (derefs x)) (var x) (heap 0)))
+     * </pre>
+     */
+    void setX(int x) {
+        this.x = x;
+    }
+
 }

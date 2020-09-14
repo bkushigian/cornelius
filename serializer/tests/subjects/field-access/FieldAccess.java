@@ -8,7 +8,7 @@ public class FieldAccess {
      *
      * Expected PEG:
      * <pre>
-     * method-root (+ (+ (rd (path (var this) (derefs x)) (heap 0)) (var y)) (rd (path (rd (path (rd (path (var this) (derefs fa)) (heap 0)) (derefs fa)) (heap 0)) (derefs y)) (heap 0))) (wr (path (var this) (derefs y)) (var y) (wr (path (var this) (derefs y)) (var y) (wr (path (var this) (derefs x)) (var ex) (heap 0)))))
+     * (method-root (+ (+ (rd (path (var this) (derefs x)) (heap 0)) (var y)) (rd (path (rd (path (rd (path (var this) (derefs fa)) (heap 0)) (derefs fa)) (heap 0)) (derefs y)) (heap 0))) (wr (path (var this) (derefs y)) (var y) (wr (path (var this) (derefs y)) (var y) (wr (path (var this) (derefs x)) (var ex) (heap 0)))))
      * </pre>
      */
     int test(int ex, int y) {
