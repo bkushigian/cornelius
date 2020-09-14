@@ -36,8 +36,13 @@ public class SimpleJavaToPegTranslator {
                 for (MethodDeclaration method : ctype.getMethods()) {
                     final String methDeclStr = method.getDeclarationAsString(false, false, false);
 
-                    translate(method, classVisitorResult).ifPresent(t -> result.put(methDeclStr.substring(methDeclStr.indexOf(' ') + 1)
-                            .replaceAll("\\s+", ""), t));
+                    try {
+                        translate(method, classVisitorResult).ifPresent(t -> result.put(methDeclStr.substring(methDeclStr.indexOf(' ') + 1)
+                                .replaceAll("\\s+", ""), t));
+                    } catch (RuntimeException e) {
+                        System.out.println("Exception encountered while translating " + method.getDeclarationAsString());
+                        System.out.println("Exception Message: " + e.getMessage());
+                    }
                 }
             }
         }

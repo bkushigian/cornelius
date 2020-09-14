@@ -292,6 +292,10 @@ public abstract class PegNode {
         return opNode("null");
     }
 
+    public static PegNode newObject(final String type, final Integer actuals, final Integer heap) {
+        return opNode("new", opNode(type).id, actuals, heap);
+    }
+
     // differentiate between heaps
     private static int heapIndex = 1;
     public static PegNode heap() {

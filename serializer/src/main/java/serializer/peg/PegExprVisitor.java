@@ -301,12 +301,31 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         final PegNode invocation = PegNode.invoke(ctx.heap.id, scope.peg.id, n.getNameAsString(), actuals.id);
         // We also need to update the context's heap since we've called a method which may have changed heap state
         ctx = context.withHeap(PegNode.projectHeap(invocation.id));
-        return PegNode.projectVal(invocation.id).exprResult(context);
+        return PegNode.projectVal(invocation.id).exprResult(ctx);
     }
 
     @Override
     public ExpressionResult visit(NullLiteralExpr n, PegContext arg) {
         return PegNode.nullLit().exprResult(arg);
+    }
+
+    @Override
+    public ExpressionResult visit(ObjectCreationExpr n, PegContext arg) {
+        final List<Integer> actualsPegs = new ArrayList<>();
+
+        // The following variable keeps track of the updated context as we visit arguments
+        PegContext ctx = arg;
+        for (final Expression actual : n.getArguments()) {
+            final ExpressionResult er = actual.accept(this, ctx);
+            ctx = er.context;
+            actualsPegs.add(er.peg.id);
+        }
+
+        final PegNode actuals = PegNode.actuals(actualsPegs.toArray(new Integer[]{}));
+        final PegNode allocation = PegNode.newObject(n.getType().asString(), actuals.id, ctx.heap.id);
+        // We also need to update the context's heap since we've called a method which may have changed heap state
+        ctx = ctx.withHeap(PegNode.projectHeap(allocation.id));
+        return PegNode.projectVal(allocation.id).exprResult(ctx);
     }
 
     public ExpressionResult getPathFromFieldAccessExpr(FieldAccessExpr n, PegContext ctx) {

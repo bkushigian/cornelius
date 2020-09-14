@@ -46,9 +46,9 @@ public class SimpleJavaToPegTranslatorTest {
 
     Map<String, PegNode> translated = translator.translate(cu);
     for (String m : translated.keySet()) {
-      System.out.println("Checking: " + m);
+      System.out.print("Checking " + m);
       if (commentPegs.containsKey(m)) {
-        System.out.println("   ...found in commentPegs");
+        System.out.println("......FOUND");
         final String expectedPeg = commentPegs.get(m);
         final String actualPeg = translated.get(m).toDerefString();
 
@@ -56,11 +56,9 @@ public class SimpleJavaToPegTranslatorTest {
         assertNotNull(actualPeg);
         assertEquals(String.format("Method %s", m), expectedPeg, actualPeg);
       } else {
-        System.out.println("   ...NOT found in commentPegs");
+        System.out.println("......NOT FOUND");
       }
     }
-    System.out.println(translated.keySet());
-    System.out.println(commentPegs.keySet());
   }
 
   /**
