@@ -3,7 +3,6 @@ package serializer.peg;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -12,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class PegContext {
 
-    final private ImmutableMap<String, PegNode> paramLookup;
+    final private ImmutableMap<String, PegNode> localVariableLookup;
     final private Set<String> fieldNames;
     final PegNode.Heap heap;
     final ImmutableSet<PegNode> exitConditions;
@@ -20,11 +19,11 @@ public class PegContext {
     // XXX The following relies on there being a _unique_ return node in the AST
     PegNode returnNode = null;
 
-    private PegContext(final ImmutableMap<String, PegNode> paramLookup,
+    private PegContext(final ImmutableMap<String, PegNode> localVariableLookup,
                        final Set<String> fieldNames,
                        final PegNode.Heap heap,
                        final ImmutableSet<PegNode> exitConditions) {
-        this.paramLookup = paramLookup;
+        this.localVariableLookup = localVariableLookup;
         this.fieldNames = fieldNames;
         this.heap = heap;
         this.exitConditions = exitConditions;
@@ -39,7 +38,7 @@ public class PegContext {
      */
     public static PegContext combine(PegContext c1, PegContext c2, Integer guardId) {
         assert c1.fieldNames == c2.fieldNames;  // TODO: is this true? This should be true
-        final ImmutableSet<String> domain = c1.paramLookup.keySet().stream().filter(c2.paramLookup::containsKey)
+        final ImmutableSet<String> domain = c1.localVariableLookup.keySet().stream().filter(c2.localVariableLookup::containsKey)
                 .collect(Collectors.collectingAndThen(Collectors.toSet(), ImmutableSet::copyOf));
 
         final PegNode.Heap combinedHeap = PegNode.heap(
@@ -71,7 +70,7 @@ public class PegContext {
     }
 
     public boolean isUnshadowedField(final String key) {
-      return isField(key) && !paramLookup.containsKey(key);
+      return isField(key) && !localVariableLookup.containsKey(key);
 
     }
 
@@ -82,8 +81,8 @@ public class PegContext {
      * @throws IllegalArgumentException if {@code key} is neither a method parameter or a field accessed by the method
      */
     public PegNode get(String key) {
-        if (paramLookup.containsKey(key)) {
-            return paramLookup.get(key);
+        if (localVariableLookup.containsKey(key)) {
+            return localVariableLookup.get(key);
         }
         if (fieldNames.contains(key)) {
             // Todo: check for static fields/etc
@@ -104,14 +103,14 @@ public class PegContext {
 
         final ImmutableMap.Builder<String, PegNode> b = new ImmutableMap.Builder<>();
         b.put(key, val);
-        if (paramLookup.containsKey(key)) {
-            for (ImmutableMap.Entry<String, PegNode> e : paramLookup.entrySet()) {
+        if (localVariableLookup.containsKey(key)) {
+            for (ImmutableMap.Entry<String, PegNode> e : localVariableLookup.entrySet()) {
                 if (! key.equals(e.getKey())) {
                     b.put(e);
                 }
             }
         } else {
-            b.putAll(paramLookup);
+            b.putAll(localVariableLookup);
         }
         return new PegContext(b.build(), fieldNames, heap, exitConditions);
     }
@@ -123,7 +122,7 @@ public class PegContext {
      *         in {@code heap}'s value
      */
     public PegContext withHeap(final PegNode.Heap heap) {
-      return new PegContext(paramLookup, fieldNames, heap, exitConditions);
+      return new PegContext(localVariableLookup, fieldNames, heap, exitConditions);
     }
 
     /**
