@@ -203,7 +203,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         final Optional<Expression> initializer = n.getInitializer();
         if (initializer.isPresent()) {
             final ExpressionResult er = initializer.get().accept(this, arg);
-            arg = er.context.set(name, er.peg);
+            arg = er.context.setLocalVar(name, er.peg);
         }
         return arg.exprResult(PegNode.unit());
     }
@@ -222,7 +222,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
                 return performWrite(fieldAccess, value, ctx);
             }
 
-            return er.withContext(ctx.set(n.getTarget().asNameExpr().getNameAsString(), value));
+            return er.withContext(ctx.setLocalVar(n.getTarget().asNameExpr().getNameAsString(), value));
         }
         else if (n.getTarget().isFieldAccessExpr()) {
             // todo: update heap
@@ -251,7 +251,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
 
     @Override
     public ExpressionResult visit(NameExpr n, PegContext context) {
-        return context.get(n.getNameAsString()).exprResult(context);
+        return context.getLocalVar(n.getNameAsString()).exprResult(context);
     }
 
     @Override
@@ -272,7 +272,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
 
     @Override
     public ExpressionResult visit(ThisExpr n, PegContext arg) {
-        return arg.get("this").exprResult(arg);
+        return arg.getLocalVar("this").exprResult(arg);
     }
 
     @Override
@@ -286,7 +286,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     public ExpressionResult visit(MethodCallExpr n, final PegContext context) {
         // YUCK: The following Expression result handles two cases: if n has a scope, visit it and capture the
         // resulting ExpressionResult. Otherwise, make  new ExpressionResult from context and "this".
-        final ExpressionResult scope = n.getScope().map(x -> x.accept(this, context)).orElse(context.exprResult(context.get("this")));
+        final ExpressionResult scope = n.getScope().map(x -> x.accept(this, context)).orElse(context.exprResult(context.getLocalVar("this")));
         final List<Integer> actualsPegs = new ArrayList<>();
 
         // The following variable keeps track of the updated context as we visit arguments

@@ -52,7 +52,7 @@ public class PegContext {
 
         final PegContext combinedLocalVars = initMap(
                 domain,
-                p -> PegNode.phi(guardId, c1.get(p).id, c2.get(p).id),
+                p -> PegNode.phi(guardId, c1.getLocalVar(p).id, c2.getLocalVar(p).id),
                 c1.fieldNames,
                 combinedHeap,
                 combinedExitConditions);
@@ -80,13 +80,13 @@ public class PegContext {
      * @return the associated {@code PegNode}
      * @throws IllegalArgumentException if {@code key} is neither a method parameter or a field accessed by the method
      */
-    public PegNode get(String key) {
+    public PegNode getLocalVar(String key) {
         if (localVariableLookup.containsKey(key)) {
             return localVariableLookup.get(key);
         }
         if (fieldNames.contains(key)) {
             // Todo: check for static fields/etc
-            return PegNode.rd(PegNode.path(get("this").id, key).id, heap.id);
+            return PegNode.rd(PegNode.path(getLocalVar("this").id, key).id, heap.id);
         }
         throw new IllegalArgumentException("No such lookup item " + key);
     }
@@ -97,7 +97,7 @@ public class PegContext {
      * @return new {@code PegContext} identical to this except for at {@code key} now maps to {@code val}
      * @throws IllegalArgumentException if key or val is null
      */
-    public PegContext set(final String key, final PegNode val) {
+    public PegContext setLocalVar(final String key, final PegNode val) {
         if (key == null) throw new IllegalArgumentException("Cannot add null key to serializer.peg.PegContext");
         if (val == null) throw new IllegalArgumentException("Cannot add null val to serializer.peg.PegContext");
 

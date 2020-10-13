@@ -28,7 +28,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
                 return performWrite(fieldAccess, value, ctx);
             }
 
-            return ctx.set(n.getTarget().asNameExpr().getNameAsString(), value);
+            return ctx.setLocalVar(n.getTarget().asNameExpr().getNameAsString(), value);
         }
         else if (n.getTarget().isFieldAccessExpr()) {
             // todo: update heap
