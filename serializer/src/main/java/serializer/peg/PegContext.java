@@ -76,8 +76,7 @@ public class PegContext {
     /**
      * Lookup a key in the context. This key can correspond to a {@code parameter} or a {@code field}
      * @param key the method parameter or field name to look up in this context
-     * @return the associated {@code PegNode}
-     * @throws IllegalArgumentException if {@code key} is neither a method parameter or a field accessed by the method
+     * @return the associated {@code PegNode} if it exists, and PegNode.unit() otherwise.
      */
     public PegNode getLocalVar(String key) {
         if (localVariableLookup.containsKey(key)) {
