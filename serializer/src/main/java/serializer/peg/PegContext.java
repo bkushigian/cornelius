@@ -125,6 +125,19 @@ public class PegContext {
     }
 
     /**
+     * Create a new PegContext identical to this one but with an added exit condition.
+     * @param exitCondition the condition to add
+     * @return the new PegContext with updated exitConditions
+     */
+    public PegContext withExitCondition(final PegNode exitCondition) {
+      ImmutableSet.Builder<PegNode> builder = ImmutableSet.builder();
+      builder.addAll(exitConditions);
+      builder.add(exitCondition);
+      final ImmutableSet<PegNode> exitConditions = builder.build();
+      return new PegContext(localVariableLookup, fieldNames, heap, exitConditions);
+    }
+
+    /**
      * Initialize a map from a domain and a function on that domain
      * @param keys the keys that the new {@code PegContext} will operate over
      * @param f  function to combine peg nodes under a guard
