@@ -18,9 +18,8 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
 
         final ExpressionResult rhsExprResult = n.getRight().accept(this, context);
         final PegNode rhs = rhsExprResult.peg;
-        context = rhsExprResult.context;
 
-        return handleBinExpr(n, lhs, rhs).exprResult(context);
+        return handleBinExpr(n, lhs, rhs).exprResult(rhsExprResult.context);
     }
 
     /**
