@@ -375,7 +375,7 @@ public abstract class PegNode {
      * @throws NullPointerException if either argument is {@code null}
      */
      public static Heap heap(Integer state, Integer status) {
-         if (state == null || status == null) throw new NullPointerException();
+         if (state == null || status == null) throw new IllegalStateException();
          final String sym = "heap";
          final List<Integer> childs = new ArrayList<>(2);
          childs.add(state);
