@@ -84,7 +84,7 @@ public class PegContext {
             // Todo: check for static fields/etc
             return PegNode.rd(PegNode.path(getLocalVar("this").id, key).id, heap.id);
         }
-        throw new IllegalArgumentException("No such lookup item " + key);
+        return PegNode.unit();
     }
 
     /**
