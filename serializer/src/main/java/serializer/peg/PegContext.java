@@ -71,7 +71,6 @@ public class PegContext {
 
     public boolean isUnshadowedField(final String key) {
       return isField(key) && !localVariableLookup.containsKey(key);
-
     }
 
     /**
