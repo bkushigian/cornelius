@@ -11,41 +11,23 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PegContext {
-    static final PegContext empty = new PegContext();
 
     final private ImmutableMap<String, PegNode> paramLookup;
     final private Set<String> fieldNames;
     final PegNode.Heap heap;
-    final ImmutableSet<PegNode> exitConditions =  ImmutableSet.of();
+    final ImmutableSet<PegNode> exitConditions;
 
     // XXX The following relies on there being a _unique_ return node in the AST
     PegNode returnNode = null;
 
-    private PegContext() {
-        paramLookup = ImmutableMap.of();
-        fieldNames = new HashSet<>();
-        heap = PegNode.initialHeap();
-    }
-
-    private PegContext(final PegContext ctx, final PegNode.Heap heap) {
-        this.heap = heap;
-        this.paramLookup = ctx.paramLookup;
-        this.fieldNames = ctx.fieldNames;
-    }
-
-    private PegContext(final Set<String> keys, final Function<String, PegNode> f, final Set<String> fieldNames,
-                       final PegNode.Heap heap) {
-        final ImmutableMap.Builder<String, PegNode> builder = ImmutableMap.builderWithExpectedSize(keys.size());
-        keys.forEach(k -> builder.put(k, f.apply(k)));
-        paramLookup = builder.build();
+    private PegContext(final ImmutableMap<String, PegNode> paramLookup,
+                       final Set<String> fieldNames,
+                       final PegNode.Heap heap,
+                       final ImmutableSet<PegNode> exitConditions) {
+        this.paramLookup = paramLookup;
         this.fieldNames = fieldNames;
         this.heap = heap;
-    }
-
-    private PegContext(ImmutableMap<String, PegNode> map, final Set<String> fieldNames, final PegNode.Heap heap) {
-        this.fieldNames = fieldNames;
-        this.paramLookup = map;
-        this.heap = heap;
+        this.exitConditions = exitConditions;
     }
 
     /**
@@ -65,11 +47,16 @@ public class PegContext {
                 PegNode.phi(guardId, c1.heap.status, c2.heap.status).id
         );
 
+        final ImmutableSet<PegNode> combinedExitConditions = (new ImmutableSet.Builder<PegNode>())
+                .addAll(c1.exitConditions)
+                .addAll(c2.exitConditions).build();
+
         final PegContext combinedLocalVars = initMap(
                 domain,
                 p -> PegNode.phi(guardId, c1.get(p).id, c2.get(p).id),
                 c1.fieldNames,
-                combinedHeap);
+                combinedHeap,
+                combinedExitConditions);
 
         return combinedLocalVars;
     }
@@ -126,7 +113,7 @@ public class PegContext {
         } else {
             b.putAll(paramLookup);
         }
-        return new PegContext(b.build(), fieldNames, heap);
+        return new PegContext(b.build(), fieldNames, heap, exitConditions);
     }
 
     /**
@@ -136,7 +123,7 @@ public class PegContext {
      *         in {@code heap}'s value
      */
     public PegContext withHeap(final PegNode.Heap heap) {
-        return new PegContext(this, heap);
+      return new PegContext(paramLookup, fieldNames, heap, exitConditions);
     }
 
     /**
@@ -147,9 +134,16 @@ public class PegContext {
      * @param heap the heap value to use in the resulting {@code PegContext}
      * @return a new context mapping all keys to values as specified by {@code f}
      */
-    public static PegContext initMap(final Set<String> keys, final Function<String, PegNode> f,
-                                     final Set<String> fieldNames, final PegNode.Heap heap) {
-        return new PegContext(keys, f, fieldNames, heap);
+    public static PegContext initMap(final Set<String> keys,
+                                     final Function<String, PegNode> f,
+                                     final Set<String> fieldNames,
+                                     final PegNode.Heap heap,
+                                     final ImmutableSet<PegNode> exitConditions)
+    {
+
+        final ImmutableMap.Builder<String, PegNode> builder = ImmutableMap.builderWithExpectedSize(keys.size());
+        keys.forEach(k -> builder.put(k, f.apply(k)));
+        return new PegContext(builder.build(), fieldNames, heap, exitConditions);
     }
 
     /**
@@ -168,7 +162,7 @@ public class PegContext {
         for (String param : params) {
             builder.put(param, PegNode.var(param));
         }
-        return new PegContext(builder.build(), fieldNames, PegNode.initialHeap());
+        return new PegContext(builder.build(), fieldNames, PegNode.initialHeap(), ImmutableSet.of());
     }
 
     /**
