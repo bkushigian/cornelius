@@ -11,10 +11,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PegContext {
+    static final PegContext empty = new PegContext();
+
     final private ImmutableMap<String, PegNode> paramLookup;
     final private Set<String> fieldNames;
     final PegNode heap;
-    static final PegContext empty = new PegContext();
+    final ImmutableSet<PegNode> exitConditions =  ImmutableSet.of();
+
+    // XXX The following relies on there being a _unique_ return node in the AST
     PegNode returnNode = null;
 
     private PegContext() {
