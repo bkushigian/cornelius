@@ -225,7 +225,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
             return er.withContext(ctx.performAssignLocalVar(nameString, value));
         }
         else if (n.getTarget().isFieldAccessExpr()) {
-            // todo: update heap
+            // todo: can this be done with normal 'visit'?
             final FieldAccessExpr fieldAccess = n.getTarget().asFieldAccessExpr();
             return performWrite(fieldAccess, value, ctx).withPeg(value);
         }
