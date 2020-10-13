@@ -34,7 +34,7 @@ public class PegContext {
      * @param c1 the context resulting from the then branch that executes if {@code guardId} is true
      * @param c2 the context resulting from the else branch that executes if {@code guardId} is false
      * @param guardId the id of the branching condition
-     * @return
+     * @return combined contexts
      */
     public static PegContext combine(PegContext c1, PegContext c2, Integer guardId) {
         assert c1.fieldNames == c2.fieldNames;  // TODO: is this true? This should be true
@@ -50,14 +50,12 @@ public class PegContext {
                 .addAll(c1.exitConditions)
                 .addAll(c2.exitConditions).build();
 
-        final PegContext combinedLocalVars = initMap(
+        return initMap(
                 domain,
                 p -> PegNode.phi(guardId, c1.getLocalVar(p).id, c2.getLocalVar(p).id),
                 c1.fieldNames,
                 combinedHeap,
                 combinedExitConditions);
-
-        return combinedLocalVars;
     }
 
     /**
