@@ -116,7 +116,7 @@ public class PegContext {
      * exitConditions.
      * @param key variable name we are assigning to
      * @param val value we are assigning
-     * @return
+     * @return context resulting from assignment
      */
     public PegContext performAssignLocalVar(final String key, final PegNode val) {
       if (exitConditions.isEmpty()) {
