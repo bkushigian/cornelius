@@ -44,6 +44,9 @@ public abstract class PegNode {
         return Optional.empty();
     }
 
+    public Optional<Heap> asHeap() {
+            return Optional.empty();
+    }
 
     public static class IntLit extends PegNode {
         public final int value;
@@ -187,6 +190,41 @@ public abstract class PegNode {
         }
     }
 
+    public static class Heap extends OpNode {
+        /**
+         * The heap state's id
+         */
+        public final Integer state;
+        /**
+         * The heap status's id
+         */
+        public final Integer status;
+
+        /**
+         * Create a new Heap node
+         * @param state the heap state's id
+         * @param status the exception status's id
+         */
+        private Heap(final Integer state, final Integer status) {
+            super("heap", state, status);
+            this.state = state;
+            this.status = status;
+        }
+
+        @Override
+        public Optional<Heap> asHeap() {
+            return Optional.of(this);
+        }
+
+        public Heap withState(final Integer state) {
+            return new Heap(state, status);
+        }
+
+        public Heap withStatus(final Integer status) {
+            return new Heap(state, status);
+        }
+    }
+
     /**
      * lookup the PEG node from an id
      */
@@ -284,19 +322,44 @@ public abstract class PegNode {
         return opNode("proj-val", invocation);
     }
 
-    public static PegNode projectHeap(Integer invocation) {
-        return opNode("proj-heap", invocation);
+    public static PegNode invocationToHeapState(Integer invocation) {
+        return opNode("invoke->heap-state", invocation);
     }
 
-    public static PegNode nullLit() {
-        return opNode("null");
+    public static PegNode invocationToExceptionStatus(Integer invocation) {
+        return opNode("invoke->exception-status", invocation);
+    }
+
+    public static Heap projectHeap(Integer invocation) {
+        return heap(invocationToHeapState(invocation).id, invocationToExceptionStatus(invocation).id);
     }
 
     // differentiate between heaps
     private static int heapIndex = 1;
-    public static PegNode heap() {
-      return opNode("heap", intLit(heapIndex++).id);
-    }
+
+    /**
+     * Get a heap node with {@code state} and {@code status} arguments, creating and caching one if one doesn't
+     * already exist.
+     * @param state
+     * @param status
+     * @return t
+     * @throws IllegalStateException if the cached node is not a {@code PegNode.Heap}
+     * @throws NullPointerException if either argument is {@code null}
+     */
+     public static Heap heap(Integer state, Integer status) {
+         if (state == null || status == null) throw new NullPointerException();
+         final String sym = "heap";
+         final List<Integer> childs = new ArrayList<>(2);
+         childs.add(state);
+         childs.add(status);
+         if (!symbolLookup.containsKey(sym) || !symbolLookup.get(sym).containsKey(childs)) {
+             return new Heap(state, status);
+         }
+         final PegNode node = symbolLookup.get(sym).get(childs);
+         return node.asHeap().orElseThrow(() -> new IllegalStateException(
+                 String.format("Unexpected value cached for sym=\"heap\", children=[%d, %d]; expected a PegNode.Heap " +
+                         "but found %s", state, status, symbolLookup.get(sym).get(childs).toDerefString())));
+     }
 
     /**
      * Get the initial heap, indexed at 0, to represent the heap coming into a method.
@@ -306,8 +369,16 @@ public abstract class PegNode {
      * NOTE: This will have to change for inlining; I'll mark this as a TODO
      * @return the initial heap {@code PegNode}
      */
-    public static PegNode initialHeap() {
-        return opNode("heap", intLit(0).id);
+     public static PegNode.Heap initialHeap() {
+       return heap(intLit(0).id, unit().id);
+     }
+
+    public static Heap wrHeap(Integer path, Integer val, Heap heap) {
+         return heap.withState(wr(path, val, heap.id).id);
+    }
+
+    public static PegNode nullLit() {
+        return opNode("null");
     }
 
     public ExpressionResult exprResult(final PegContext context) {

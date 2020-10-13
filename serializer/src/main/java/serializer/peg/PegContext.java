@@ -15,7 +15,7 @@ public class PegContext {
 
     final private ImmutableMap<String, PegNode> paramLookup;
     final private Set<String> fieldNames;
-    final PegNode heap;
+    final PegNode.Heap heap;
     final ImmutableSet<PegNode> exitConditions =  ImmutableSet.of();
 
     // XXX The following relies on there being a _unique_ return node in the AST
@@ -24,17 +24,17 @@ public class PegContext {
     private PegContext() {
         paramLookup = ImmutableMap.of();
         fieldNames = new HashSet<>();
-        heap = PegNode.heap();
+        heap = PegNode.initialHeap();
     }
 
-    private PegContext(final PegContext ctx, final PegNode heap) {
+    private PegContext(final PegContext ctx, final PegNode.Heap heap) {
         this.heap = heap;
         this.paramLookup = ctx.paramLookup;
         this.fieldNames = ctx.fieldNames;
     }
 
     private PegContext(final Set<String> keys, final Function<String, PegNode> f, final Set<String> fieldNames,
-                       final PegNode heap) {
+                       final PegNode.Heap heap) {
         final ImmutableMap.Builder<String, PegNode> builder = ImmutableMap.builderWithExpectedSize(keys.size());
         keys.forEach(k -> builder.put(k, f.apply(k)));
         paramLookup = builder.build();
@@ -42,36 +42,36 @@ public class PegContext {
         this.heap = heap;
     }
 
-    private PegContext(ImmutableMap<String, PegNode> map, final Set<String> fieldNames, final PegNode heap) {
+    private PegContext(ImmutableMap<String, PegNode> map, final Set<String> fieldNames, final PegNode.Heap heap) {
         this.fieldNames = fieldNames;
         this.paramLookup = map;
         this.heap = heap;
     }
 
     /**
-     * Combine two contexts, say after an if-else branch merge.
-     * @param c1 the first context
-     * @param c2 the second context
-     * @param f the combination function; should normally be something like:
-     *  <pre>
-     *   p -> p.fst.equals(p.snd) ?
-     *     p.fst :
-     *    PegNode.phi(guard.id, p.fst.id, p.snd.id)
-     *  </pre>
-     * @return the combined context
+     * Combine two contexts, merging control flow.
+     * @param c1 the context resulting from the then branch that executes if {@code guardId} is true
+     * @param c2 the context resulting from the else branch that executes if {@code guardId} is false
+     * @param guardId the id of the branching condition
+     * @return
      */
-    public static PegContext combine(PegContext c1, PegContext c2, Function<Pair<PegNode, PegNode>, PegNode> f) {
+    public static PegContext combine(PegContext c1, PegContext c2, Integer guardId) {
+        assert c1.fieldNames == c2.fieldNames;  // TODO: is this true? This should be true
         final ImmutableSet<String> domain = c1.paramLookup.keySet().stream().filter(c2.paramLookup::containsKey)
                 .collect(Collectors.collectingAndThen(Collectors.toSet(), ImmutableSet::copyOf));
 
-        assert c1.fieldNames == c2.fieldNames;  // TODO: is this true? This should be true
-        final PegNode heap = f.apply(new Pair<>(c1.heap, c2.heap));
-        return PegContext.initMap(domain, k -> f.apply(new Pair<>(c1.get(k), c2.get(k))), c1.fieldNames, heap);
-    }
+        final PegNode.Heap combinedHeap = PegNode.heap(
+                PegNode.phi(guardId, c1.heap.state, c2.heap.state).id,
+                PegNode.phi(guardId, c1.heap.status, c2.heap.status).id
+        );
 
-    public static PegContext combine(PegContext c1, PegContext c2, Integer guardId) {
-        return PegContext.combine(c1, c2, p -> p.fst.equals(p.snd) ? p.fst : PegNode.phi(guardId, p.fst.id, p.snd.id));
+        final PegContext combinedLocalVars = initMap(
+                domain,
+                p -> PegNode.phi(guardId, c1.get(p).id, c2.get(p).id),
+                c1.fieldNames,
+                combinedHeap);
 
+        return combinedLocalVars;
     }
 
     /**
@@ -135,7 +135,7 @@ public class PegContext {
      * @return a new {@code PegContext} identical to this one save for it's heap value, which is set to the passed
      *         in {@code heap}'s value
      */
-    public PegContext withHeap(final PegNode heap) {
+    public PegContext withHeap(final PegNode.Heap heap) {
         return new PegContext(this, heap);
     }
 
@@ -148,7 +148,7 @@ public class PegContext {
      * @return a new context mapping all keys to values as specified by {@code f}
      */
     public static PegContext initMap(final Set<String> keys, final Function<String, PegNode> f,
-                                     final Set<String> fieldNames, final PegNode heap) {
+                                     final Set<String> fieldNames, final PegNode.Heap heap) {
         return new PegContext(keys, f, fieldNames, heap);
     }
 

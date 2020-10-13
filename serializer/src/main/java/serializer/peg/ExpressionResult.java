@@ -8,7 +8,7 @@ public class ExpressionResult {
     this.context = context;
   }
 
-  public ExpressionResult withHeap(PegNode heap) {
+  public ExpressionResult withHeap(PegNode.Heap heap) {
     return new ExpressionResult(peg, context.withHeap(heap));
   }
 

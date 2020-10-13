@@ -1,7 +1,6 @@
 package serializer.peg;
 
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
@@ -46,8 +45,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
         final ExpressionResult er = pev.getPathFromFieldAccessExpr(fieldAccess, ctx);
         ctx = er.context;
         final PegNode target = er.peg;
-        return ctx.withHeap(PegNode.wr(target.id, value.id, ctx.heap.id));
-
+        return ctx.withHeap(PegNode.wrHeap(target.id, value.id, ctx.heap));
     }
 
     @Override
@@ -74,7 +72,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
         final PegContext c1 = n.getThenStmt().accept(this, ctx);
         final PegContext c2 = n.getElseStmt().isPresent() ? n.getElseStmt().get().accept(this, ctx)
                                                           : ctx;
-        return PegContext.combine(c1, c2, p -> p.fst.equals(p.snd) ? p.fst : PegNode.phi(guard.id, p.fst.id, p.snd.id));
+        return PegContext.combine(c1, c2, guard.id);
     }
 
     @Override

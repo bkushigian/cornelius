@@ -328,6 +328,6 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     // Helper function to produce a new Context storing the write
     ExpressionResult performWrite(FieldAccessExpr fieldAccess, PegNode value, PegContext ctx) {
         final ExpressionResult er = getPathFromFieldAccessExpr(fieldAccess, ctx);
-        return er.withHeap(PegNode.wr(er.peg.id, value.id, er.context.heap.id));
+        return er.withHeap(PegNode.wrHeap(er.peg.id, value.id, er.context.heap));
     }
 }
