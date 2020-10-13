@@ -208,7 +208,6 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         return arg.exprResult(PegNode.unit());
     }
 
-
     @Override
     public ExpressionResult visit(AssignExpr n, PegContext ctx) {
         final ExpressionResult er = n.getValue().accept(this, ctx);
