@@ -1,6 +1,9 @@
 package serializer.peg;
 
+import com.google.common.collect.ImmutableSet;
+
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class PegNode {
 
@@ -46,6 +49,14 @@ public abstract class PegNode {
 
     public Optional<Heap> asHeap() {
             return Optional.empty();
+    }
+
+    public Optional<ExitConditions> asExitConditions() {
+        return Optional.empty();
+    }
+
+    public Optional<OpNode> asOpNode() {
+        return Optional.empty();
     }
 
     public static class IntLit extends PegNode {
@@ -225,6 +236,18 @@ public abstract class PegNode {
         }
     }
 
+    public static class ExitConditions extends OpNode {
+
+        private ExitConditions(Integer...conditions) {
+            super("exit-condition", conditions);
+        }
+
+        @Override
+        public Optional<ExitConditions> asExitConditions() {
+            return Optional.of(this);
+        }
+    }
+
     /**
      * lookup the PEG node from an id
      */
@@ -383,5 +406,27 @@ public abstract class PegNode {
 
     public ExpressionResult exprResult(final PegContext context) {
         return new ExpressionResult(this, context);
+    }
+
+    public static ExitConditions exitConditions(ImmutableSet<PegNode> conditions) {
+       for (PegNode c : conditions) {
+           if (c == null) {
+               throw new IllegalStateException("Found null condition");
+           }
+       }
+        final String sym = "exit-conditions";
+        final List<Integer> childs = new ArrayList<>(conditions.size());
+        childs.addAll(conditions.stream().map(c -> c.id).collect(Collectors.toList()));
+        childs.sort(null);
+
+        if (!symbolLookup.containsKey(sym) || !symbolLookup.get(sym).containsKey(childs)) {
+            return new ExitConditions(childs.toArray(new Integer[0]));
+        }
+        final PegNode node = symbolLookup.get(sym).get(childs);
+        return node.asExitConditions().orElseThrow(() -> new IllegalStateException(
+                String.format("Unexpected value cached for sym=\"exit-condition\", children=[%s]; expected a " +
+                        "PegNode.ExitConditions " +
+                        "but found %s", childs.toString(), symbolLookup.get(sym).get(childs).toDerefString())));
+
     }
 }
