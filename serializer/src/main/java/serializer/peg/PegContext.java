@@ -112,6 +112,20 @@ public class PegContext {
     }
 
     /**
+     * A helper method wrapping {@code setLocalVar} to predicate assignments on appropriate checks against
+     * exitConditions.
+     * @param key variable name we are assigning to
+     * @param val value we are assigning
+     * @return
+     */
+    public PegContext performAssignLocalVar(final String key, final PegNode val) {
+      if (exitConditions.isEmpty()) {
+          return setLocalVar(key, val);
+      }
+      return setLocalVar(key, PegNode.phi(PegNode.exitConditions(exitConditions).id, getLocalVar(key).id, val.id));
+    }
+
+    /**
      * Update the heap
      * @param heap the new heap to be used in the new {@code PegContext}
      * @return a new {@code PegContext} identical to this one save for it's heap value, which is set to the passed
