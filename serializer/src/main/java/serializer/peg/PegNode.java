@@ -346,8 +346,8 @@ public abstract class PegNode {
         return opNode("actuals", actuals);
     }
 
-    public static PegNode projectVal(Integer invocation) {
-        return opNode("proj-val", invocation);
+    public static PegNode invokeToPeg(Integer invocation) {
+        return opNode("invoke->peg", invocation);
     }
 
     public static PegNode invocationToHeapState(Integer invocation) {
@@ -356,6 +356,10 @@ public abstract class PegNode {
 
     public static PegNode invocationToExceptionStatus(Integer invocation) {
         return opNode("invoke->exception-status", invocation);
+    }
+
+    public static PegNode invocationThrew(Integer invocation) {
+        return opNode("invocation-threw?", invocation);
     }
 
     public static Heap projectHeap(Integer invocation) {
@@ -397,9 +401,9 @@ public abstract class PegNode {
      * NOTE: This will have to change for inlining; I'll mark this as a TODO
      * @return the initial heap {@code PegNode}
      */
-     public static PegNode.Heap initialHeap() {
-       return heap(intLit(0).id, unit().id);
-     }
+    public static PegNode.Heap initialHeap() {
+      return heap(intLit(0).id, unit().id);
+    }
 
     public static Heap wrHeap(Integer path, Integer val, Heap heap) {
          return heap.withState(wr(path, val, heap.id).id);
@@ -407,6 +411,18 @@ public abstract class PegNode {
 
     public static PegNode nullLit() {
         return opNode("null");
+    }
+
+    public static PegNode isnull(Integer valId) {
+        return opNode("isnull?", valId);
+    }
+
+    public static PegNode isunit(Integer valId) {
+        return opNode("isunit?", valId);
+    }
+
+    public static PegNode exception(final String name) {
+        return opNode(name);
     }
 
     public ExpressionResult exprResult(final PegContext context) {

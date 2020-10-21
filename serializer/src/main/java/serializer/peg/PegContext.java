@@ -80,7 +80,7 @@ public class PegContext {
         if (localVariableLookup.containsKey(key)) {
             return localVariableLookup.get(key);
         }
-        if (fieldNames.contains(key)) {
+        if (isUnshadowedField(key)) {
             // Todo: check for static fields/etc
             return PegNode.rd(PegNode.path(getLocalVar("this").id, key).id, heap.id);
         }
@@ -146,6 +146,34 @@ public class PegContext {
       builder.add(exitCondition);
       final ImmutableSet<PegNode> exitConditions = builder.build();
       return new PegContext(localVariableLookup, fieldNames, heap, exitConditions);
+    }
+
+    /**
+     * Update this context's exception status to reflect possible exceptional behavior
+     * @param condition the boolean condition that implies exceptional behavior
+     * @param exception the exception
+     * @return
+     */
+    public PegContext withExceptionCondition(final PegNode condition, final PegNode exception) {
+        PegNode.Heap newHeap;
+        // Check for the case of `(phi (isunit? unit) thn els)` and transform to `thn`
+        if (heap.status == PegNode.unit().id) {
+            newHeap = heap.withStatus(PegNode.phi(condition.id, exception.id, PegNode.unit().id).id);
+        }
+        // Update the status to check if we already have an exception. If so, pass that exceptional status on.
+        // Otherwise, mark the current status as {@code exception}
+        // (phi (isunit? heap.status                            ;; If the status is unit, nothing thrown yet
+        //               (phi condition.id exception.id unit)   ;; ...so check for exception
+        //               heap.status)                           ;; Otherwise, use that status
+        else {
+            newHeap = heap.withStatus(
+                    PegNode.phi(
+                            PegNode.isunit(heap.status).id,
+                            PegNode.phi(condition.id, exception.id, PegNode.unit().id).id,
+                            heap.status).id
+            );
+        }
+        return withExitCondition(condition).withHeap(newHeap);
     }
 
     /**

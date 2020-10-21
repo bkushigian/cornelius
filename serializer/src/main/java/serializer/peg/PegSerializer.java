@@ -25,9 +25,6 @@ public class PegSerializer {
         for (final String meth: translated.keySet()) {
           final PegNode node = translated.get(meth);
           System.out.printf("%s: %s\n", meth, node.toDerefString());
-
-
-
         }
       } catch (FileNotFoundException e) {
         System.out.println("Couldn't load file " + javaFile);
