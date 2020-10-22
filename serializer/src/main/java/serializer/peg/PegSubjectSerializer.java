@@ -115,7 +115,8 @@ public class PegSubjectSerializer {
 
                         xmlGen.addMutant(sig, row.id, row.pegId);
                         if (printDerefStrings) {
-                            System.out.printf("mutant %s: %s\n", row.id, PegNode.getIdLookup().get(row.pegId).toDerefString());
+                            System.out.printf("mutant %s: %s\n", row.id,
+                                    PegNode.idLookup(row.pegId).map(PegNode::toDerefString));
                         }
 
                     } catch (FileNotFoundException e) {
@@ -124,6 +125,7 @@ public class PegSubjectSerializer {
                 }
             }
 
+            // TODO: this involves giving public access to the idLookup which is sketchy.
             xmlGen.addDeduplicationTable(PegNode.getIdLookup());
 
             xmlGen.writeToFile("subjects.xml");

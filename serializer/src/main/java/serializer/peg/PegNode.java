@@ -12,6 +12,10 @@ public abstract class PegNode {
         return new HashMap<>(idLookup);
     }
 
+    public static Optional<PegNode> idLookup(final Integer id) {
+        return Optional.ofNullable(idLookup.get(id));
+    }
+
     public String toDerefString() {
         return toString();
     }
@@ -57,6 +61,10 @@ public abstract class PegNode {
 
     public Optional<OpNode> asOpNode() {
         return Optional.empty();
+    }
+
+    public ExpressionResult exprResult(final PegContext context) {
+        return new ExpressionResult(this, context);
     }
 
     public static class IntLit extends PegNode {
@@ -425,12 +433,8 @@ public abstract class PegNode {
         return opNode(name);
     }
 
-    public ExpressionResult exprResult(final PegContext context) {
-        return new ExpressionResult(this, context);
-    }
-
-    public static ExitConditions exitConditions(ImmutableSet<PegNode> conditions) {
-       for (PegNode c : conditions) {
+    public static ExitConditions exitConditions(Collection<PegNode> conditions) {
+       for (PegNode c : new HashSet<PegNode>(conditions)) {
            if (c == null) {
                throw new IllegalStateException("Found null condition");
            }
