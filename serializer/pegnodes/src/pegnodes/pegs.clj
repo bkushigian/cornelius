@@ -156,4 +156,3 @@ EXCEPTION: the exception to be thrown"
                                 node)
           :else (throw (IllegalArgumentException. "Expected an OpNode of some sort")))))
 
-(defn foo [] 1)
