@@ -16,6 +16,10 @@ public abstract class PegNode {
         return Optional.ofNullable(idLookup.get(id));
     }
 
+    public static void clearIdLookupTable() {
+        idLookup.clear();
+    }
+
     public String toDerefString() {
         return toString();
     }
@@ -27,6 +31,11 @@ public abstract class PegNode {
 
     PegNode(Integer...children) {
         this.id = _id++;
+        for (Integer child: children) {
+            if (child >= id) {
+                throw new IllegalStateException(String.format("PegNode with id %d has child with id %d: children must have ids that are strictly less than that of their parents", id, child));
+            }
+        }
         idLookup.put(id, this);
         this.children = Arrays.asList(children);
     }
@@ -55,6 +64,27 @@ public abstract class PegNode {
             return Optional.empty();
     }
 
+    public boolean isHeap() {
+        return false;
+    }
+
+    public boolean isIntLit() {
+        return false;
+    }
+
+    public boolean isBoolLit() {
+        return false;
+    }
+
+    public boolean isOpNode() {
+        return false;
+    }
+
+    public boolean isExitConditions() {
+        return false;
+    }
+
+
     public Optional<ExitConditions> asExitConditions() {
         return Optional.empty();
     }
@@ -73,6 +103,11 @@ public abstract class PegNode {
             this.value = value;
             idLookup.put(this.id, this);
             litLookup.put(value, this);
+        }
+
+        @Override
+        public boolean isIntLit() {
+            return true;
         }
 
         @Override
@@ -114,6 +149,11 @@ public abstract class PegNode {
         }
 
         @Override
+        public boolean isBoolLit() {
+            return true;
+        }
+
+        @Override
         public Optional<Boolean> asBoolean() {
             return Optional.of(value);
         }
@@ -151,6 +191,11 @@ public abstract class PegNode {
             idLookup.put(id, this);
             symbolLookup.computeIfAbsent(op, x -> new HashMap<>())
                         .put(this.children, this);
+        }
+
+        @Override
+        public boolean isOpNode() {
+            return true;
         }
 
         @Override
@@ -236,6 +281,11 @@ public abstract class PegNode {
         }
 
         @Override
+        public boolean isHeap() {
+            return true;
+        }
+
+        @Override
         public Optional<Heap> asHeap() {
             return Optional.of(this);
         }
@@ -253,6 +303,11 @@ public abstract class PegNode {
 
         private ExitConditions(Integer...conditions) {
             super("exit-condition", conditions);
+        }
+
+        @Override
+        public boolean isExitConditions() {
+            return true;
         }
 
         @Override
