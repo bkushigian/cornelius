@@ -489,11 +489,11 @@ public abstract class PegNode {
     }
 
     public static ExitConditions exitConditions(Collection<PegNode> conditions) {
-       for (PegNode c : new HashSet<PegNode>(conditions)) {
-           if (c == null) {
-               throw new IllegalStateException("Found null condition");
-           }
-       }
+        for (PegNode c : new HashSet<PegNode>(conditions)) {
+            if (c == null) {
+                throw new IllegalStateException("Found null condition");
+            }
+        }
         final String sym = "exit-conditions";
         final List<Integer> childs = new ArrayList<>(conditions.size());
         childs.addAll(conditions.stream().map(c -> c.id).collect(Collectors.toList()));
