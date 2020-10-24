@@ -7,9 +7,6 @@ public class FieldAccess {
      * This tests more field writing and reading, using overloaded names, and doing multiple rewrites.
      *
      * Expected PEG:
-     * <pre>
-     * (method-root (+ (+ (rd (path (var this) (derefs x)) (heap 0)) (var y)) (rd (path (rd (path (rd (path (var this) (derefs fa)) (heap 0)) (derefs fa)) (heap 0)) (derefs y)) (heap 0))) (wr (path (var this) (derefs y)) (var y) (wr (path (var this) (derefs y)) (var y) (wr (path (var this) (derefs x)) (var ex) (heap 0)))))
-     * </pre>
      */
     int test(int ex, int y) {
         // Heap: (heap 0)
@@ -104,45 +101,117 @@ public class FieldAccess {
      * This test case checks dereferencing fields
      *
      * Expected PEG:
-     * <pre>
-     * (method-root (rd (path (rd (path (rd (path (var this) (derefs fa)) (heap 0)) (derefs fa)) (heap 0)) (derefs y)) (heap 0)) (heap 0))
-     * </pre>
+     * <target-peg>
+     * (let [heap  (initial-heap)
+     *       peg1  (rd (param "this") "fa" heap)
+     *       heap  (update-exception-status heap (is-null? (param "this")) (exception "java.lang.NullPointerException"))
+     *       peg2  (rd peg1 "fa" heap)
+     *       heap  (update-exception-status heap (is-null? peg1) (exception "java.lang.NullPointerException"))
+     *       peg3  (rd peg2 "y"  heap)
+     *       heap  (update-exception-status heap (is-null? peg2) (exception "java.lang.NullPointerException"))]
+     *   (method-root peg3 heap))
+     *   
+     * </target-peg>
      */
     int simpleFieldAccess() {
         return this.fa.fa.y;
     }
 
     /**
-     * <pre>
-     * (method-root (invoke->peg (invoke (heap 0 unit) (var this) getFieldAccess actuals)) (heap (invoke->heap-state (invoke (heap 0 unit) (var this) getFieldAccess actuals)) (invoke->exception-status (invoke (heap 0 unit) (var this) getFieldAccess actuals))))
-     * </pre>
+     * <target-peg>
+     * (let [heap (initial-heap)
+     *       recv (param  "this")
+     *       args (actuals)
+     *       invk (invoke heap recv "getFieldAccess" args)]
+     *   (method-root (invoke->peg invk) (invoke->heap invk)))
+     * </target-peg>
      */
     FieldAccess methodInvocation() {
         return getFieldAccess();
     }
 
     /**
-     * <pre>
-     * (method-root (invoke->peg (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals)) (heap (invoke->heap-state (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals)) (invoke->exception-status (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals))))
-     * </pre>
+     * methodInvocation2()
+     * <target-peg>
+     * (let
+     *  [heap
+     *   (initial-heap)
+     *   recv
+     *   (rd (param "this") "fa" heap)
+     *   args
+     *   (actuals)
+     *   invk
+     *   (invoke heap recv "getFieldAccess" args)]
+     *  (method-root (invoke->peg invk) (invoke->heap invk)))
+     * </target-peg>
      */
     FieldAccess methodInvocation2() {
         return fa.getFieldAccess();
     }
 
     /**
-     * <pre>
-     * (method-root (rd (path (invoke->peg (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals)) (derefs fa)) (heap (invoke->heap-state (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals)) (invoke->exception-status (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals)))) (heap (invoke->heap-state (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals)) (phi (isunit? (invoke->exception-status (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals))) (phi (isnull? (invoke->peg (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals))) java.lang.NullPointerException unit) (invoke->exception-status (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals)))))
-     * </pre>
+     * methodInvocation3()
+     * <target-peg>
+     * (let
+     *  [heap
+     *   (initial-heap)
+     *   recv
+     *   (rd (param "this") "fa" heap)
+     *   args
+     *   (actuals)
+     *   invk
+     *   (invoke heap recv "getFieldAccess" args)
+     *   peg1
+     *   (invoke->peg invk)
+     *   heap
+     *   (invoke->heap invk)
+     *   peg2
+     *   (rd peg1 "fa" heap)
+     *   heap
+     *   (update-exception-status
+     *    heap
+     *    (is-null? peg1)
+     *    (exception "java.lang.NullPointerException"))]
+     *  (method-root peg2 heap))
+     * </target-peg>
      */
+
     FieldAccess methodInvocation3() {
         return fa.getFieldAccess().fa;
     }
 
     /**
-     * <pre>
-     * (method-root (rd (path (rd (path (invoke->peg (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals)) (derefs fa)) (heap (invoke->heap-state (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals)) (invoke->exception-status (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals)))) (derefs y)) (heap (invoke->heap-state (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals)) (phi (isunit? (invoke->exception-status (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals))) (phi (isnull? (invoke->peg (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals))) java.lang.NullPointerException unit) (invoke->exception-status (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals))))) (heap (invoke->heap-state (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals)) (phi (isunit? (phi (isunit? (invoke->exception-status (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals))) (phi (isnull? (invoke->peg (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals))) java.lang.NullPointerException unit) (invoke->exception-status (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals)))) (phi (isnull? (rd (path (invoke->peg (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals)) (derefs fa)) (heap (invoke->heap-state (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals)) (invoke->exception-status (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals))))) java.lang.NullPointerException unit) (phi (isunit? (invoke->exception-status (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals))) (phi (isnull? (invoke->peg (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals))) java.lang.NullPointerException unit) (invoke->exception-status (invoke (heap 0 unit) (rd (path (var this) (derefs fa)) (heap 0 unit)) getFieldAccess actuals))))))
-     * </pre>
+     * methodInvocation4()
+     * <target-peg>
+     * (let
+     *  [heap
+     *   (initial-heap)
+     *   recv
+     *   (rd (param "this") "fa" heap)
+     *   args
+     *   (actuals)
+     *   invk
+     *   (invoke heap recv "getFieldAccess" args)
+     *   peg1
+     *   (invoke->peg invk)
+     *   heap
+     *   (invoke->heap invk)
+     *   peg2
+     *   (rd peg1 "fa" heap)
+     *   heap
+     *   (update-exception-status
+     *    heap
+     *    (is-null? peg1)
+     *    (exception "java.lang.NullPointerException"))
+     *   peg
+     *   (rd peg2 "y" heap)
+     *   heap
+     *   (update-exception-status
+     *    heap
+     *    (is-null? peg2)
+     *    (exception "java.lang.NullPointerException"))]
+     *  (method-root peg heap))
+     * </target-peg>
      */
     int methodInvocation4() {
         return fa.getFieldAccess().fa.y;
@@ -151,9 +220,9 @@ public class FieldAccess {
     /**
      * This test case tests for guards against NPEs
      * Expected PEG:
-     * <pre>
+     * <-target-peg>
      * (method-root (phi (exit-condition (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) (phi (exit-condition (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) (+ (phi (exit-condition (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) 1)) (heap 0 (phi (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit))) java.lang.NullPointerException unit)))
-     * </pre>
+     * </-target-peg>
      */
     int possibleNPEFollowedByContextUpdate() {
         // Heap:      (heap 0 unit)
