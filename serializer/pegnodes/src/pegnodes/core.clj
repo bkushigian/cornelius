@@ -1,6 +1,9 @@
-(ns pegnodes.core)
+(ns pegnodes.core
+  (:require  [pegnodes.pegs :refer :all])
+  (:require  [pegnodes.tests.tests :refer :all])
+  (:require  [pegnodes.tests.field-access :as field-access]))
 
-(defn foo
-  "I don't do a whole lot."
-  [x]
-  (println x "Hello, World!"))
+(defn -main
+  "Run tests"
+  []
+  (test-java-class field-access/file-path))

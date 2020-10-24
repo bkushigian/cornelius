@@ -37,8 +37,7 @@
 (defn opnode
   "Create an arbitrary opnode PEG."
   [sym & children]
-  (let [children2 (map object->id children)]
-    (PegNode/opNode sym (into-array Integer children2))))
+  (PegNode/opNode sym (into-array Integer (map object->id children))))
 
 (defn int-lit
   "Create an integer literal PEG"
@@ -130,6 +129,9 @@
 (defn exit-conditions [conditions]
   (PegNode/exitConditions conditions))
 
+(defn method-root [peg heap]
+  (opnode "method-root" peg heap))
+
 (defn id-lookup [id]
   (cond (int? id) (. (PegNode/idLookup (int id)) orElse nil)
         :else nil))
@@ -140,6 +142,9 @@
     (doseq [id keys]
       (printf "%4d: %s\n" id (. table get id)))))
 
+(defn to-deref-string [node]
+  (. node toDerefString))
+
 (defn update-exception-status [old-status-or-heap condition exception]
   "Update a heap or an exception status with a new condition and exception.
 OLD-STATUS: the old status to be updated
@@ -149,10 +154,14 @@ EXCEPTION: the exception to be thrown"
                    (instance? PegNode old-status-or-heap) old-status-or-heap
                    :else (throw  (IllegalArgumentException. "old-status-or-heap must be a PegNode or an Id (i.e., integer type)")))]
     (cond (. node isHeap)    (heap (. node state) (update-exception-status (. node status) condition exception))
-          (. node isOpNode) (phi (is-unit? node)
-                                (phi condition
-                                     exception
-                                     (unit))
-                                node)
+          (. node isOpNode) (if (= node (unit))
+                              (phi condition
+                                   exception
+                                   (unit))
+                              (phi (is-unit? node)
+                                   (phi condition
+                                        exception
+                                        (unit))
+                                   node))
           :else (throw (IllegalArgumentException. "Expected an OpNode of some sort")))))
 
