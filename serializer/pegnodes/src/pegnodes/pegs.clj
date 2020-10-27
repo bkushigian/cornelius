@@ -10,6 +10,7 @@
 
 (ns pegnodes.pegs
   (:import (serializer.peg PegContext PegNode))
+  (:require [clojure.set :refer [union intersection]])
   (:gen-class))
 
 (defn  is-valid-id?
@@ -143,7 +144,18 @@
       (printf "%4d: %s\n" id (. table get id)))))
 
 (defn to-deref-string [node]
-  (. node toDerefString))
+  (cond (:context? node)
+        (let [exit-conds     (map to-deref-string (:exit-conds node))
+              exit-conds-str (format "  exit-conds: %s\n"
+                                     (clojure.string/join "\n              " exit-conds))
+              pegs           (for [[k v] node
+                                   :when (string? k)]
+                               (format "%-5s %s" k (to-deref-string v)))
+              pegs-str       (format "  pegs: %s" (clojure.string/join "\n        " pegs))]
+          (str "{\n" pegs-str "\n" exit-conds-str "}\n"))
+        :else (. node toDerefString)))
+
+;;; Updates to state
 
 (defn update-exception-status [old-status-or-heap condition exception]
   "Update a heap or an exception status with a new condition and exception.
@@ -165,3 +177,60 @@ EXCEPTION: the exception to be thrown"
                                    node))
           :else (throw (IllegalArgumentException. "Expected an OpNode of some sort")))))
 
+(defn make-ctx
+  ([mappings]
+   (make-ctx mappings #{}))
+  ([mappings exit-conds]
+   (into {} (conj mappings [:exit-conds (into #{} exit-conds)] [:context? true]))))
+
+(defn new-ctx-from-params
+  "Create a new context with empty exit conditions. A context is a hashmap
+  mapping variables to PEGS and represent all potential states at a particular
+  program point. Each parameter `p` passed in initially maps to `(var p)`,
+  representing that it is an unbound variable and thus has no constraints
+  leveled on it.
+
+  Contexts should not be accessed directly, but rather used through
+  `lookup-in-ctx`, `update-key-in-ctx`, `add-exit-condition-to-ctx`, and
+  `ctx-join`.
+  "
+  [& params]
+  (make-ctx (for [p (conj params "this")] [p (param p)])))
+
+(defn lookup-in-ctx
+  "Lookup a value stored in ctx, returning `(unit)` if none is present."
+  [ctx key]
+  (or (ctx key) (unit)))
+
+(defn update-key-in-ctx
+  "Update a key in the context, predicated on exit conditions. If the context's
+  exit conditions are empty then the resulting context associates the key with
+  the value. Otherwise, if there are exit conditions, a new phi node, with a
+  condition node of `(exit-conditions (:exit-conds ctx))`, is created to
+  represent the possible update of the value."
+  [ctx key val]
+  (let [exit-conds (:exit-conds ctx)]
+    (cond (empty? exit-conds) ;; In this case we can just update the ctx
+          (assoc ctx key val)
+          :else
+          (assoc ctx key (phi (exit-conditions exit-conds)
+                              (lookup-in-ctx ctx key)
+                              val))) ))
+
+(defn add-exit-condition-to-ctx
+  "Add an exit condition to the context."
+  [ctx exit-cond]
+  (assoc ctx :exit-conds (conj (:exit-conds ctx) exit-cond)))
+
+(defn ctx-join [guard thn-ctx els-ctx]
+  (let [exit-conds  (union (:exit-conds thn-ctx) (:exit-conds els-ctx))
+        shared-keys (intersection (into #{} (keys thn-ctx )) (into #{} (keys thn-ctx )))
+        pairs       (for [k shared-keys :when (string? k)]
+                      [k (phi guard (thn-ctx k) (els-ctx k))])
+        ]
+    (make-ctx pairs exit-conds)))
+
+;; Handle Exceptions
+(defn update-status-npe
+  [heap-or-status possibly-null-peg]
+  (update-exception-status heap-or-status (is-null? possibly-null-peg) (exception "java.lang.NullPointerException")))

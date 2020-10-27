@@ -1,5 +1,6 @@
 (ns pegnodes.tests.tests
   (:require  [clojure.test  :as t])
+  (:require  [clojure.pprint])
   (:require  [pegnodes.pegs :refer :all])
   (:import   (serializer.peg PegContext PegNode PegSerializer PegCommentScraperVisitor)))
 
@@ -59,7 +60,6 @@
         expected-str   (. (:expected (tester method-name)) toDerefString)
         idx (index-of-difference serialized-str expected-str)]
     (t/testing method-name
-      (println method-name)
       (t/is (= serialized-str expected-str)
             (str "First difference at index: "
                  idx
@@ -85,7 +85,7 @@
   "Given a lisp expression, format it for embedding in a javadoc comment wrapped
   in an appropriate tag. The tag must not include the open or close angle
   braces '<' or '>'."
-  ([program tag indent]
+  ([name program tag indent]
 
    (let [pprogram   (with-out-str (clojure.pprint/pprint program))
          lines      (clojure.string/split pprogram #"\n+")
@@ -95,13 +95,21 @@
      (str (apply str (repeat (- indent 1) \space))
           "/**\n"
           line-start
+          name
+          \newline
+          line-start
           (format "<%s>\n" tag)
           (clojure.string/join \newline lines)
           \newline
           line-start
-          (format "<\\%s>\n" tag)
+          (format "</%s>\n" tag)
           last-line)))
-  ([program tag] (format-test-program program tag 5))
-  ([program] (format-test-program program "target-peg"))
-  )
-(println  (format-test-program '(a b c)))
+  ([name program tag] (format-test-program name program tag 5))
+  ([name program] (format-test-program name program "target-peg")))
+
+(defn print-programs-as-java-comments
+  [programs]
+  (doseq [[k v] programs]
+    (printf "%s:\n" k)
+    (println (format-test-program k v))
+    (println)))
