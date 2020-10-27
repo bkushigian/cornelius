@@ -223,7 +223,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     @Override
     public ExpressionResult visit(VariableDeclarator n, PegContext arg) {
         final String name = n.getNameAsString();
-        arg = arg.setLocalVar("x", PegNode.unit());
+        arg = arg.setLocalVar(name, PegNode.unit());
         final Optional<Expression> initializer = n.getInitializer();
         if (initializer.isPresent()) {
             final ExpressionResult er = initializer.get().accept(this, arg);
