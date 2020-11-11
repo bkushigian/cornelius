@@ -63,17 +63,17 @@
          peg-tmp  (rd peg "x" heap)
          exitc    (is-null? peg)
          heap     (update-status-npe heap peg)
-         ctx      (add-exit-condition-to-ctx ctx exitc)
+         ctx      (ctx-add-exit-condition ctx exitc)
          peg      peg-tmp               ; fa.x
          ;; x = fa.x
-         ctx      (update-key-in-ctx ctx "x" peg)
+         ctx      (ctx-update ctx "x" peg)
          ;; x + 1
-         x        (lookup-in-ctx ctx "x")
+         x        (ctx-lookup ctx "x")
          peg      (opnode "+" x (int-lit 1))
          ;; x = x + 1
-         ctx      (update-key-in-ctx ctx "x" peg)
+         ctx      (ctx-update ctx "x" peg)
          ;; return x
-         peg      (lookup-in-ctx ctx "x")]
+         peg      (ctx-lookup ctx "x")]
      (method-root peg heap)))
 
 (def test-field-access-1
@@ -81,30 +81,30 @@
          ctx  (new-ctx-from-params "ex" "y")
          ;; int a = x
          peg     (rd (param "this") "x" heap)
-         ctx     (update-key-in-ctx ctx "a" peg)
+         ctx     (ctx-update ctx "a" peg)
          ;;  int b = y
-         y       (lookup-in-ctx ctx "y")
-         ctx     (update-key-in-ctx ctx "b" y)
+         y       (ctx-lookup ctx "y")
+         ctx     (ctx-update ctx "b" y)
          ;; fa
          fa      (rd (param "this") "fa" heap)
          ;; fa.fa
          fa-fa   (rd fa "fa" heap)
          heap    (update-status-npe heap fa)
-         ctx     (add-exit-condition-to-ctx ctx (is-null? fa))
+         ctx     (ctx-add-exit-condition ctx (is-null? fa))
          ;; fa.fa.y
          fa-fa-y (rd fa-fa "y" heap)
          heap    (update-status-npe heap fa-fa)
-         ctx     (add-exit-condition-to-ctx ctx (is-null? fa-fa))
+         ctx     (ctx-add-exit-condition ctx (is-null? fa-fa))
          ;;  int c = fa.fa.y
-         ctx     (update-key-in-ctx ctx "c" fa-fa-y)
+         ctx     (ctx-update ctx "c" fa-fa-y)
          ;; a + b + c + x
          ;; This is left-associative so parses as ((a + b) + c) + x
-         a+b     (opnode "+" (lookup-in-ctx ctx "a") (lookup-in-ctx ctx "b"))
-         a+b+c   (opnode "+" a+b (lookup-in-ctx ctx "c"))
+         a+b     (opnode "+" (ctx-lookup ctx "a") (ctx-lookup ctx "b"))
+         a+b+c   (opnode "+" a+b (ctx-lookup ctx "c"))
          x       (rd (param "this") "x" heap)
          a+b+c+x (opnode "+" a+b+c x)
-         ctx     (update-key-in-ctx ctx "result" a+b+c+x)
-         result  (lookup-in-ctx ctx "result")
+         ctx     (ctx-update ctx "result" a+b+c+x)
+         result  (ctx-lookup ctx "result")
          ]
     (method-root result heap)))
 
@@ -113,37 +113,37 @@
          ctx  (new-ctx-from-params "ex" "y")
          ;; int a = x
          peg     (rd (param "this") "x" heap)
-         ctx     (update-key-in-ctx ctx "a" peg)
+         ctx     (ctx-update ctx "a" peg)
          ;;  int b = y
-         y       (lookup-in-ctx ctx "y")
-         ctx     (update-key-in-ctx ctx "b" y)
+         y       (ctx-lookup ctx "y")
+         ctx     (ctx-update ctx "b" y)
          ;; fa
          fa      (rd (param "this") "fa" heap)
          ;; fa.fa
          fa-fa   (rd fa "fa" heap)
          heap    (update-status-npe heap fa)
-         ctx     (add-exit-condition-to-ctx ctx (is-null? fa))
+         ctx     (ctx-add-exit-condition ctx (is-null? fa))
          ;; fa.fa.y
          fa-fa-y (rd fa-fa "y" heap)
          heap    (update-status-npe heap fa-fa)
-         ctx     (add-exit-condition-to-ctx ctx (is-null? fa-fa))
+         ctx     (ctx-add-exit-condition ctx (is-null? fa-fa))
          ;;  int c = fa.fa.y
-         ctx     (update-key-in-ctx ctx "c" fa-fa-y)
+         ctx     (ctx-update ctx "c" fa-fa-y)
          ;; if (ex < y)
-         ex      (lookup-in-ctx ctx "ex")
-         y       (lookup-in-ctx ctx "y")
+         ex      (ctx-lookup ctx "ex")
+         y       (ctx-lookup ctx "y")
          cond    (opnode "<" ex y)
-         ctx-thn (update-key-in-ctx ctx "a" y)
-         ctx-els (update-key-in-ctx ctx "a" ex)
+         ctx-thn (ctx-update ctx "a" y)
+         ctx-els (ctx-update ctx "a" ex)
          ctx     (ctx-join cond ctx-thn ctx-els)
          ;; a + b + c + x
          ;; This is left-associative so parses as ((a + b) + c) + x
-         a+b     (opnode "+" (lookup-in-ctx ctx "a") (lookup-in-ctx ctx "b"))
-         a+b+c   (opnode "+" a+b (lookup-in-ctx ctx "c"))
+         a+b     (opnode "+" (ctx-lookup ctx "a") (ctx-lookup ctx "b"))
+         a+b+c   (opnode "+" a+b (ctx-lookup ctx "c"))
          x       (rd (param "this") "x" heap)
          a+b+c+x (opnode "+" a+b+c x)
-         ctx     (update-key-in-ctx ctx "result" a+b+c+x)
-         result  (lookup-in-ctx ctx "result")
+         ctx     (ctx-update ctx "result" a+b+c+x)
+         result  (ctx-lookup ctx "result")
          ]
     (method-root result heap)))
 
@@ -159,3 +159,5 @@
    "possibleNPEFollowedByContextUpdate()" possible-npe-followed-by-cntext-update
    "testFieldAccess1(int,int)" test-field-access-1
    })
+
+(def my-tester (init-tester file-path))

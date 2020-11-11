@@ -5,10 +5,9 @@ import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Util {
@@ -82,6 +81,17 @@ public class Util {
       }
       return String.format("%s(%s)", name, String.join(",", params));
     }
+  }
+
+  public static List<String> getParameterList(MethodDeclaration n) {
+    final NodeList<Parameter> parameters = n.getParameters();
+
+    final List<String> params =
+            parameters.stream().map(NodeWithSimpleName::getNameAsString).collect(Collectors.toList());
+    if (!n.isStatic()) {
+      params.add(0, "this");
+    }
+    return params;
   }
 
 }

@@ -11,13 +11,17 @@ import java.util.stream.Collectors;
 
 public class PegContext {
 
-    final private ImmutableMap<String, PegNode> localVariableLookup;
-    final private Set<String> fieldNames;
-    final PegNode.Heap heap;
-    final ImmutableSet<PegNode> exitConditions;
+    final public ImmutableMap<String, PegNode> localVariableLookup;
+    final public Set<String> fieldNames;
+    final public PegNode.Heap heap;
+    final public ImmutableSet<PegNode> exitConditions;
 
-    // XXX The following relies on there being a _unique_ return node in the AST
+    // FIXME The following relies on there being a _unique_ return node in the AST
     PegNode returnNode = null;
+
+    public PegNode getReturnNode() {
+        return returnNode;
+    }
 
     private PegContext(final ImmutableMap<String, PegNode> localVariableLookup,
                        final Set<String> fieldNames,
@@ -227,5 +231,9 @@ public class PegContext {
 
     public ExpressionResult exprResult(final PegNode peg) {
         return new ExpressionResult(peg, this);
+    }
+
+    public ExpressionResult exprResult() {
+        return exprResult(PegNode.unit());
     }
 }

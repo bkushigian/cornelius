@@ -10,131 +10,92 @@ public class FieldAccess {
         return fa;
     }
 
-    /**
-     * simpleFieldAccess()
-     * <target-peg>
-     * (let
-     *  [heap
-     *   (initial-heap)
-     *   peg1
-     *   (rd (param "this") "fa" heap)
-     *   heap
-     *   (update-status-npe heap (param "this"))
-     *   peg2
-     *   (rd peg1 "fa" heap)
-     *   heap
-     *   (update-status-npe heap peg1)
-     *   peg3
-     *   (rd peg2 "y" heap)
-     *   heap
-     *   (update-status-npe heap peg2)]
-     *  (method-root peg3 heap))
-     * </target-peg>
-     */
     int simpleFieldAccess() {
+        /**
+         * simpleFieldAccess()
+         * <expected>
+         *  [
+         *   fa       (rd (param "this") "fa" heap)
+         *   heap     (update-status-npe heap (param "this"))
+         *   fa-fa    (rd fa "fa" heap)
+         *   heap     (update-status-npe heap fa)
+         *   fa-fa-y  (rd fa-fa "y" heap)
+         *   heap     (update-status-npe heap fa-fa)
+         *   (snapshot {:ctx ctx :heap heap :return fa-fa-y})]
+         * </expected>
+         */
         return this.fa.fa.y;
     }
 
-    /**
-     * methodInvocation()
-     * <target-peg>
-     * (let
-     *  [heap
-     *   (initial-heap)
-     *   recv
-     *   (param "this")
-     *   args
-     *   (actuals)
-     *   invk
-     *   (invoke heap recv "getFieldAccess" args)]
-     *  (method-root (invoke->peg invk) (invoke->heap invk)))
-     * </target-peg>
-     */
     FieldAccess methodInvocation() {
+        /**
+         * <expected>
+         *  [recv    (param "this")
+         *   args    (actuals)
+         *   invk    (invoke heap recv "getFieldAccess" args)
+         *   heap    (invoke->heap invk)
+         *   peg     (invoke->peg  invk)
+         *   (snapshot {:ctx ctx :heap heap :return peg})]
+         * </expected>
+         */
         return getFieldAccess();
     }
 
-    /**
-     * methodInvocation2()
-     * <target-peg>
-     * (let
-     *  [heap
-     *   (initial-heap)
-     *   recv
-     *   (rd (param "this") "fa" heap)
-     *   args
-     *   (actuals)
-     *   invk
-     *   (invoke heap recv "getFieldAccess" args)]
-     *  (method-root (invoke->peg invk) (invoke->heap invk)))
-     * </target-peg>
-     */
     FieldAccess methodInvocation2() {
+        /**
+         * <expected>
+         *  [recv    (rd (param "this") "fa" heap)
+         *   args    (actuals)
+         *   invk    (invoke heap recv "getFieldAccess" args)
+         *   heap    (invoke->heap invk)
+         *   peg     (invoke->peg  invk)
+         *   (snapshot {:ctx ctx :heap heap :return peg})]
+         * </expected>
+         */
         return fa.getFieldAccess();
     }
 
 
-    /**
-     * methodInvocation3()
-     * <target-peg>
-     * (let
-     *  [heap
-     *   (initial-heap)
-     *   recv
-     *   (rd (param "this") "fa" heap)
-     *   args
-     *   (actuals)
-     *   invk
-     *   (invoke heap recv "getFieldAccess" args)
-     *   peg1
-     *   (invoke->peg invk)
-     *   heap
-     *   (invoke->heap invk)
-     *   peg2
-     *   (rd peg1 "fa" heap)
-     *   heap
-     *   (update-status-npe heap peg1)]
-     *  (method-root peg2 heap))
-     * </target-peg>
-     */
     FieldAccess methodInvocation3() {
+        /**
+         * <expected>
+         *  [recv    (rd (param "this") "fa" heap)
+         *   args    (actuals)
+         *   invk    (invoke heap recv "getFieldAccess" args)
+         *   heap    (invoke->heap invk)
+         *   peg     (invoke->peg  invk)
+         *   peg2    (rd peg "fa" heap)
+         *   heap    (update-status-npe heap peg)
+         *   ctx     (ctx-add-exit-condition ctx (is-null? peg))
+         *   (snapshot {:ctx ctx :heap heap :return peg2})]
+         * </expected>
+         */
         return fa.getFieldAccess().fa;
     }
 
-    /**
-     * methodInvocation4()
-     * <target-peg>
-     * (let
-     *  [heap
-     *   (initial-heap)
-     *   recv
-     *   (rd (param "this") "fa" heap)
-     *   args
-     *   (actuals)
-     *   invk
-     *   (invoke heap recv "getFieldAccess" args)
-     *   peg1
-     *   (invoke->peg invk)
-     *   heap
-     *   (invoke->heap invk)
-     *   peg2
-     *   (rd peg1 "fa" heap)
-     *   heap
-     *   (update-status-npe heap peg1)
-     *   peg
-     *   (rd peg2 "y" heap)
-     *   heap
-     *   (update-status-npe heap peg2)]
-     *  (method-root peg heap))
-     * </target-peg>
-     */
     int methodInvocation4() {
+        /**
+         * <expected>
+         *  [recv    (rd (param "this") "fa" heap)
+         *   args    (actuals)
+         *   invk    (invoke heap recv "getFieldAccess" args)
+         *   heap    (invoke->heap invk)
+         *   peg     (invoke->peg  invk)
+         *   peg2    (rd peg "fa" heap)
+         *   heap    (update-status-npe heap peg)
+         *   ctx     (ctx-add-exit-condition ctx (is-null? peg))
+         *   peg     (rd peg2 "y" heap)
+         *   heap    (update-status-npe heap peg2)
+         *   ctx     (ctx-add-exit-condition ctx (is-null? peg2))
+         *   (snapshot {:ctx ctx :heap heap :return peg})]
+         * </expected>
+         */
         return fa.getFieldAccess().fa.y;
     }
 
     /**
      * possibleNPEFollowedByContextUpdate()
-     * <target-peg>
+     * <eexpected>
      * (let
      *  [heap
      *   (initial-heap)
@@ -149,31 +110,53 @@ public class FieldAccess {
      *   heap
      *   (update-status-npe heap peg)
      *   ctx
-     *   (add-exit-condition-to-ctx ctx exitc)
+     *   (ctx-add-exit-condition ctx exitc)
      *   peg
      *   peg-tmp
      *   ctx
-     *   (update-key-in-ctx ctx "x" peg)
+     *   (ctx-update ctx "x" peg)
      *   x
-     *   (lookup-in-ctx ctx "x")
+     *   (ctx-lookup ctx "x")
      *   peg
      *   (opnode "+" x (int-lit 1))
      *   ctx
-     *   (update-key-in-ctx ctx "x" peg)
+     *   (ctx-update ctx "x" peg)
      *   peg
-     *   (lookup-in-ctx ctx "x")]
+     *   (ctx-lookup ctx "x")]
      *  (method-root peg heap))
-     * </target-peg>
+     * </eexpected>
      */
     int possibleNPEFollowedByContextUpdate() {
+        /**
+         * <expected>
+         *   [fa      (rd (param "this") "fa" heap)
+         *    peg     (rd fa "x" heap)
+         *    heap    (update-status-npe heap fa)
+         *    ctx     (ctx-add-exit-condition ctx (is-null? fa))
+         *    ctx     (ctx-update ctx "x" peg)]
+         * </expected>
+         */
         int x = fa.x;
+        /**
+         * <expected>
+         *   [x     (ctx-lookup ctx "x")
+         *    peg   (opnode "+" x (int-lit 1))
+         *    ctx   (ctx-update ctx "x" peg)
+         *    (snapshot {:heap heap :ctx ctx})]
+         * </expected>
+         */
         x = x + 1;
+
+        /**
+         * <expected>
+         *   [x     (ctx-lookup ctx "x")
+         *    (snapshot {:return x})]
+         *  </expected>
+         */
         return x;
     }
 
     /**
-     * testFieldAccess1(int,int)
-     * <target-peg>
      * (let
      *  [heap
      *   (initial-heap)
@@ -182,11 +165,11 @@ public class FieldAccess {
      *   peg
      *   (rd (param "this") "x" heap)
      *   ctx
-     *   (update-key-in-ctx ctx "a" peg)
+     *   (ctx-update ctx "a" peg)
      *   y
-     *   (lookup-in-ctx ctx "y")
+     *   (ctx-lookup ctx "y")
      *   ctx
-     *   (update-key-in-ctx ctx "b" y)
+     *   (ctx-update ctx "b" y)
      *   fa
      *   (rd (param "this") "fa" heap)
      *   fa-fa
@@ -194,42 +177,86 @@ public class FieldAccess {
      *   heap
      *   (update-status-npe heap fa)
      *   ctx
-     *   (add-exit-condition-to-ctx ctx (is-null? fa))
+     *   (ctx-add-exit-condition ctx (is-null? fa))
      *   fa-fa-y
      *   (rd fa-fa "y" heap)
      *   heap
      *   (update-status-npe heap fa-fa)
      *   ctx
-     *   (add-exit-condition-to-ctx ctx (is-null? fa-fa))
+     *   (ctx-add-exit-condition ctx (is-null? fa-fa))
      *   ctx
-     *   (update-key-in-ctx ctx "c" fa-fa-y)
+     *   (ctx-update ctx "c" fa-fa-y)
      *   a+b
-     *   (opnode "+" (lookup-in-ctx ctx "a") (lookup-in-ctx ctx "b"))
+     *   (opnode "+" (ctx-lookup ctx "a") (ctx-lookup ctx "b"))
      *   a+b+c
-     *   (opnode "+" a+b (lookup-in-ctx ctx "c"))
+     *   (opnode "+" a+b (ctx-lookup ctx "c"))
      *   x
      *   (rd (param "this") "x" heap)
      *   a+b+c+x
      *   (opnode "+" a+b+c x)
      *   ctx
-     *   (update-key-in-ctx ctx "result" a+b+c+x)
+     *   (ctx-update ctx "result" a+b+c+x)
      *   result
-     *   (lookup-in-ctx ctx "result")]
+     *   (ctx-lookup ctx "result")]
      *  (method-root result heap))
-     * </target-peg>
      */
     int testFieldAccess1(int ex, int y) {
+        /**
+         * <expected>
+         * [peg   (rd (param "this") "x" heap)
+         *  ctx   (ctx-update ctx "a" peg)
+         *  (snapshot {:ctx ctx :heap heap})]
+         * </expected>
+         */
         int a = x;
+        /**
+         * <expected>
+         *  [y   (ctx-lookup ctx "y")
+         *   ctx (ctx-update ctx "b" y)
+         *   (snapshot {:ctx ctx :heap heap})]
+         * </expected>
+         */
         int b = y;
+
+
+        /**
+         * <expected>
+         *  [fa      (rd (param "this") "fa" heap)
+         *   fa-fa   (rd fa "fa" heap)
+         *   heap    (update-status-npe heap fa)
+         *   ctx     (ctx-add-exit-condition ctx (is-null? fa))
+         *   fa-fa-y (rd fa-fa "y" heap)
+         *   heap    (update-status-npe heap fa-fa)
+         *   ctx     (ctx-add-exit-condition ctx (is-null? fa-fa))
+         *   ctx     (ctx-update ctx "c" fa-fa-y)
+         *   (snapshot {:ctx ctx :heap heap})]
+         * </expected>
+         */
         int c = fa.fa.y;
 
+        /**
+         * <expected>
+         *  [a+b       (opnode "+" (ctx-lookup ctx "a") (ctx-lookup ctx "b"))
+         *   a+b+c     (opnode "+" a+b (ctx-lookup ctx "c"))
+         *   x         (rd (param "this") "x" heap)
+         *   a+b+c+x   (opnode "+" a+b+c x)
+         *   ctx       (ctx-update ctx "result" a+b+c+x)
+         *   (snapshot {:ctx ctx :heap heap})]
+         * </expected>
+         */
         int result = a + b + c + x;
+        /**
+         * <expected>
+         *   [result (ctx-lookup ctx "result")
+         *    (snapshot {:return result})]
+         * </expected>
+         */
         return result;
     }
 
     /**
      * testFieldAccess2(int,int)
-     * <target-peg>
+     * <eexpected>
      * (let
      *  [heap
      *   (initial-heap)
@@ -238,11 +265,11 @@ public class FieldAccess {
      *   peg
      *   (rd (param "this") "x" heap)
      *   ctx
-     *   (update-key-in-ctx ctx "a" peg)
+     *   (ctx-update ctx "a" peg)
      *   y
-     *   (lookup-in-ctx ctx "y")
+     *   (ctx-lookup ctx "y")
      *   ctx
-     *   (update-key-in-ctx ctx "b" y)
+     *   (ctx-update ctx "b" y)
      *   fa
      *   (rd (param "this") "fa" heap)
      *   fa-fa
@@ -250,41 +277,41 @@ public class FieldAccess {
      *   heap
      *   (update-status-npe heap fa)
      *   ctx
-     *   (add-exit-condition-to-ctx ctx (is-null? fa))
+     *   (ctx-add-exit-condition ctx (is-null? fa))
      *   fa-fa-y
      *   (rd fa-fa "y" heap)
      *   heap
      *   (update-status-npe heap fa-fa)
      *   ctx
-     *   (add-exit-condition-to-ctx ctx (is-null? fa-fa))
+     *   (ctx-add-exit-condition ctx (is-null? fa-fa))
      *   ctx
-     *   (update-key-in-ctx ctx "c" fa-fa-y)
+     *   (ctx-update ctx "c" fa-fa-y)
      *   ex
-     *   (lookup-in-ctx ctx "ex")
+     *   (ctx-lookup ctx "ex")
      *   y
-     *   (lookup-in-ctx ctx "y")
+     *   (ctx-lookup ctx "y")
      *   cond
      *   (opnode "<" ex y)
      *   ctx-thn
-     *   (update-key-in-ctx ctx "a" y)
+     *   (ctx-update ctx "a" y)
      *   ctx-els
-     *   (update-key-in-ctx ctx "a" ex)
+     *   (ctx-update ctx "a" ex)
      *   ctx
      *   (ctx-join cond ctx-thn ctx-els)
      *   a+b
-     *   (opnode "+" (lookup-in-ctx ctx "a") (lookup-in-ctx ctx "b"))
+     *   (opnode "+" (ctx-lookup ctx "a") (ctx-lookup ctx "b"))
      *   a+b+c
-     *   (opnode "+" a+b (lookup-in-ctx ctx "c"))
+     *   (opnode "+" a+b (ctx-lookup ctx "c"))
      *   x
      *   (rd (param "this") "x" heap)
      *   a+b+c+x
      *   (opnode "+" a+b+c x)
      *   ctx
-     *   (update-key-in-ctx ctx "result" a+b+c+x)
+     *   (ctx-update ctx "result" a+b+c+x)
      *   result
-     *   (lookup-in-ctx ctx "result")]
+     *   (ctx-lookup ctx "result")]
      *  (method-root result heap))
-     * </target-peg>
+     * </eexpected>
      */
     int testFieldAccess2(int ex, int y) {
         int a = x;

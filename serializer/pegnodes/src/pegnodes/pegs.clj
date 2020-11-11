@@ -177,11 +177,29 @@ EXCEPTION: the exception to be thrown"
                                    node))
           :else (throw (IllegalArgumentException. "Expected an OpNode of some sort")))))
 
-(defn make-ctx
+(declare new-ctx)
+(defn peg-context->ctx
+  "Take a PegContext and produce a ctx"
+  [peg-context]
+  (assert (instance? PegContext peg-context))
+  (let [locals (.-localVariableLookup peg-context)
+        locals (into {} locals)
+        exit-conds (into #{} (.-exitConditions peg-context))]
+    (new-ctx locals )))
+
+(defn new-ctx
+  "Create a context.
+  mappings: can be a vec of key/value pairs, anything satisfying `map?`, or a `PegContext`
+  exit-conds: a sequence of exit conditions. This is ignored if `mappings` is a `PegContext`"
   ([mappings]
-   (make-ctx mappings #{}))
+   (new-ctx mappings #{}))
   ([mappings exit-conds]
-   (into {} (conj mappings [:exit-conds (into #{} exit-conds)] [:context? true]))))
+   (cond
+     (instance? PegContext mappings) (peg-context->ctx mappings)
+     (seq? mappings)    (new-ctx (into {} mappings) exit-conds)
+     (vector? mappings) (new-ctx (into {} mappings) exit-conds)
+     (map? mappings) (assoc mappings :exit-conds (into #{} exit-conds) :context? true)
+     :else (throw (IllegalArgumentException. "expected a vec, a map, or a PegContext")))))
 
 (defn new-ctx-from-params
   "Create a new context with empty exit conditions. A context is a hashmap
@@ -191,18 +209,18 @@ EXCEPTION: the exception to be thrown"
   leveled on it.
 
   Contexts should not be accessed directly, but rather used through
-  `lookup-in-ctx`, `update-key-in-ctx`, `add-exit-condition-to-ctx`, and
+  `ctx-lookup`, `ctx-update`, `ctx-add-exit-condition`, and
   `ctx-join`.
   "
   [& params]
-  (make-ctx (for [p (conj params "this")] [p (param p)])))
+  (new-ctx (for [p (conj params "this")] [p (param p)])))
 
-(defn lookup-in-ctx
+(defn ctx-lookup
   "Lookup a value stored in ctx, returning `(unit)` if none is present."
   [ctx key]
   (or (ctx key) (unit)))
 
-(defn update-key-in-ctx
+(defn ctx-update
   "Update a key in the context, predicated on exit conditions. If the context's
   exit conditions are empty then the resulting context associates the key with
   the value. Otherwise, if there are exit conditions, a new phi node, with a
@@ -214,10 +232,10 @@ EXCEPTION: the exception to be thrown"
           (assoc ctx key val)
           :else
           (assoc ctx key (phi (exit-conditions exit-conds)
-                              (lookup-in-ctx ctx key)
-                              val))) ))
+                              (ctx-lookup ctx key)
+                              val)))))
 
-(defn add-exit-condition-to-ctx
+(defn ctx-add-exit-condition
   "Add an exit condition to the context."
   [ctx exit-cond]
   (assoc ctx :exit-conds (conj (:exit-conds ctx) exit-cond)))
@@ -228,7 +246,7 @@ EXCEPTION: the exception to be thrown"
         pairs       (for [k shared-keys :when (string? k)]
                       [k (phi guard (thn-ctx k) (els-ctx k))])
         ]
-    (make-ctx pairs exit-conds)))
+    (new-ctx pairs exit-conds)))
 
 ;; Handle Exceptions
 (defn update-status-npe

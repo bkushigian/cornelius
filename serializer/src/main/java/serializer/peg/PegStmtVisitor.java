@@ -4,15 +4,35 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
+import serializer.peg.testing.TestPair;
+import serializer.peg.testing.TestPairs;
+import serializer.peg.testing.TestUtil;
 
-import java.util.Optional;
+import java.util.*;
 
 public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext> {
     final PegExprVisitor pev = new PegExprVisitor();
+    /**
+     * Map methods to all collected TestPairs
+     */
+    public TestPairs testPairs;
 
+    public PegStmtVisitor() {
+        this(false);
+    }
+
+    public PegStmtVisitor(boolean scrapeComments) {
+        testPairs = new TestPairs(scrapeComments);
+    }
+
+    public TestPairs getTestPairs() {
+        return testPairs;
+    }
     @Override
     public PegContext visit(MethodDeclaration n, PegContext ctx) {
-        return super.visit(n, ctx);
+        final PegContext result = super.visit(n, ctx);
+        testPairs.scrape(n, result.exprResult());
+        return result;
     }
 
     @Override
@@ -61,7 +81,9 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
 
     @Override
     public PegContext visit(ExpressionStmt n, PegContext ctx) {
-        return n.accept(pev, ctx).context;
+        PegContext result = n.accept(pev, ctx).context;
+        testPairs.scrape(n, result.exprResult());
+        return result;
     }
 
     @Override
@@ -72,7 +94,9 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
         final PegContext c1 = n.getThenStmt().accept(this, ctx);
         final PegContext c2 = n.getElseStmt().isPresent() ? n.getElseStmt().get().accept(this, ctx)
                                                           : ctx;
-        return PegContext.combine(c1, c2, guard.id);
+        PegContext combined = PegContext.combine(c1, c2, guard.id);
+        testPairs.scrape(n, combined.exprResult());
+        return combined;
     }
 
     @Override
@@ -100,6 +124,8 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
             ctx = er.context;
             ctx.returnNode = er.peg;
         }
+
+        testPairs.scrape(n, ctx.exprResult());
         return ctx;
     }
 
