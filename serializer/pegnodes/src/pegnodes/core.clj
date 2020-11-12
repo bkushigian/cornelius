@@ -1,12 +1,13 @@
 (ns pegnodes.core
   (:require  [pegnodes.pegs :refer :all])
   (:require  [pegnodes.tests.tests :refer :all])
-  (:require  [pegnodes.tests.field-access])
   (:require  [pegnodes.tests.statements])
-  )
+  (:require  [pegnodes.tests.field-access])
+  (:require  [pegnodes.tests.field-write]))
 
 (defn -main
   "Run tests"
   []
-  (test-file pegnodes.tests.field-access/file-path)
-  (test-file pegnodes.tests.statements/file-path))
+  (test-files [pegnodes.tests.statements/file-path
+               pegnodes.tests.field-access/file-path
+               pegnodes.tests.field-write/file-path]))

@@ -118,8 +118,8 @@
 (defn initial-heap [] (PegNode/initialHeap))
 
 (defn wr-heap
-  ([path val heap] (PegNode/wrHeap (object->id path) (object->id val) (object->id heap)))
-  ([base field value heap] (wr-heap (path base field) value heap)))
+  ([path val heap] (PegNode/wrHeap (object->id path) (object->id val) heap))
+  ([base field val heap] (wr-heap (path base field) val heap)))
 
 (defn null-lit []
   (PegNode/nullLit))
