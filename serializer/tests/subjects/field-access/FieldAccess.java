@@ -248,6 +248,7 @@ public class FieldAccess {
          * <expected>
          *  [cond  (opnode "<" ex y)
          *   ctx   (ctx-join cond ctx-thn ctx-els)
+         *   heap  (heap-join cond heap heap)
          *   (snapshot {:ctx ctx :heap heap})]
          *  </expected>
          */
@@ -276,7 +277,8 @@ public class FieldAccess {
          * <expected>
          *  [a+b      (opnode "+" (ctx-lookup ctx "a") (ctx-lookup ctx "b"))
          *   a+b+c    (opnode "+" a+b (ctx-lookup ctx "c"))
-         *   x        (rd (param "this") "x" heap)
+         *   this     (ctx-lookup ctx "this")
+         *   x        (rd this "x" heap)
          *   a+b+c+x  (opnode "+" a+b+c x)
          *   ctx      (ctx-update ctx "result" a+b+c+x)
          *   (snapshot {:ctx ctx :heap heap})]

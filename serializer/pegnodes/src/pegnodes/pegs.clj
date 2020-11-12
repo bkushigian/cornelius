@@ -109,6 +109,12 @@
 (defn heap [state status]
   (PegNode/heap (object->id state) (object->id status)))
 
+(defn heap->state [heap]
+  (.. heap state))
+
+(defn heap->status [heap]
+  (.. heap status))
+
 (defn initial-heap [] (PegNode/initialHeap))
 
 (defn wr-heap
@@ -196,9 +202,9 @@ EXCEPTION: the exception to be thrown"
   ([mappings exit-conds]
    (cond
      (instance? PegContext mappings) (peg-context->ctx mappings)
-     (seq? mappings)    (new-ctx (into {} mappings) exit-conds)
+     (seq?    mappings) (new-ctx (into {} mappings) exit-conds)
      (vector? mappings) (new-ctx (into {} mappings) exit-conds)
-     (map? mappings) (assoc mappings :exit-conds (into #{} exit-conds) :context? true)
+     (map?    mappings) (assoc mappings :exit-conds (into #{} exit-conds) :context? true)
      :else (throw (IllegalArgumentException. "expected a vec, a map, or a PegContext")))))
 
 (defn new-ctx-from-params
@@ -244,9 +250,14 @@ EXCEPTION: the exception to be thrown"
   (let [exit-conds  (union (:exit-conds thn-ctx) (:exit-conds els-ctx))
         shared-keys (intersection (into #{} (keys thn-ctx )) (into #{} (keys thn-ctx )))
         pairs       (for [k shared-keys :when (string? k)]
-                      [k (phi guard (thn-ctx k) (els-ctx k))])
+                      [k (phi guard (ctx-lookup thn-ctx k) (ctx-lookup els-ctx k))])
         ]
     (new-ctx pairs exit-conds)))
+
+(defn heap-join [guard thn-heap els-heap]
+  (let [state  (phi guard (heap->state  thn-heap) (heap->state  els-heap))
+        status (phi guard (heap->status thn-heap) (heap->status els-heap))]
+    (heap state status)))
 
 ;; Handle Exceptions
 (defn update-status-npe
