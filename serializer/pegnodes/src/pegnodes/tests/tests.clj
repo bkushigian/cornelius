@@ -118,11 +118,11 @@
   (and ctx-expected
        (let [the-keys (into #{} (filter string? (keys ctx-actual)))]
          (list 't/testing "CHECKING:CONTEXT"
-               (cons 'do
-                     (for [k (filter string? the-keys)]
+               (conj (for [k (filter string? the-keys)]
                        `(ensure-strings-are-same (to-deref-string   (~ctx-expected ~k))
                                                  ~(to-deref-string  (ctx-actual   k))
-                                                 ~(str "difference at key " k))))))))
+                                                 ~(str "difference at key " k)))
+                     'do)))))
 
 (defn pegs-are-same
   [peg-e peg-a]
@@ -253,10 +253,11 @@
     (doseq [the-test the-tests]
       ;; (clojure.pprint/pprint the-test)
       (try
-        (eval the-test)
+        (eval-comment-string the-test)
         (catch RuntimeException e
           (println "Error running test:")
           (clojure.pprint/pprint the-test)
+          (println e)
           (println "Cause:" (:cause (Throwable->map e))))))))
 (def current-directory  (System/getProperty "user.dir"))
 (def subjects-directory "../tests/subjects")
