@@ -1,5 +1,5 @@
 (ns pegnodes.tests.tests
-  (:require  [clojure.test  :as t])
+  (:require  [clojure.test])
   (:require  [clojure.pprint])
   (:require  [clojure.string])
   (:require  [pegnodes.pegs :refer :all])
@@ -97,7 +97,7 @@
   ([expected-str actual-str msg]
    (let [msg (if (nil? msg) "" (str msg ": "))
          idx (index-of-difference expected-str actual-str)]
-     (t/is (= actual-str expected-str)
+     (clojure.test/is (= actual-str expected-str)
            (str msg "First difference at index: "
                 idx
                 "\nexpected :"
@@ -117,7 +117,7 @@
   [ctx-expected ctx-actual]
   (and ctx-expected
        (let [the-keys (into #{} (filter string? (keys ctx-actual)))]
-         (list 't/testing "CHECKING:CONTEXT"
+         (list 'clojure.test/testing "CHECKING:CONTEXT"
                (conj (for [k (filter string? the-keys)]
                        `(ensure-strings-are-same (to-deref-string   (~ctx-expected ~k))
                                                  ~(to-deref-string  (ctx-actual   k))
@@ -127,7 +127,7 @@
 (defn pegs-are-same
   [peg-e peg-a]
   (and peg-e
-       (list 't/testing "CHECKING:PEG"
+       (list 'clojure.test/testing "CHECKING:PEG"
              `(ensure-strings-are-same
                    (to-deref-string ~peg-e)
                    ~(to-deref-string peg-a)))))
@@ -135,7 +135,7 @@
 (defn returns-are-same
   [ret-e ret-a]
   (and ret-e
-       (list 't/testing "CHECKING:RETURN-VALUE"
+       (list 'clojure.test/testing "CHECKING:RETURN-VALUE"
              `(ensure-strings-are-same
                (to-deref-string ~ret-e)
                ~(to-deref-string ret-a)
@@ -144,7 +144,7 @@
 (defn heaps-are-same
   [heap-e heap-a]
   (and heap-e
-       (list 't/testing "CHECKING HEAP"
+       (list 'clojure.test/testing "CHECKING HEAP"
              `(ensure-strings-are-same
                    (to-deref-string ~heap-e)
                    ~(to-deref-string heap-a)))))
@@ -215,7 +215,7 @@
           ;; A possibly nil value that tests if the snapshot matches the
           ;; provided `ExprResult` (i.e., `actual`)
           snapshot-test (snapshot->assertion (first snapshots) actual)
-          snapshot-test-wrapped `(t/testing ~node-str ~snapshot-test)
+          snapshot-test-wrapped `(clojure.test/testing ~node-str ~snapshot-test)
           ;; Want to create a `let` of the form
           ;; ```
           ;; (let BINDINGS body)
@@ -223,7 +223,7 @@
           ;; where `body` is one of the following:
           ;; 1. If there is a snapshot at this level, then body is
           ;;    ```
-          ;;    (t/testing STMT-STRING SNAPSHOT-TESTS)
+          ;;    (clojure.test/testing STMT-STRING SNAPSHOT-TESTS)
           ;;    nested
           ;;    ```
           ;; 2. If there is no snapshot at this level, then body is just `nested`
@@ -238,14 +238,18 @@
   "Given a tester, as the one described in `init-tester`, transform it into a
   list of programs that asserts program properties."
   [tester]
-  (for [k (keys tester)]
-    (let [item     (tester k)
-          params   (:params item)
-          worklist (:worklist item)
-          raw-test (worklist->test worklist)]
-      `(t/testing ~(format "METHOD:%s\n" k) (~'let [~'ctx (new-ctx-from-params ~@params)
-                                             ~'heap (initial-heap)]
-                                      ~raw-test)))))
+  (concat
+   (for [k (keys tester)]
+
+     (let [item     (tester k)
+           params   (:params item)
+           worklist (:worklist item)
+           raw-test (worklist->test worklist)]
+       `(clojure.test/deftest ~(symbol (clojure.string/replace (str "test-" k) #"\(\)" "--"))
+          (clojure.test/testing ~(format "METHOD:%s\n" k) (~'let [~'ctx (new-ctx-from-params ~@params)
+                                                                  ~'heap (initial-heap)]
+                                                           ~raw-test)))))
+   (list `(clojure.test/run-tests))))
 
 (defn test-file [file-path]
   (let [tester (init-tester file-path)
@@ -253,7 +257,7 @@
     (doseq [the-test the-tests]
       ;; (clojure.pprint/pprint the-test)
       (try
-        (eval-comment-string the-test)
+        (binding [*ns* (find-ns 'pegnodes.tests.tests)] (eval the-test))
         (catch RuntimeException e
           (println "Error running test:")
           (clojure.pprint/pprint the-test)

@@ -1,16 +1,23 @@
 public class FieldWrite {
     int x = 0;
 
-    /**
-     * This test case tests field modification and readings.
-     *
-     * Expected PEG:
-     * <pre>
-     * (method-root (rd (path (var this) (derefs x)) (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0))) (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0)))
-     * </pre>
-     */
+
     int test_field_write(int a) {
+        /**
+         * <expected>
+         * [ctx (ctx-update ctx "result" (int-lit 0))]
+         * </expected>
+         */
         int result = 0;
+        /**
+         * <expected>
+         * [a1 (ctx-lookup ctx "a")
+         *  a2 (ctx-lookup ctx "a")
+         *  peg (opnode "-" a1 a2)
+         *  (snapshot {:ctx ctx})
+         *  ]
+         * </expected>
+         */
         x = a - a;
         result = x;
         return result;

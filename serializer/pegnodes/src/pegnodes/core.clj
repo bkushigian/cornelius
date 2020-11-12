@@ -8,5 +8,5 @@
 (defn -main
   "Run tests"
   []
-  ;; (test-file pegnodes.tests.field-access/file-path)
+  (test-file pegnodes.tests.field-access/file-path)
   (test-file pegnodes.tests.statements/file-path))
