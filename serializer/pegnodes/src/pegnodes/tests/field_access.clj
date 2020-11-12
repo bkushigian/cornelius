@@ -4,4 +4,3 @@
   (:require  [pegnodes.tests.tests :refer :all]))
 
 (def file-path (str subjects-directory "/field-access/FieldAccess.java"))
-(test-file file-path)
