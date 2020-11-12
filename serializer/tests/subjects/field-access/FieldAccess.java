@@ -255,7 +255,7 @@ public class FieldAccess {
 
             /**
              * <expected>
-             *   y       (ctx-lookup ctx "y")
+             *  [y       (ctx-lookup ctx "y")
              *   ctx-thn (ctx-update ctx "a" y)
              *   (snapshot {:ctx ctx-thn})]
              *  </expected>
