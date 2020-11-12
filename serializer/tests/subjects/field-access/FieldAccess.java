@@ -156,50 +156,6 @@ public class FieldAccess {
         return x;
     }
 
-    /**
-     * (let
-     *  [heap
-     *   (initial-heap)
-     *   ctx
-     *   (new-ctx-from-params "ex" "y")
-     *   peg
-     *   (rd (param "this") "x" heap)
-     *   ctx
-     *   (ctx-update ctx "a" peg)
-     *   y
-     *   (ctx-lookup ctx "y")
-     *   ctx
-     *   (ctx-update ctx "b" y)
-     *   fa
-     *   (rd (param "this") "fa" heap)
-     *   fa-fa
-     *   (rd fa "fa" heap)
-     *   heap
-     *   (update-status-npe heap fa)
-     *   ctx
-     *   (ctx-add-exit-condition ctx (is-null? fa))
-     *   fa-fa-y
-     *   (rd fa-fa "y" heap)
-     *   heap
-     *   (update-status-npe heap fa-fa)
-     *   ctx
-     *   (ctx-add-exit-condition ctx (is-null? fa-fa))
-     *   ctx
-     *   (ctx-update ctx "c" fa-fa-y)
-     *   a+b
-     *   (opnode "+" (ctx-lookup ctx "a") (ctx-lookup ctx "b"))
-     *   a+b+c
-     *   (opnode "+" a+b (ctx-lookup ctx "c"))
-     *   x
-     *   (rd (param "this") "x" heap)
-     *   a+b+c+x
-     *   (opnode "+" a+b+c x)
-     *   ctx
-     *   (ctx-update ctx "result" a+b+c+x)
-     *   result
-     *   (ctx-lookup ctx "result")]
-     *  (method-root result heap))
-     */
     int testFieldAccess1(int ex, int y) {
         /**
          * <expected>
@@ -254,77 +210,86 @@ public class FieldAccess {
         return result;
     }
 
-    /**
-     * testFieldAccess2(int,int)
-     * <eexpected>
-     * (let
-     *  [heap
-     *   (initial-heap)
-     *   ctx
-     *   (new-ctx-from-params "ex" "y")
-     *   peg
-     *   (rd (param "this") "x" heap)
-     *   ctx
-     *   (ctx-update ctx "a" peg)
-     *   y
-     *   (ctx-lookup ctx "y")
-     *   ctx
-     *   (ctx-update ctx "b" y)
-     *   fa
-     *   (rd (param "this") "fa" heap)
-     *   fa-fa
-     *   (rd fa "fa" heap)
-     *   heap
-     *   (update-status-npe heap fa)
-     *   ctx
-     *   (ctx-add-exit-condition ctx (is-null? fa))
-     *   fa-fa-y
-     *   (rd fa-fa "y" heap)
-     *   heap
-     *   (update-status-npe heap fa-fa)
-     *   ctx
-     *   (ctx-add-exit-condition ctx (is-null? fa-fa))
-     *   ctx
-     *   (ctx-update ctx "c" fa-fa-y)
-     *   ex
-     *   (ctx-lookup ctx "ex")
-     *   y
-     *   (ctx-lookup ctx "y")
-     *   cond
-     *   (opnode "<" ex y)
-     *   ctx-thn
-     *   (ctx-update ctx "a" y)
-     *   ctx-els
-     *   (ctx-update ctx "a" ex)
-     *   ctx
-     *   (ctx-join cond ctx-thn ctx-els)
-     *   a+b
-     *   (opnode "+" (ctx-lookup ctx "a") (ctx-lookup ctx "b"))
-     *   a+b+c
-     *   (opnode "+" a+b (ctx-lookup ctx "c"))
-     *   x
-     *   (rd (param "this") "x" heap)
-     *   a+b+c+x
-     *   (opnode "+" a+b+c x)
-     *   ctx
-     *   (ctx-update ctx "result" a+b+c+x)
-     *   result
-     *   (ctx-lookup ctx "result")]
-     *  (method-root result heap))
-     * </eexpected>
-     */
     int testFieldAccess2(int ex, int y) {
+        /**
+         * <expected>
+         * [peg   (rd (param "this") "x" heap)
+         *  ctx   (ctx-update ctx "a" peg)
+         *  (snapshot {:ctx ctx :heap heap})]
+         * </expected>
+         */
         int a = x;
+
+        /**
+         * <expected>
+         *  [y   (ctx-lookup ctx "y")
+         *   ctx (ctx-update ctx "b" y)
+         *   (snapshot {:ctx ctx :heap heap})]
+         * </expected>
+         */
         int b = y;
+
+        /**
+         * <expected>
+         *  [fa      (rd (param "this") "fa" heap)
+         *   fa-fa   (rd fa "fa" heap)
+         *   heap    (update-status-npe heap fa)
+         *   ctx     (ctx-add-exit-condition ctx (is-null? fa))
+         *   fa-fa-y (rd fa-fa "y" heap)
+         *   heap    (update-status-npe heap fa-fa)
+         *   ctx     (ctx-add-exit-condition ctx (is-null? fa-fa))
+         *   ctx     (ctx-update ctx "c" fa-fa-y)
+         *   (snapshot {:ctx ctx :heap heap})]
+         * </expected>
+         */
         int c = fa.fa.y;
 
+        /**
+         * <expected>
+         *  [cond  (opnode "<" ex y)
+         *   ctx   (ctx-join cond ctx-thn ctx-els)
+         *   (snapshot {:ctx ctx :heap heap})]
+         *  </expected>
+         */
         if (ex < y) {
+
+            /**
+             * <expected>
+             *   y       (ctx-lookup ctx "y")
+             *   ctx-thn (ctx-update ctx "a" y)
+             *   (snapshot {:ctx ctx-thn})]
+             *  </expected>
+             */
             a = y;
         } else {
+            /**
+             * <expected>
+             *  [ex      (ctx-lookup ctx "ex")
+             *   ctx-els (ctx-update ctx "a" ex)
+             *   (snapshot {:ctx ctx-els})]
+             *  </expected>
+             */
             a = ex;
         }
 
+        /**
+         * <expected>
+         *  [a+b      (opnode "+" (ctx-lookup ctx "a") (ctx-lookup ctx "b"))
+         *   a+b+c    (opnode "+" a+b (ctx-lookup ctx "c"))
+         *   x        (rd (param "this") "x" heap)
+         *   a+b+c+x  (opnode "+" a+b+c x)
+         *   ctx      (ctx-update ctx "result" a+b+c+x)
+         *   (snapshot {:ctx ctx :heap heap})]
+         *
+         * </expected>
+         */
         int result = a + b + c + x;
+        /**
+         * <expected>
+         *  [result   (ctx-lookup ctx "result")
+         *   (snapshot {:return result})]
+         * </expected>
+         */
         return result;
     }
 }
