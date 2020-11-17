@@ -26,9 +26,13 @@ public class TestPairs {
    * @param n
    * @param actual
    */
-  public void scrape(Node n, ExpressionResult actual) {
+  public void scrape(final Node n, final ExpressionResult actual) {
+    scrape(n, actual, "expected");
+  }
+
+  public void scrape(final Node n, final ExpressionResult actual, final String tag) {
     if (!scraping) return;
-    final Optional<String> content = TestUtil.parseTestingComment(n.getComment());
+    final Optional<String> content = TestUtil.parseTestingComment(n.getComment(), tag);
     if (content.isPresent()) {
       if (n instanceof Statement) {
         worklist.add(new TestPair.StmtTestPair(actual, content.get(), (Statement)n));

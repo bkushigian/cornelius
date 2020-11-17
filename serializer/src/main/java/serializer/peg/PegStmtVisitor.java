@@ -89,11 +89,14 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
     @Override
     public PegContext visit(IfStmt n, PegContext ctx) {
         final ExpressionResult er = n.getCondition().accept(pev, ctx);
+        testPairs.scrape(n, er, "cond");
         ctx = er.context;
         final PegNode guard = er.peg;
         final PegContext c1 = n.getThenStmt().accept(this, ctx);
+        testPairs.scrape(n, er, "then");
         final PegContext c2 = n.getElseStmt().isPresent() ? n.getElseStmt().get().accept(this, ctx)
                                                           : ctx;
+        testPairs.scrape(n, er, "else");
         PegContext combined = PegContext.combine(c1, c2, guard.id);
         testPairs.scrape(n, combined.exprResult());
         return combined;
