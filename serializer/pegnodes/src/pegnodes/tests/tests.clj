@@ -160,7 +160,8 @@
 
 (defn snapshot->assertion
   "compare a snapshot and an expr-result. If snapshot is nil, return nil.
-  Otherwise, write a test comparing it to the `ExprResult`"
+  Otherwise, write tests comparing it to the `ExprResult`, and return a list
+  of tests"
   [snapshot expr-result]
   (and snapshot
        (let [{peg-e :peg ctx-e :ctx heap-e :heap return-e :return} (second snapshot)
@@ -220,7 +221,7 @@
           ;; A possibly nil value that tests if the snapshot matches the
           ;; provided `ExprResult` (i.e., `actual`)
           snapshot-test (snapshot->assertion (first snapshots) actual)
-          snapshot-test-wrapped `(clojure.test/testing ~node-str ~snapshot-test)
+          snapshot-test-wrapped (and snapshot-test `(clojure.test/testing ~node-str ~@snapshot-test))
           ;; Want to create a `let` of the form
           ;; ```
           ;; (let BINDINGS body)
@@ -233,41 +234,54 @@
           ;;    ```
           ;; 2. If there is no snapshot at this level, then body is just `nested`
           ;;
-          body (if snapshot-test  (list snapshot-test-wrapped nested) (list nested))]
+          body (if snapshot-test  (list snapshot-test-wrapped nested) (list nested))
+          body (remove nil? body)
+          body (if (empty? body) nil body)]
       ;; Just a sanity check, ensure that there are an even number of bindings
       (assert (even? (count bindings)))
       ;; Create a let binding
-      (concat (list 'let bindings) body))))
+      (if (nil? bindings) body 
+          (concat (list 'let bindings) body)))))
 
 (defn tester->tests
-  "Given a tester, as the one described in `init-tester`, transform it into a
-  list of programs that asserts program properties."
+  "Transform a `tester` into a hash map from method names to tests. Each test is
+  a `deftest` form that should be defined prior to invoking `runtests`"
   [tester]
-  (concat
-   (for [k (keys tester)]
+  (into {}
+        (for [k (keys tester)]
 
-     (let [item     (tester k)
-           params   (:params item)
-           worklist (:worklist item)
-           raw-test (worklist->test worklist)]
-       `(clojure.test/deftest ~(symbol (clojure.string/replace (str "test-" k) #"\(\)" "--"))
-          (clojure.test/testing ~(format "METHOD:%s\n" k) (~'let [~'ctx (new-ctx-from-params ~@params)
-                                                                  ~'heap (initial-heap)]
-                                                           ~raw-test)))))
-   (list `(clojure.test/run-tests))))
+          (let [item     (tester k)
+                params   (:params item)
+                worklist (:worklist item)
+                raw-test (worklist->test worklist)
+                the-test  `(clojure.test/deftest
+                             ~(symbol (clojure.string/replace (str "test-" k) #"\(\)" "--"))
+                             (clojure.test/testing ~(format "METHOD:%s\n" k)
+                               (~'let [~'ctx  (new-ctx-from-params ~@params)
+                                       ~'heap (initial-heap)]
+                                ~raw-test)))
+                ]
+            [k the-test]))))
+
+(defn file->tests [file-path] (tester->tests (init-tester file-path)))
 
 (defn test-file [file-path]
-  (let [tester (init-tester file-path)
-        the-tests  (tester->tests tester)]
-    (doseq [the-test the-tests]
-      ;; (clojure.pprint/pprint the-test)
-      (try
-        (binding [*ns* (find-ns 'pegnodes.tests.tests)] (eval the-test))
-        (catch RuntimeException e
-          (println "Error running test:")
-          (clojure.pprint/pprint the-test)
-          (println e)
-          (println "Cause:" (:cause (Throwable->map e))))))))
+  (doseq [[method the-test] (file->tests file-path)]
+    ;; (clojure.pprint/pprint the-test)
+    (try
+      (binding [*ns* (find-ns 'pegnodes.tests.tests)] (eval the-test))
+      (catch RuntimeException e
+        (println "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        (printf "                    %s\n" method)
+        (println "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        (clojure.pprint/pprint the-test)
+        (println "[!!!] Error defining above test for" method)
+        (println "      Cause:" (:cause (Throwable->map e))))))
+  (try
+    (binding [*ns* (find-ns 'pegnodes.tests.tests)] (eval `(clojure.test/run-tests)))
+    (catch RuntimeException e
+      (println "Error running tests")
+      (println "Cause:" (:cause (Throwable->map e))))))
 
 (defn test-files [file-paths]
   (let [the-tests (apply concat (for [path file-paths] (tester->tests (init-tester path))))]
