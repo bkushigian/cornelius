@@ -8,7 +8,16 @@
   (:import   (com.github.javaparser.ast CompilationUnit))
   (:import   (com.github.javaparser.ast.body MethodDeclaration))
   (:import   (com.github.javaparser.ast.stmt Statement))
+  (:import   (com.github.javaparser.printer PrettyPrinter PrettyPrinterConfiguration))
   (:import   (java.io File FileNotFoundException)))
+
+(def JAVAPARSER-DEBUG-PRETTY-PRINT-CONFIGURATION
+  (let [config (PrettyPrinterConfiguration.)
+        config (. config setPrintJavadoc false)
+        config (. config setPrintComments false)
+        config (. config setEndOfLineCharacter " ")
+        config (. config setIndentSize 0)]
+    config))
 
 (defn serialize
   "Return a map `{:pegs pegs :pairs pairs}` where,
