@@ -189,13 +189,9 @@
                      position)
                    "")
         meta-model (.. node getMetaModel toString)
-        token-range (if (.. node getTokenRange isPresent)
-                      (let [token-range (.. node getTokenRange get)
-                            token-range (str token-range)
-                            token-range (clojure.string/replace token-range "\n" " ")]
-                        token-range))]
-    (format "%s%s `%s`" position meta-model token-range))
-  )
+        token-range (. node toString JAVAPARSER-DEBUG-PRETTY-PRINT-CONFIGURATION)]
+    (format "%s[%s]:\n    %s" position meta-model token-range)))
+
 (defn worklist->test
   "Transform a worklist into a test. Given a worklist
   ```
