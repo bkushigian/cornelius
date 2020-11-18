@@ -72,4 +72,137 @@ class Statements {
          */
         return val;
     }
+
+    int max_no_else(int a, int b) {
+        /**
+         * <cond>
+         * [a (ctx-lookup ctx "a")
+         *  b (ctx-lookup ctx "b")
+         *  cond (opnode ">" a b)
+         *  (snapshot {:peg cond})]
+         * </cond>
+         * <expected>
+         *   [ctx (ctx-join cond ctx-then ctx)
+         *    heap (heap-join cond heap heap)
+         *    (snapshot {:heap heap :ctx ctx})]
+         * </expected>
+         *
+         */
+        if (a > b) {
+            /**
+             * <expected>
+             * [a (ctx-lookup ctx "a")
+             *  ctx-then (ctx-update ctx "b" a)
+             *  (snapshot {:ctx ctx-then})]
+             * </expected>
+             */
+            b = a;
+        }
+
+        /**
+         * <expected>
+         *  [b (ctx-lookup ctx "b")
+         *   (snapshot {:return b})]
+         * </expected>
+         */
+        return b;
+    }
+
+    int max_with_else(int a, int b) {
+        /**
+         * <cond>
+         * [a (ctx-lookup ctx "a")
+         *  b (ctx-lookup ctx "b")
+         *  cond (opnode ">" a b)
+         *  (snapshot {:peg cond})]
+         * </cond>
+         * <expected>
+         *   [ctx (ctx-join cond ctx-then ctx-else)
+         *    heap (heap-join cond heap heap)
+         *    (snapshot {:heap heap :ctx ctx})]
+         * </expected>
+         *
+         */
+        if (a > b) {
+            /**
+             * <expected>
+             * [a (ctx-lookup ctx "a")
+             *  ctx-then (ctx-update ctx "b" a)
+             *  (snapshot {:ctx ctx-then})]
+             * </expected>
+             */
+            b = a;
+        } else {
+            /**
+             * <expected>
+             * [b (ctx-lookup ctx "b")
+             *  ctx-else (ctx-update ctx "b" b)
+             *  (snapshot {:ctx ctx-else})]
+             * </expected>
+             */
+            b = b;
+        }
+
+        /**
+         * <expected>
+         *  [b (ctx-lookup ctx "b")
+         *   (snapshot {:return b})]
+         * </expected>
+         */
+        return b;
+    }
+
+    int max_with_else_if(int a, int b) {
+        /**
+         * <cond>
+         * [a (ctx-lookup ctx "a")
+         *  b (ctx-lookup ctx "b")
+         *  cond (opnode ">" a b)
+         *  (snapshot {:peg cond})]
+         * </cond>
+         * <expected>
+         *   [ctx (ctx-join cond ctx-then ctx-else)
+         *    heap (heap-join cond heap heap-else)
+         *    (snapshot {:heap heap :ctx ctx})]
+         * </expected>
+         *
+         */
+        if (a > b) {
+            /**
+             * <expected>
+             * [a (ctx-lookup ctx "a")
+             *  ctx-then (ctx-update ctx "b" a)
+             *  (snapshot {:ctx ctx-then})]
+             * </expected>
+             */
+            b = a;
+        }
+        else
+        /**
+         * <cond>
+         * [a (ctx-lookup ctx "a")
+         *  b (ctx-lookup ctx "b")
+         *  cond2 (opnode "<=" a b)
+         *  (snapshot {:peg cond2})]
+         * </cond>
+         *
+         * <expected>
+         *   [ctx-else (ctx-join cond2 ctx-then-2 ctx)
+         *    heap-else (heap-join cond2 heap heap)
+         *    (snapshot {:heap heap-else :ctx ctx-else})]
+         * </expected>
+         */
+        if (a <= b)
+        {
+            /**
+             * <expected>
+             * [b (ctx-lookup ctx "b")
+             *  ctx-then-2 (ctx-update ctx "b" b)
+             *  (snapshot {:ctx ctx-then-2})]
+             * </expected>
+             */
+            b = b;
+        }
+        return b;
+    }
 }
