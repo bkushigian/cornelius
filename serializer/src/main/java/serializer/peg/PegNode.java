@@ -488,6 +488,10 @@ public abstract class PegNode {
         return opNode(name);
     }
 
+    public static PegNode returnNode(final Integer pegId, final Integer heapId) {
+        return opNode("return-node", pegId, heapId);
+    }
+
     public static ExitConditions exitConditions(Collection<PegNode> conditions) {
         for (PegNode c : new HashSet<PegNode>(conditions)) {
             if (c == null) {

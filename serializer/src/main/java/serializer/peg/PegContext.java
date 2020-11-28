@@ -226,7 +226,7 @@ public class PegContext {
         if (returnNode == null) {
             returnNode = PegNode.unit();
         }
-        return Optional.ofNullable(PegNode.opNodeFromPegs("method-root", returnNode, heap));
+        return Optional.ofNullable(PegNode.returnNode(returnNode.id, heap.id));
     }
 
     public ExpressionResult exprResult(final PegNode peg) {
