@@ -284,7 +284,7 @@
       (println "Cause:" (:cause (Throwable->map e))))))
 
 (defn test-files [file-paths]
-  (let [the-tests (apply concat (for [path file-paths] (tester->tests (init-tester path))))]
+  (let [the-tests (apply concat (for [path file-paths] (file->tests path)))]
     (doseq [the-test the-tests]
       (try
         (binding [*ns* (find-ns 'pegnodes.tests.tests)] (eval the-test))
