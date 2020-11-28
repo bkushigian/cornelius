@@ -77,101 +77,129 @@ public class FieldWrite {
     int y;
     int nestedHeapyWrites(int a, int b, boolean c) {
         /**
+         * CONDITION FOR IF 1
          * <cond>
-         * [guard-1 (ctx-lookup ctx "c")
-         *  heap-1 heap
-         *  ctx-1 ctx
+         * [guard-1     (ctx-lookup ctx "c")
+         *  heap-1-init heap
+         *  heap-1      heap
+         *  ctx-1-init  ctx
+         *  ctx-1       ctx
          *  (snapshot {:peg guard-1})]
          * </cond>
          *
          * <expected>
-         * [heap (heap-join guard-1 heap-then heap-else)
+         * [heap (heap-join guard-1 heap-1 heap-1-init)
+         *  ctx  (ctx-join  guard-1 ctx-1  ctx-1-init)
          * (snapshot {:heap heap})
          * ]
          * </expected>
          */
-        if (c) {
+        if (c) {// IF 1
             /**
              * <cond>
-             * [a (ctx-lookup ctx "a")
+             * [ctx-2       ctx-1
+             *  ctx-2-init  ctx-1
+             *  heap-2      heap-1
+             *  heap-2-init heap-1
+             *  a (ctx-lookup ctx-2 "a")
              *  y (rd (ctx-lookup ctx "this") "y" heap-1)
              *  guard-2 (opnode "<" a y)
-             *  heap-2 heap
-             *  ctx-2 ctx
-             *  (snapshot {:peg guard-2})]
+             *  (snapshot {:peg guard-2})
+             *  ]
              * </cond>
              * <expected>
-             *   [heap-then (heap-join guard-2 heap-then heap-else)
-             *   (snapshot {:heap heap-then})]
+             *   [heap-1-then heap-2
+             *    heap-1-else heap-4
+             *    heap-1      (heap-join guard-2 heap-1-then heap-1-else)
+             *    ctx-1-then  ctx-2
+             *    ctx-1-else  ctx-4
+             *    ctx-1       (ctx-join guard-2 ctx-1-then ctx-1-else)
+             *
+             *   (snapshot {:heap heap-1})
+             *   ]
              * </expected>
              */
-            if (a < y) {
+            if (a < y) {// IF 2 (Parent 1)
                 /**
                  * <expected>
-                 * [a    (ctx-lookup ctx "a")
-                 *  heap (wr-heap (ctx-lookup ctx "this") "y" a heap)
-                 *  (snapshot {:heap heap :ctx ctx})]
+                 * [a    (ctx-lookup ctx-2 "a")
+                 *  heap-2 (wr-heap (ctx-lookup ctx-2 "this") "y" a heap-2)
+                 *  (snapshot {:heap heap-2 :ctx ctx-2})
+                 *  ]
                  * </expected>
                  */
                 y = a;
 
                 /**
                  * <cond>
-                 * [b (ctx-lookup ctx "b")
-                 *  a (ctx-lookup ctx "a")
+                 * [b (ctx-lookup ctx-2 "b")
+                 *  a (ctx-lookup ctx-2 "a")
                  *  guard-3 (opnode "<" b a)
-                 *  ctx-3 ctx
-                 *  heap-3 heap
-                 *  (snapshot {:peg guard-3})]
+                 *  ctx-3-init  ctx-2
+                 *  ctx-3       ctx-2
+                 *  heap-3-init heap-2
+                 *  heap-3      heap-2
+                 *  (snapshot {:peg guard-3})
+                 *  ]
                  * </cond>
                  *
                  * <expected>
-                 * [heap-then (heap-join guard-3 heap heap-3)
-                 *  ctx-then  (ctx-join  guard-3 ctx  ctx-3)
-                 *  (snapshot {:heap heap-then :ctx ctx-then})]
+                 * [heap-2    (heap-join guard-3 heap-3 heap-3-init)
+                 *  ctx-2     (ctx-join  guard-3 ctx-3  ctx-3-init)
+                 *  (snapshot {:heap heap-2})
+                 *  ]
                  * </expected>
                  */
-                if (b < a) {
+                if (b < a) { // IF 3
                     /**
                      * <expected>
-                     * [b    (ctx-lookup ctx "b")
-                     *  heap (wr-heap (ctx-lookup ctx "this") "y" b heap)
-                     *  (snapshot {:heap heap})]
+                     * [b    (ctx-lookup ctx-3 "b")
+                     *  heap-3 (wr-heap (ctx-lookup ctx-3 "this") "y" b heap-3)
+                     *  (snapshot {:heap heap-3 :ctx ctx-3})
+                     *  ]
                      * </expected>
                      */
                     y = b;
                 }
             } 
             else
+            /**
+             * <cond>
+             * [ctx-4       ctx-2-init
+             *  ctx-4-init  ctx-2-init
+             *  heap-4      heap-2-init
+             *  heap-4-init heap-2-init
+             *  b (ctx-lookup ctx-4 "b")
+             *  y (rd (ctx-lookup ctx-4 "this") "y" heap-4)
+             *  guard-4 (opnode "<" b y)
+             *  (snapshot {:ctx ctx-4 :peg guard-4})
+             *  ]
+             * </cond>
+             * <expected>
+             * [heap-4 (heap-join guard-4 heap-4 heap-4-init)
+             *  ctx-4  (ctx-join  guard-4 ctx-4  ctx-4-init)
+             *  (snapshot {:heap heap-4 :ctx ctx-4})
+             *  ]
+             * </expected>
+             */
+            if (b < y) { // IF 4
                 /**
-                 * <cond>
-                 * [ctx ctx-2
-                 *  heap heap-2
-                 *  ctx-4 ctx
-                 *  heap-4 heap
-                 *  b (ctx-lookup ctx "b")
-                 *  y (rd (ctx-lookup ctx "this") "y" heap)
-                 *  guard-4 (opnode "<" b y)
-                 *  (snapshot {:peg guard-4})
+                 * <expected>
+                 * [b (ctx-lookup ctx-4 "b")
+                 *  heap-4 (wr-heap (ctx-lookup ctx-4 "this") "y" b heap-4)
+                 *  (snapshot {:heap heap-4})
                  *  ]
-                 * </cond>
-                 * <expected>
-                 * [heap-else (heap-join guard-4 heap-5 heap-4)
-                 *  ctx  (ctx-join  guard-4 ctx-4 ctx-4)
-                 *  (snapshot {:heap heap-else :ctx ctx})]
-                 * </expected>
-                 */
-                if (b < y) {
-                /**
-                 * <expected>
-                 * [b (ctx-lookup ctx "b")
-                 *  heap-5 (wr-heap (ctx-lookup ctx "this") "y" b heap-4)
-                 *  (snapshot {:heap heap-5})]
                  * </expected>
                  */
                 y = b;
             }
-        } 
+        }
+        /**
+         * <expected>
+         * [y (rd (ctx-lookup ctx "this") "y" heap)
+         * (snapshot {:return y :heap heap :ctx ctx})]
+         * </expected>
+         */
         return y;
     }
 
