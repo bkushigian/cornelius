@@ -291,18 +291,18 @@ public abstract class PegNode {
         }
 
         public Heap withState(final Integer state) {
-            return new Heap(state, status);
+            return heap(state, status);
         }
 
         public Heap withStatus(final Integer status) {
-            return new Heap(state, status);
+            return heap(state, status);
         }
     }
 
     public static class ExitConditions extends OpNode {
 
         private ExitConditions(Integer...conditions) {
-            super("exit-condition", conditions);
+            super("exit-conditions", conditions);
         }
 
         @Override
