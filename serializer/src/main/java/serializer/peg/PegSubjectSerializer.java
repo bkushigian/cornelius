@@ -18,7 +18,6 @@ public class PegSubjectSerializer {
         if (args.length < 2) {
             usage("Incorrect arg count");
         }
-        /* arg[0] is original program; arg[1] is folder of mutated copies; args[2] is log of mutations */
         final PegSubjectSerializer m =  new PegSubjectSerializer(
                 String.format("%s/%s", args[0], args[1]),
                 String.format("%s/mutants", args[0]),
