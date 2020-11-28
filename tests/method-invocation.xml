@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<subjects>
+<subject method="MethodInvocation@doNothing()" sourcefile="tests/subjects/method-invocation/MethodInvocation.java">
+<egg>5</egg>
+<mutant id="1">
+<egg>5</egg>
+</mutant>
+</subject>
+<subject method="MethodInvocation@identity(java.lang.Integer)" sourcefile="tests/subjects/method-invocation/MethodInvocation.java">
+<egg>8</egg>
+<mutant id="11">
+<egg>49</egg>
+</mutant>
+</subject>
+<subject method="MethodInvocation@identity(int)" sourcefile="tests/subjects/method-invocation/MethodInvocation.java">
+<egg>8</egg>
+<mutant id="2">
+<egg>50</egg>
+</mutant>
+</subject>
+<subject method="MethodInvocation@updateField(int)" sourcefile="tests/subjects/method-invocation/MethodInvocation.java">
+<egg>47</egg>
+<mutant id="44">
+<egg>57</egg>
+</mutant>
+<mutant id="36">
+<egg>72</egg>
+</mutant>
+<mutant id="42">
+<egg>47</egg>
+</mutant>
+<mutant id="39">
+<egg>75</egg>
+</mutant>
+<mutant id="40">
+<egg>77</egg>
+</mutant>
+<mutant id="41">
+<egg>57</egg>
+</mutant>
+<mutant id="38">
+<egg>80</egg>
+</mutant>
+<mutant id="43">
+<egg>47</egg>
+</mutant>
+<mutant id="37">
+<egg>87</egg>
+</mutant>
+</subject>
+<subject method="MethodInvocation@add(int,int)" sourcefile="tests/subjects/method-invocation/MethodInvocation.java">
+<egg>14</egg>
+<mutant id="5">
+<egg>89</egg>
+</mutant>
+<mutant id="6">
+<egg>95</egg>
+</mutant>
+<mutant id="3">
+<egg>98</egg>
+</mutant>
+<mutant id="4">
+<egg>100</egg>
+</mutant>
+</subject>
+<subject method="MethodInvocation@invoke(int,int)" sourcefile="tests/subjects/method-invocation/MethodInvocation.java">
+<egg>28</egg>
+<mutant id="10">
+<egg>108</egg>
+</mutant>
+<mutant id="9">
+<egg>110</egg>
+</mutant>
+<mutant id="7">
+<egg>113</egg>
+</mutant>
+<mutant id="8">
+<egg>115</egg>
+</mutant>
+</subject>
+<id_table>
+<dedup_entry id="0" peg="this"/>
+<dedup_entry id="1" peg="(var 0)"/>
+<dedup_entry id="2" peg="0"/>
+<dedup_entry id="3" peg="unit"/>
+<dedup_entry id="4" peg="(heap 2 3)"/>
+<dedup_entry id="5" peg="(return-node 3 4)"/>
+<dedup_entry id="6" peg="x"/>
+<dedup_entry id="7" peg="(var 6)"/>
+<dedup_entry id="8" peg="(return-node 7 4)"/>
+<dedup_entry id="9" peg="a"/>
+<dedup_entry id="10" peg="(var 9)"/>
+<dedup_entry id="11" peg="b"/>
+<dedup_entry id="12" peg="(var 11)"/>
+<dedup_entry id="13" peg="(+ 10 12)"/>
+<dedup_entry id="14" peg="(return-node 13 4)"/>
+<dedup_entry id="15" peg="(actuals 10 12)"/>
+<dedup_entry id="16" peg="add"/>
+<dedup_entry id="17" peg="(invoke 4 1 16 15)"/>
+<dedup_entry id="18" peg="(invoke-&gt;heap-state 17)"/>
+<dedup_entry id="19" peg="(invoke-&gt;exception-status 17)"/>
+<dedup_entry id="20" peg="(heap 18 19)"/>
+<dedup_entry id="21" peg="(invoke-&gt;peg 17)"/>
+<dedup_entry id="22" peg="(invoke 20 1 16 15)"/>
+<dedup_entry id="23" peg="(invoke-&gt;heap-state 22)"/>
+<dedup_entry id="24" peg="(invoke-&gt;exception-status 22)"/>
+<dedup_entry id="25" peg="(heap 23 24)"/>
+<dedup_entry id="26" peg="(invoke-&gt;peg 22)"/>
+<dedup_entry id="27" peg="(+ 21 26)"/>
+<dedup_entry id="28" peg="(return-node 27 25)"/>
+<dedup_entry id="29" peg="true"/>
+<dedup_entry id="30" peg="(derefs 6)"/>
+<dedup_entry id="31" peg="(path 1 30)"/>
+<dedup_entry id="32" peg="(rd 31 4)"/>
+<dedup_entry id="33" peg="(actuals 29 32)"/>
+<dedup_entry id="34" peg="branchingWithInvocation2"/>
+<dedup_entry id="35" peg="(invoke 4 1 34 33)"/>
+<dedup_entry id="36" peg="(invoke-&gt;heap-state 35)"/>
+<dedup_entry id="37" peg="(invoke-&gt;exception-status 35)"/>
+<dedup_entry id="38" peg="(heap 36 37)"/>
+<dedup_entry id="39" peg="(invoke-&gt;peg 35)"/>
+<dedup_entry id="40" peg="(rd 31 38)"/>
+<dedup_entry id="41" peg="(actuals 29 40)"/>
+<dedup_entry id="42" peg="(invoke 38 1 34 41)"/>
+<dedup_entry id="43" peg="(invoke-&gt;heap-state 42)"/>
+<dedup_entry id="44" peg="(invoke-&gt;exception-status 42)"/>
+<dedup_entry id="45" peg="(heap 43 44)"/>
+<dedup_entry id="46" peg="(invoke-&gt;peg 42)"/>
+<dedup_entry id="47" peg="(return-node 2 45)"/>
+<dedup_entry id="48" peg="null"/>
+<dedup_entry id="49" peg="(return-node 48 4)"/>
+<dedup_entry id="50" peg="(return-node 2 4)"/>
+<dedup_entry id="51" peg="(== 2 2)"/>
+<dedup_entry id="52" peg="java.lang.DivideByZeroError"/>
+<dedup_entry id="53" peg="(isunit? 44)"/>
+<dedup_entry id="54" peg="(phi 51 52 3)"/>
+<dedup_entry id="55" peg="(phi 53 54 44)"/>
+<dedup_entry id="56" peg="(heap 43 55)"/>
+<dedup_entry id="57" peg="(return-node 3 45)"/>
+<dedup_entry id="58" peg="false"/>
+<dedup_entry id="59" peg="(actuals 58 32)"/>
+<dedup_entry id="60" peg="(invoke 4 1 34 59)"/>
+<dedup_entry id="61" peg="(invoke-&gt;heap-state 60)"/>
+<dedup_entry id="62" peg="(invoke-&gt;exception-status 60)"/>
+<dedup_entry id="63" peg="(heap 61 62)"/>
+<dedup_entry id="64" peg="(invoke-&gt;peg 60)"/>
+<dedup_entry id="65" peg="(rd 31 63)"/>
+<dedup_entry id="66" peg="(actuals 29 65)"/>
+<dedup_entry id="67" peg="(invoke 63 1 34 66)"/>
+<dedup_entry id="68" peg="(invoke-&gt;heap-state 67)"/>
+<dedup_entry id="69" peg="(invoke-&gt;exception-status 67)"/>
+<dedup_entry id="70" peg="(heap 68 69)"/>
+<dedup_entry id="71" peg="(invoke-&gt;peg 67)"/>
+<dedup_entry id="72" peg="(return-node 2 70)"/>
+<dedup_entry id="73" peg="-1"/>
+<dedup_entry id="74" peg="-2"/>
+<dedup_entry id="75" peg="(return-node 74 45)"/>
+<dedup_entry id="76" peg="(+ 46 46)"/>
+<dedup_entry id="77" peg="(return-node 76 45)"/>
+<dedup_entry id="78" peg="1"/>
+<dedup_entry id="79" peg="2"/>
+<dedup_entry id="80" peg="(return-node 79 45)"/>
+<dedup_entry id="81" peg="(actuals 58 40)"/>
+<dedup_entry id="82" peg="(invoke 38 1 34 81)"/>
+<dedup_entry id="83" peg="(invoke-&gt;heap-state 82)"/>
+<dedup_entry id="84" peg="(invoke-&gt;exception-status 82)"/>
+<dedup_entry id="85" peg="(heap 83 84)"/>
+<dedup_entry id="86" peg="(invoke-&gt;peg 82)"/>
+<dedup_entry id="87" peg="(return-node 2 85)"/>
+<dedup_entry id="88" peg="(- 10 12)"/>
+<dedup_entry id="89" peg="(return-node 88 4)"/>
+<dedup_entry id="90" peg="(== 12 2)"/>
+<dedup_entry id="91" peg="(phi 90 52 3)"/>
+<dedup_entry id="92" peg="(heap 2 91)"/>
+<dedup_entry id="93" peg="(/ 10 12)"/>
+<dedup_entry id="94" peg="(phi 90 3 93)"/>
+<dedup_entry id="95" peg="(return-node 94 4)"/>
+<dedup_entry id="96" peg="(% 10 12)"/>
+<dedup_entry id="97" peg="(phi 90 3 96)"/>
+<dedup_entry id="98" peg="(return-node 97 4)"/>
+<dedup_entry id="99" peg="(* 10 12)"/>
+<dedup_entry id="100" peg="(return-node 99 4)"/>
+<dedup_entry id="101" peg="(== 26 2)"/>
+<dedup_entry id="102" peg="(isunit? 24)"/>
+<dedup_entry id="103" peg="(phi 101 52 3)"/>
+<dedup_entry id="104" peg="(phi 102 103 24)"/>
+<dedup_entry id="105" peg="(heap 23 104)"/>
+<dedup_entry id="106" peg="(/ 21 26)"/>
+<dedup_entry id="107" peg="(phi 101 3 106)"/>
+<dedup_entry id="108" peg="(return-node 107 25)"/>
+<dedup_entry id="109" peg="(- 21 26)"/>
+<dedup_entry id="110" peg="(return-node 109 25)"/>
+<dedup_entry id="111" peg="(% 21 26)"/>
+<dedup_entry id="112" peg="(phi 101 3 111)"/>
+<dedup_entry id="113" peg="(return-node 112 25)"/>
+<dedup_entry id="114" peg="(* 21 26)"/>
+<dedup_entry id="115" peg="(return-node 114 25)"/>
+</id_table>
+</subjects>
