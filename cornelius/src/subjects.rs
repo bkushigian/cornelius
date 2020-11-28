@@ -193,10 +193,27 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
 
     let mut i: u32 = 1;
     for mut subj in &mut subjects.subjects {
+        info!("");
         info!("---------------------------------------");
+        info!("Running on subject {}:{}", subj.source_file, subj.method);
         info!("Analyzing results of subject {}", i);
         info!("    subject peg = {}", subj.peg);
         info!("---------------------------------------");
+        info!("");
+        if log_enabled!(Level::Info) {
+          let rec_expr_ref = rec_expr.as_ref();
+          let id: usize = subj.peg.parse().unwrap();
+          let v = rec_expr_ref[0..(id + 1 as usize)].to_vec();
+          let re = RecExpr::from(v);
+          info!("original id: {}:\n{}", id, re.pretty(80));
+          for m in &subj.mutants {
+            let mid = m.id;
+            let pid: usize = m.peg.parse().unwrap();
+            let v = rec_expr_ref[0..(pid + 1)].to_vec();
+            let re = RecExpr::from(v);
+            info!("mutant id: {}:\n{}", mid, re.pretty(80));
+          }
+      }
         analyze_subject(&mut subj, egraph, &rec_expr);
         i += 1;
     }
@@ -217,7 +234,6 @@ fn analyze_subject(subj: &mut Subject,
                    egraph: &EGraph<Peg, VarAnalysis>,
                    _expr: &RecExpr<Peg>
 ) {
-    info!("Running on subject {}:{}", subj.source_file, subj.method);
 
     // Map canonical_ids (from egg) to mutant ids (from Major)
     let mut rev_can_id_lookup = HashMap::<Id, HashSet<u32>>::default();
