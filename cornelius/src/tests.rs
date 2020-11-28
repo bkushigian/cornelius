@@ -453,7 +453,7 @@ mod heap {
     use super::*;
     #[test]
     fn rd_wr() {
-        assert!(test_straight_rewrite("(rd (path (var a) (derefs .a.b)) (wr (path (var a) (derefs .a.b)) 3 (heap 0)))", "3"));
+        assert!(test_straight_rewrite("(rd (path (var a) (derefs .a.b)) (wr (path (var a) (derefs .a.b)) 3 (heap 0 unit)))", "3"));
     }
 
     #[test]
@@ -471,7 +471,7 @@ mod heap {
             //     }
             // }
 
-            "(mutant-root (rd (path (var this) (derefs x)) (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0))) (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0)))",
+            "(return-node (rd (path (var this) (derefs x)) (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0 unit))) (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0 unit)))",
             // Mutant
             // public class MyClass {
             //     int x = 0;
@@ -484,7 +484,7 @@ mod heap {
             //     }
             // }
 
-            "(mutant-root 0 (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0)))"))
+            "(return-node 0 (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0 unit)))"))
     }
 
     #[test]
@@ -501,14 +501,14 @@ mod heap {
         //           return result;
         //      }
         // }
-"(mutant-root
+"(return-node
     (rd (path (var this) (derefs x))
         (wr (path (var this) (derefs x))
             (phi (> (var a) (var b)) (var a) (var b))
-            (heap 0)))
+            (heap 0 unit)))
     (wr (path (var this) (derefs x))
         (phi (> (var a) (var b)) (var a) (var b))
-        (heap 0)))",
+        (heap 0 unit)))",
         // Mutant Program
         // public class MyClass
         //     int x = 0;
@@ -518,17 +518,32 @@ mod heap {
         //           return result;
         //      }
         // }
-"(mutant-root
+"(return-node
     (rd (path (var this) (derefs x))
         (wr (path (var this) (derefs x))
             (phi (>= (var a) (var b)) (var a) (var b))
-            (heap 0)))
+            (heap 0 unit)))
     (wr (path (var this) (derefs x))
         (phi (>= (var a) (var b)) (var a) (var b))
-        (heap 0)))"))
+        (heap 0 unit)))"))
 
     }
 
+    #[test]
+    fn test_field_access_1() {
+        let others = [
+            "(return-node (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) (phi (== 1 0) unit (/ (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) 1))) (heap 0 (phi (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit))) java.lang.NullPointerException unit)))",
+            "(return-node (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) (phi (== 1 0) unit (% (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) 1))) (heap 0 (phi (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit))) java.lang.NullPointerException unit)))",
+            "(return-node (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) (* (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) 1)) (heap 0 (phi (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit))) java.lang.NullPointerException unit)))]",
+            "(return-node (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) (+ (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) -1)) (heap 0 (phi (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit))) java.lang.NullPointerException unit)))",
+            "(return-node 1 (heap 0 unit))",
+            "(return-node (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) (heap 0 (phi (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit))) java.lang.NullPointerException unit)))",
+            "(return-node (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) (+ (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) 0)) (heap 0 (phi (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit))) java.lang.NullPointerException unit)))",
+            "(return-node 0 (heap 0 (phi (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit))) java.lang.NullPointerException unit)))",
+            "(return-node (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) (+ (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) 1)) (heap 0 (phi (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit))) java.lang.NullPointerException unit)))",
+        ];
+        assert!(test_no_straight_rewrite("(return-node (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) (- (phi (exit-conditions (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit)))) unit (rd (path (rd (path (var this) (derefs fa)) (heap 0 unit)) (derefs x)) (heap 0 unit))) 1)) (heap 0 (phi (isnull? (rd (path (var this) (derefs fa)) (heap 0 unit))) java.lang.NullPointerException unit)))", "(return-node 1 (heap 0 unit))", &others));
+    }
 }
 
 #[cfg(test)]
@@ -552,15 +567,28 @@ mod serialization {
 
 #[allow(dead_code)]
 fn test_straight_rewrite(start: &str, end: &str) -> bool {
-    let start_expr = start.parse().unwrap();
-    let end_expr = end.parse().unwrap();
+    exprs_collide(start, end, &[])
+}
+
+/// exprs_collide
+///
+/// Ensure that expressions `e1` and `e2` do not become equal during equality
+/// saturation when expressions `others` are in the egraph
+#[allow(dead_code)]
+fn exprs_collide(e1: &str, e2: &str, others: &[&str]) -> bool {
+    let e1 = e1.parse().unwrap();
+    let e2 = e2.parse().unwrap();
     let mut eg = EGraph::default();
-    eg.add_expr(&start_expr);
+    eg.add_expr(&e1);
+    eg.add_expr(&e2);
+    for e in others {
+        eg.add_expr(&e.parse().unwrap());
+    }
     let rules: Box<RewriteSystem> = crate::rewrites::rw_rules();
     let runner = Runner::default()
         .with_egraph(eg)
         .run(rules.iter());
-    !runner.egraph.equivs(&start_expr, &end_expr).is_empty()
+    !runner.egraph.equivs(&e1, &e2).is_empty()
 }
 
 #[allow(dead_code)]
@@ -584,10 +612,8 @@ fn test_no_straight_rewrite(start: &str, end: &str, other: &[&str]) -> bool {
 
     let mut trial: u32 = 0;
 
-    if test_straight_rewrite(start, end) {
+    if exprs_collide(start, end, other) {
         if  run_dd {
-            let dd_start_time = Instant::now();
-            let rules = crate::rewrites::rw_rules();
             let start_expr = start.parse().unwrap();
             let end_expr = end.parse().unwrap();
             let oracle =
@@ -616,8 +642,11 @@ fn test_no_straight_rewrite(start: &str, end: &str, other: &[&str]) -> bool {
                     }
                     not_equiv
                 };
+
+            let rules = crate::rewrites::rw_rules();
             let rules: Vec<_> = rules.iter().collect();
             let min_config = dd(&rules, oracle);
+            let dd_start_time = Instant::now();
 
             for (i, rule) in min_config.iter().enumerate() {
                 println!("({}) {}  {}", i+1, rule.name(), rule.long_name());
