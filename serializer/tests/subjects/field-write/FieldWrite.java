@@ -1,4 +1,5 @@
 public class FieldWrite {
+    static int s = 0;
     int x = 0;
 
     int test_field_write(int a) {
