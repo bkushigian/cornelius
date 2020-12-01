@@ -3,7 +3,6 @@ package serializer.peg;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -11,63 +10,56 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PegContext {
-    final private ImmutableMap<String, PegNode> paramLookup;
-    final private Set<String> fieldNames;
-    final PegNode heap;
-    static final PegContext empty = new PegContext();
+
+    final public ImmutableMap<String, PegNode> localVariableLookup;
+    final public Set<String> fieldNames;
+    final public PegNode.Heap heap;
+    final public ImmutableSet<PegNode> exitConditions;
+
+    // FIXME The following relies on there being a _unique_ return node in the AST
     PegNode returnNode = null;
 
-    private PegContext() {
-        paramLookup = ImmutableMap.of();
-        fieldNames = new HashSet<>();
-        heap = PegNode.heap();
+    public PegNode getReturnNode() {
+        return returnNode;
     }
 
-    private PegContext(final PegContext ctx, final PegNode heap) {
-        this.heap = heap;
-        this.paramLookup = ctx.paramLookup;
-        this.fieldNames = ctx.fieldNames;
-    }
-
-    private PegContext(final Set<String> keys, final Function<String, PegNode> f, final Set<String> fieldNames,
-                       final PegNode heap) {
-        final ImmutableMap.Builder<String, PegNode> builder = ImmutableMap.builderWithExpectedSize(keys.size());
-        keys.forEach(k -> builder.put(k, f.apply(k)));
-        paramLookup = builder.build();
+    private PegContext(final ImmutableMap<String, PegNode> localVariableLookup,
+                       final Set<String> fieldNames,
+                       final PegNode.Heap heap,
+                       final ImmutableSet<PegNode> exitConditions) {
+        this.localVariableLookup = localVariableLookup;
         this.fieldNames = fieldNames;
         this.heap = heap;
-    }
-
-    private PegContext(ImmutableMap<String, PegNode> map, final Set<String> fieldNames, final PegNode heap) {
-        this.fieldNames = fieldNames;
-        this.paramLookup = map;
-        this.heap = heap;
+        this.exitConditions = exitConditions;
     }
 
     /**
-     * Combine two contexts, say after an if-else branch merge.
-     * @param c1 the first context
-     * @param c2 the second context
-     * @param f the combination function; should normally be something like:
-     *  <pre>
-     *   p -> p.fst.equals(p.snd) ?
-     *     p.fst :
-     *    PegNode.phi(guard.id, p.fst.id, p.snd.id)
-     *  </pre>
-     * @return the combined context
+     * Combine two contexts, merging control flow.
+     * @param c1 the context resulting from the then branch that executes if {@code guardId} is true
+     * @param c2 the context resulting from the else branch that executes if {@code guardId} is false
+     * @param guardId the id of the branching condition
+     * @return combined contexts
      */
-    public static PegContext combine(PegContext c1, PegContext c2, Function<Pair<PegNode, PegNode>, PegNode> f) {
-        final ImmutableSet<String> domain = c1.paramLookup.keySet().stream().filter(c2.paramLookup::containsKey)
+    public static PegContext combine(PegContext c1, PegContext c2, Integer guardId) {
+        assert c1.fieldNames == c2.fieldNames;  // TODO: is this true? This should be true
+        final ImmutableSet<String> domain = c1.localVariableLookup.keySet().stream().filter(c2.localVariableLookup::containsKey)
                 .collect(Collectors.collectingAndThen(Collectors.toSet(), ImmutableSet::copyOf));
 
-        assert c1.fieldNames == c2.fieldNames;  // TODO: is this true? This should be true
-        final PegNode heap = f.apply(new Pair<>(c1.heap, c2.heap));
-        return PegContext.initMap(domain, k -> f.apply(new Pair<>(c1.get(k), c2.get(k))), c1.fieldNames, heap);
-    }
+        final PegNode.Heap combinedHeap = PegNode.heap(
+                PegNode.phi(guardId, c1.heap.state, c2.heap.state).id,
+                PegNode.phi(guardId, c1.heap.status, c2.heap.status).id
+        );
 
-    public static PegContext combine(PegContext c1, PegContext c2, Integer guardId) {
-        return PegContext.combine(c1, c2, p -> p.fst.equals(p.snd) ? p.fst : PegNode.phi(guardId, p.fst.id, p.snd.id));
+        final ImmutableSet<PegNode> combinedExitConditions = (new ImmutableSet.Builder<PegNode>())
+                .addAll(c1.exitConditions)
+                .addAll(c2.exitConditions).build();
 
+        return initMap(
+                domain,
+                p -> PegNode.phi(guardId, c1.getLocalVar(p).id, c2.getLocalVar(p).id),
+                c1.fieldNames,
+                combinedHeap,
+                combinedExitConditions);
     }
 
     /**
@@ -80,25 +72,23 @@ public class PegContext {
     }
 
     public boolean isUnshadowedField(final String key) {
-      return isField(key) && !paramLookup.containsKey(key);
-
+      return isField(key) && !localVariableLookup.containsKey(key);
     }
 
     /**
      * Lookup a key in the context. This key can correspond to a {@code parameter} or a {@code field}
      * @param key the method parameter or field name to look up in this context
-     * @return the associated {@code PegNode}
-     * @throws IllegalArgumentException if {@code key} is neither a method parameter or a field accessed by the method
+     * @return the associated {@code PegNode} if it exists, and PegNode.unit() otherwise.
      */
-    public PegNode get(String key) {
-        if (paramLookup.containsKey(key)) {
-            return paramLookup.get(key);
+    public PegNode getLocalVar(String key) {
+        if (localVariableLookup.containsKey(key)) {
+            return localVariableLookup.get(key);
         }
-        if (fieldNames.contains(key)) {
+        if (isUnshadowedField(key)) {
             // Todo: check for static fields/etc
-            return PegNode.rd(PegNode.path(get("this").id, key).id, heap.id);
+            return PegNode.rd(PegNode.path(getLocalVar("this").id, key).id, heap.id);
         }
-        throw new IllegalArgumentException("No such lookup item " + key);
+        return PegNode.unit();
     }
 
     /**
@@ -107,22 +97,36 @@ public class PegContext {
      * @return new {@code PegContext} identical to this except for at {@code key} now maps to {@code val}
      * @throws IllegalArgumentException if key or val is null
      */
-    public PegContext set(final String key, final PegNode val) {
+    public PegContext setLocalVar(final String key, final PegNode val) {
         if (key == null) throw new IllegalArgumentException("Cannot add null key to serializer.peg.PegContext");
         if (val == null) throw new IllegalArgumentException("Cannot add null val to serializer.peg.PegContext");
 
         final ImmutableMap.Builder<String, PegNode> b = new ImmutableMap.Builder<>();
         b.put(key, val);
-        if (paramLookup.containsKey(key)) {
-            for (ImmutableMap.Entry<String, PegNode> e : paramLookup.entrySet()) {
+        if (localVariableLookup.containsKey(key)) {
+            for (ImmutableMap.Entry<String, PegNode> e : localVariableLookup.entrySet()) {
                 if (! key.equals(e.getKey())) {
                     b.put(e);
                 }
             }
         } else {
-            b.putAll(paramLookup);
+            b.putAll(localVariableLookup);
         }
-        return new PegContext(b.build(), fieldNames, heap);
+        return new PegContext(b.build(), fieldNames, heap, exitConditions);
+    }
+
+    /**
+     * A helper method wrapping {@code setLocalVar} to predicate assignments on appropriate checks against
+     * exitConditions.
+     * @param key variable name we are assigning to
+     * @param val value we are assigning
+     * @return context resulting from assignment
+     */
+    public PegContext performAssignLocalVar(final String key, final PegNode val) {
+      if (exitConditions.isEmpty()) {
+          return setLocalVar(key, val);
+      }
+      return setLocalVar(key, PegNode.phi(PegNode.exitConditions(exitConditions).id, getLocalVar(key).id, val.id));
     }
 
     /**
@@ -131,8 +135,49 @@ public class PegContext {
      * @return a new {@code PegContext} identical to this one save for it's heap value, which is set to the passed
      *         in {@code heap}'s value
      */
-    public PegContext withHeap(final PegNode heap) {
-        return new PegContext(this, heap);
+    public PegContext withHeap(final PegNode.Heap heap) {
+      return new PegContext(localVariableLookup, fieldNames, heap, exitConditions);
+    }
+
+    /**
+     * Create a new PegContext identical to this one but with an added exit condition.
+     * @param exitCondition the condition to add
+     * @return the new PegContext with updated exitConditions
+     */
+    public PegContext withExitCondition(final PegNode exitCondition) {
+      ImmutableSet.Builder<PegNode> builder = ImmutableSet.builder();
+      builder.addAll(exitConditions);
+      builder.add(exitCondition);
+      final ImmutableSet<PegNode> exitConditions = builder.build();
+      return new PegContext(localVariableLookup, fieldNames, heap, exitConditions);
+    }
+
+    /**
+     * Update this context's exception status to reflect possible exceptional behavior
+     * @param condition the boolean condition that implies exceptional behavior
+     * @param exception the exception
+     * @return
+     */
+    public PegContext withExceptionCondition(final PegNode condition, final PegNode exception) {
+        PegNode.Heap newHeap;
+        // Check for the case of `(phi (isunit? unit) thn els)` and transform to `thn`
+        if (heap.status == PegNode.unit().id) {
+            newHeap = heap.withStatus(PegNode.phi(condition.id, exception.id, PegNode.unit().id).id);
+        }
+        // Update the status to check if we already have an exception. If so, pass that exceptional status on.
+        // Otherwise, mark the current status as {@code exception}
+        // (phi (isunit? heap.status                            ;; If the status is unit, nothing thrown yet
+        //               (phi condition.id exception.id unit)   ;; ...so check for exception
+        //               heap.status)                           ;; Otherwise, use that status
+        else {
+            newHeap = heap.withStatus(
+                    PegNode.phi(
+                            PegNode.isunit(heap.status).id,
+                            PegNode.phi(condition.id, exception.id, PegNode.unit().id).id,
+                            heap.status).id
+            );
+        }
+        return withExitCondition(condition).withHeap(newHeap);
     }
 
     /**
@@ -143,9 +188,16 @@ public class PegContext {
      * @param heap the heap value to use in the resulting {@code PegContext}
      * @return a new context mapping all keys to values as specified by {@code f}
      */
-    public static PegContext initMap(final Set<String> keys, final Function<String, PegNode> f,
-                                     final Set<String> fieldNames, final PegNode heap) {
-        return new PegContext(keys, f, fieldNames, heap);
+    public static PegContext initMap(final Set<String> keys,
+                                     final Function<String, PegNode> f,
+                                     final Set<String> fieldNames,
+                                     final PegNode.Heap heap,
+                                     final ImmutableSet<PegNode> exitConditions)
+    {
+
+        final ImmutableMap.Builder<String, PegNode> builder = ImmutableMap.builderWithExpectedSize(keys.size());
+        keys.forEach(k -> builder.put(k, f.apply(k)));
+        return new PegContext(builder.build(), fieldNames, heap, exitConditions);
     }
 
     /**
@@ -164,7 +216,7 @@ public class PegContext {
         for (String param : params) {
             builder.put(param, PegNode.var(param));
         }
-        return new PegContext(builder.build(), fieldNames, PegNode.initialHeap());
+        return new PegContext(builder.build(), fieldNames, PegNode.initialHeap(), ImmutableSet.of());
     }
 
     /**
@@ -174,10 +226,14 @@ public class PegContext {
         if (returnNode == null) {
             returnNode = PegNode.unit();
         }
-        return Optional.ofNullable(PegNode.opNodeFromPegs("method-root", returnNode, heap));
+        return Optional.ofNullable(PegNode.returnNode(returnNode.id, heap.id));
     }
 
     public ExpressionResult exprResult(final PegNode peg) {
         return new ExpressionResult(peg, this);
+    }
+
+    public ExpressionResult exprResult() {
+        return exprResult(PegNode.unit());
     }
 }

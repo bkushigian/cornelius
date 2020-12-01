@@ -292,10 +292,10 @@ impl<'a> Evaluator<'a> {
             Heap(_) => Err("Cannot evaluate heap directly".to_owned()),
             Wr(_) => Err("Cannot evaluate wr node directly directly".to_owned()),
             Rd(_) => Err("Cannot evaluate rd node directly directly".to_owned()),
-            MethodRoot([val, heap]) => {
+            ReturnNode([val, heap]) => {
                 let r = self.evaluate_expr_at(usize::from(val))?;
                 let ret_val_id = self.expr.add(r);
-                let meth_root = MethodRoot([ret_val_id, heap]);
+                let meth_root = ReturnNode([ret_val_id, heap]);
                 self.expr.add(meth_root.clone());
                 Ok(meth_root)
             },

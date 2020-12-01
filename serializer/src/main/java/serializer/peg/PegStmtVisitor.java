@@ -1,19 +1,38 @@
 package serializer.peg;
 
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
+import serializer.peg.testing.TestPair;
+import serializer.peg.testing.TestPairs;
+import serializer.peg.testing.TestUtil;
 
-import java.util.Optional;
+import java.util.*;
 
 public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext> {
     final PegExprVisitor pev = new PegExprVisitor();
+    /**
+     * Map methods to all collected TestPairs
+     */
+    public TestPairs testPairs;
 
+    public PegStmtVisitor() {
+        this(false);
+    }
+
+    public PegStmtVisitor(boolean scrapeComments) {
+        testPairs = new TestPairs(scrapeComments);
+    }
+
+    public TestPairs getTestPairs() {
+        return testPairs;
+    }
     @Override
     public PegContext visit(MethodDeclaration n, PegContext ctx) {
-        return super.visit(n, ctx);
+        final PegContext result = super.visit(n, ctx);
+        testPairs.scrape(n, result.exprResult());
+        return result;
     }
 
     @Override
@@ -29,7 +48,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
                 return performWrite(fieldAccess, value, ctx);
             }
 
-            return ctx.set(n.getTarget().asNameExpr().getNameAsString(), value);
+            return ctx.setLocalVar(n.getTarget().asNameExpr().getNameAsString(), value);
         }
         else if (n.getTarget().isFieldAccessExpr()) {
             // todo: update heap
@@ -46,8 +65,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
         final ExpressionResult er = pev.getPathFromFieldAccessExpr(fieldAccess, ctx);
         ctx = er.context;
         final PegNode target = er.peg;
-        return ctx.withHeap(PegNode.wr(target.id, value.id, ctx.heap.id));
-
+        return ctx.withHeap(PegNode.wrHeap(target.id, value.id, ctx.heap));
     }
 
     @Override
@@ -63,18 +81,25 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
 
     @Override
     public PegContext visit(ExpressionStmt n, PegContext ctx) {
-        return n.accept(pev, ctx).context;
+        PegContext result = n.accept(pev, ctx).context;
+        testPairs.scrape(n, result.exprResult());
+        return result;
     }
 
     @Override
     public PegContext visit(IfStmt n, PegContext ctx) {
         final ExpressionResult er = n.getCondition().accept(pev, ctx);
+        testPairs.scrape(n, er, "cond");
         ctx = er.context;
         final PegNode guard = er.peg;
         final PegContext c1 = n.getThenStmt().accept(this, ctx);
+        testPairs.scrape(n, er, "then");
         final PegContext c2 = n.getElseStmt().isPresent() ? n.getElseStmt().get().accept(this, ctx)
                                                           : ctx;
-        return PegContext.combine(c1, c2, p -> p.fst.equals(p.snd) ? p.fst : PegNode.phi(guard.id, p.fst.id, p.snd.id));
+        testPairs.scrape(n, er, "else");
+        PegContext combined = PegContext.combine(c1, c2, guard.id);
+        testPairs.scrape(n, combined.exprResult());
+        return combined;
     }
 
     @Override
@@ -102,6 +127,8 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
             ctx = er.context;
             ctx.returnNode = er.peg;
         }
+
+        testPairs.scrape(n, ctx.exprResult());
         return ctx;
     }
 

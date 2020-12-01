@@ -18,7 +18,6 @@ public class PegSubjectSerializer {
         if (args.length < 2) {
             usage("Incorrect arg count");
         }
-        /* arg[0] is original program; arg[1] is folder of mutated copies; args[2] is log of mutations */
         final PegSubjectSerializer m =  new PegSubjectSerializer(
                 String.format("%s/%s", args[0], args[1]),
                 String.format("%s/mutants", args[0]),
@@ -74,6 +73,8 @@ public class PegSubjectSerializer {
 
             // Iterate through each method
             for (String sig : mutantsLog.methodNameMap.keySet()){
+                // TODO: handle class-level mutations
+                if (!sig.contains("@")) continue;
                 final String canonical = Util.canonicalName(sig);
                 final String sourceFile = sig.substring(0, sig.indexOf('@')).replace('.', '/') + ".java";
                 if (!methodMap.containsKey(canonical)) {
@@ -115,7 +116,8 @@ public class PegSubjectSerializer {
 
                         xmlGen.addMutant(sig, row.id, row.pegId);
                         if (printDerefStrings) {
-                            System.out.printf("mutant %s: %s\n", row.id, PegNode.getIdLookup().get(row.pegId).toDerefString());
+                            System.out.printf("mutant %s: %s\n", row.id,
+                                    PegNode.idLookup(row.pegId).map(PegNode::toDerefString));
                         }
 
                     } catch (FileNotFoundException e) {
@@ -124,6 +126,7 @@ public class PegSubjectSerializer {
                 }
             }
 
+            // TODO: this involves giving public access to the idLookup which is sketchy.
             xmlGen.addDeduplicationTable(PegNode.getIdLookup());
 
             xmlGen.writeToFile("subjects.xml");

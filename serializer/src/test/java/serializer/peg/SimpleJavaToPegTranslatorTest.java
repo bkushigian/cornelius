@@ -1,19 +1,13 @@
 package serializer.peg;
 
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.comments.Comment;
-import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import org.junit.Test;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
+import serializer.peg.testing.TestPairs;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
-import static org.junit.Assert.*;
+import java.util.*;
 
 public class SimpleJavaToPegTranslatorTest {
   @Test
@@ -39,63 +33,19 @@ public class SimpleJavaToPegTranslatorTest {
    * @throws FileNotFoundException
    */
   public void testJavaFile(final String javaFile) throws FileNotFoundException {
-    final SimpleJavaToPegTranslator translator = new SimpleJavaToPegTranslator();
+    final SimpleJavaToPegTranslator translator = new SimpleJavaToPegTranslator(true);
     final CompilationUnit cu = StaticJavaParser.parse(new File(javaFile));
-    final Map<String, String> commentPegs = new HashMap<>();
-    cu.accept(new PegCommentScraperVisitor(), commentPegs);
 
-    Map<String, PegNode> translated = translator.translate(cu);
+    final Map<String, PegNode> translated = translator.translate(cu);
+    final TestPairs testPairs = translator.testPairs;
+    List<String> failed = new ArrayList<>();
+    int i = 0;
     for (String m : translated.keySet()) {
-      System.out.println("Checking: " + m);
-      if (commentPegs.containsKey(m)) {
-        System.out.println("   ...found in commentPegs");
-        final String expectedPeg = commentPegs.get(m);
-        final String actualPeg = translated.get(m).toDerefString();
-
-        assertNotNull(expectedPeg);
-        assertNotNull(actualPeg);
-        assertEquals(String.format("Method %s", m), expectedPeg, actualPeg);
-      } else {
-        System.out.println("   ...NOT found in commentPegs");
-      }
-    }
-    System.out.println(translated.keySet());
-    System.out.println(commentPegs.keySet());
-  }
-
-  /**
-   * Extract an expected peg from javadoc comments.
-   */
-  static class PegCommentScraperVisitor extends VoidVisitorAdapter<Map<String, String>> {
-    @Override
-    public void visit(MethodDeclaration n, Map<String, String> arg) {
-      final Optional<Comment> maybeComment = n.getComment();
-      if (maybeComment.isPresent()) {
-        final Comment comment = maybeComment.get();
-        final String content = comment.getContent();
-        boolean inPre = false;
-        String peg = null;
-        for (String s : content.split("\n\\s*\\*")) {
-          final String line = s.trim();
-          if ("<pre>".equals(line)) {
-            inPre = true;
-          }
-          else if ("</pre>".equals(line)) {
-            inPre = false;
-          }
-          else if (inPre) {
-            if (peg != null) {
-              throw new RuntimeException("Illformed Comment: multiple peg lines\n:" + peg + "\n" + line);
-            }
-            peg = line;
-            String methodDeclStr = n.getDeclarationAsString(false,false,false).trim();
-            methodDeclStr = methodDeclStr.substring(methodDeclStr.indexOf(' ') + 1)
-                    .replaceAll("\\s+", "");
-            arg.put(methodDeclStr, peg);
-          }
-        }
+      ++i;
+      System.out.printf("%-40s [%d/%d]", m, i, translated.size());
+      if (testPairs.testPairLookupTable.containsKey(m)) {
+        System.out.print("   ... Found expected PEG ... ");
       }
     }
   }
-
 }

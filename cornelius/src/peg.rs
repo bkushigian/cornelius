@@ -16,9 +16,13 @@ define_language! {
     "unit" = Unit,
     // Here I reintroduce null values to Rust
     "null" = Null,
+
+    "isnull?" = IsNull(Id),
+    "isunit?" = IsUnit(Id),
     "+"    = Add([Id; 2]),
     "*"    = Mul([Id; 2]),
     "/"    = Div([Id; 2]),
+    "%"    = Rem([Id; 2]),
     "-"    = Sub([Id; 2]),
     "---"  = Neg(Id),
     "&&"   = And([Id; 2]),
@@ -53,7 +57,7 @@ define_language! {
     "derefs" = Derefs(Id),
     // a heap represents an unknown heap state. it is indexed to syntactically
     // differentiate unknown heaps
-    "heap" = Heap(Id),
+    "heap" = Heap([Id; 2]),
     // (wr path value heap)
     // represent the heap `heap'` that is equal to `heap` at all points save for
     // `path`, which now has value `value`
@@ -61,16 +65,22 @@ define_language! {
     // (rd path heap)
     // read the value stored at an access path `path` in a heap `heap`
     "rd" = Rd([Id; 2]),
-    // (MethodRoot return heap)
+    // (ReturnNode return heap)
     // represent the returned value from a mutant (or original program)---this
     // is used as the root of a program we are comparing for equality
-    "mutant-root" = MethodRoot([Id; 2]),
+    "return-node" = ReturnNode([Id; 2]),
 
     /***                       Method Stuff                      ***/
 
     // (invoke heap receiver method actuals)
     // A normal (i.e., non-static), method invocation
     "invoke" = Invoke([Id; 4]),
+    // Get the heap state from an invoke node
+    "invoke->heap-state" = InvokeToHeapState(Id),
+    // Get the exception status from an invoke node
+    "invoke->exception-status" = InvokeToExceptionStatus(Id),
+    // Get the returned value of an invoke node
+    "invoke->peg" = InvokeToPeg(Id),
     // (invoke-static heap method actuals)
     // A normal (i.e., non-static), method invocation
     "invoke-static" = InvokeStatic([Id; 3]),
@@ -82,6 +92,9 @@ define_language! {
     "method" = MethodName(Id),
     // Actual paramters passed to a method
     "actuals" = Actuals(Box<[Id]>),
+    // A list of exit conditions: these are not rewritten for now to avoid AC
+    // blowup
+    "exit-conditions" = ExitCondition(Box<[Id]>),
   }
 }
 

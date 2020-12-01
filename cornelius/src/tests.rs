@@ -453,7 +453,7 @@ mod heap {
     use super::*;
     #[test]
     fn rd_wr() {
-        assert!(test_straight_rewrite("(rd (path (var a) (derefs .a.b)) (wr (path (var a) (derefs .a.b)) 3 (heap 0)))", "3"));
+        assert!(test_straight_rewrite("(rd (path (var a) (derefs .a.b)) (wr (path (var a) (derefs .a.b)) 3 (heap 0 unit)))", "3"));
     }
 
     #[test]
@@ -471,7 +471,7 @@ mod heap {
             //     }
             // }
 
-            "(mutant-root (rd (path (var this) (derefs x)) (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0))) (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0)))",
+            "(return-node (rd (path (var this) (derefs x)) (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0 unit))) (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0 unit)))",
             // Mutant
             // public class MyClass {
             //     int x = 0;
@@ -484,7 +484,7 @@ mod heap {
             //     }
             // }
 
-            "(mutant-root 0 (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0)))"))
+            "(return-node 0 (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0 unit)))"))
     }
 
     #[test]
@@ -501,14 +501,14 @@ mod heap {
         //           return result;
         //      }
         // }
-"(mutant-root
+"(return-node
     (rd (path (var this) (derefs x))
         (wr (path (var this) (derefs x))
             (phi (> (var a) (var b)) (var a) (var b))
-            (heap 0)))
+            (heap 0 unit)))
     (wr (path (var this) (derefs x))
         (phi (> (var a) (var b)) (var a) (var b))
-        (heap 0)))",
+        (heap 0 unit)))",
         // Mutant Program
         // public class MyClass
         //     int x = 0;
@@ -518,49 +518,75 @@ mod heap {
         //           return result;
         //      }
         // }
-"(mutant-root
+"(return-node
     (rd (path (var this) (derefs x))
         (wr (path (var this) (derefs x))
             (phi (>= (var a) (var b)) (var a) (var b))
-            (heap 0)))
+            (heap 0 unit)))
     (wr (path (var this) (derefs x))
         (phi (>= (var a) (var b)) (var a) (var b))
-        (heap 0)))"))
-
+        (heap 0 unit)))"))
     }
-
 }
 
 #[cfg(test)]
 mod serialization {
     use super::*;
     #[test]
-    fn field_write() {
+    fn field_write_gt() {
         ensure_serialized_subject_meets_specs("../tests/field-write.xml", "../tests/field-write.gt", 1);
     }
 
     #[test]
-    fn field_access() {
+    fn field_write_deduplication() {
+        ensure_no_duplicates_in_serialized("../tests/field-write.xml");
+    }
+
+    #[test]
+    fn field_access_gt() {
         ensure_serialized_subject_meets_specs("../tests/field-access.xml", "../tests/field-access.gt", 1);
     }
 
     #[test]
-    fn method_invocation() {
+    fn field_access_deduplication() {
+        ensure_no_duplicates_in_serialized("../tests/field-access.xml");
+    }
+
+    #[test]
+    fn method_invocation_gt() {
         ensure_serialized_subject_meets_specs("../tests/method-invocation.xml", "../tests/method-invocation.gt", 1);
+    }
+
+    #[test]
+    fn method_invocation_deduplication() {
+        ensure_no_duplicates_in_serialized("../tests/method-invocation.xml");
     }
 }
 
 #[allow(dead_code)]
 fn test_straight_rewrite(start: &str, end: &str) -> bool {
-    let start_expr = start.parse().unwrap();
-    let end_expr = end.parse().unwrap();
+    exprs_collide(start, end, &[])
+}
+
+/// exprs_collide
+///
+/// Ensure that expressions `e1` and `e2` do not become equal during equality
+/// saturation when expressions `others` are in the egraph
+#[allow(dead_code)]
+fn exprs_collide(e1: &str, e2: &str, others: &[&str]) -> bool {
+    let e1 = e1.parse().unwrap();
+    let e2 = e2.parse().unwrap();
     let mut eg = EGraph::default();
-    eg.add_expr(&start_expr);
+    eg.add_expr(&e1);
+    eg.add_expr(&e2);
+    for e in others {
+        eg.add_expr(&e.parse().unwrap());
+    }
     let rules: Box<RewriteSystem> = crate::rewrites::rw_rules();
     let runner = Runner::default()
         .with_egraph(eg)
         .run(rules.iter());
-    !runner.egraph.equivs(&start_expr, &end_expr).is_empty()
+    !runner.egraph.equivs(&e1, &e2).is_empty()
 }
 
 #[allow(dead_code)]
@@ -584,10 +610,8 @@ fn test_no_straight_rewrite(start: &str, end: &str, other: &[&str]) -> bool {
 
     let mut trial: u32 = 0;
 
-    if test_straight_rewrite(start, end) {
+    if exprs_collide(start, end, other) {
         if  run_dd {
-            let dd_start_time = Instant::now();
-            let rules = crate::rewrites::rw_rules();
             let start_expr = start.parse().unwrap();
             let end_expr = end.parse().unwrap();
             let oracle =
@@ -616,8 +640,11 @@ fn test_no_straight_rewrite(start: &str, end: &str, other: &[&str]) -> bool {
                     }
                     not_equiv
                 };
+
+            let rules = crate::rewrites::rw_rules();
             let rules: Vec<_> = rules.iter().collect();
             let min_config = dd(&rules, oracle);
+            let dd_start_time = Instant::now();
 
             for (i, rule) in min_config.iter().enumerate() {
                 println!("({}) {}  {}", i+1, rule.name(), rule.long_name());
@@ -673,4 +700,34 @@ fn ensure_serialized_subject_meets_specs(
         score += subject.analysis_result.score;
     }
     assert!(score >= min_score, format!("score = {} < min_score = {}", score, min_score));
+}
+
+/// Read in a serialized file, parse it into a subjects, and add it to an
+/// EGraph. Then, check that the size of the EGraph is correct (i.e., that there
+/// were no duplications of syntactically identical pegs from serialization).
+#[allow(dead_code)]
+fn ensure_no_duplicates_in_serialized(
+    subjects_file: &str
+) {
+    let subjects: crate::subjects::Subjects = crate::subjects::Subject::from_file(subjects_file.to_string()).unwrap();
+    let rec_expr = subjects.compute_rec_expr().unwrap();
+    let rec_expr_ref = rec_expr.as_ref();
+    let mut egraph = EGraph::<Peg,()>::default();
+
+    for i in 0..rec_expr_ref.len(){
+        let new_id = egraph.add(rec_expr_ref[i].clone());
+
+        let egg_size = egraph.total_size();
+        let v = rec_expr_ref[0..(i+1)].to_vec();
+        let re = RecExpr::from(v);
+        assert!((i + 1) == egg_size, format!("rec_expr_size: {} != egraph size: {}\nre: `{}`", i + 1, egg_size, re.pretty(80)));
+        assert!(usize::from(new_id) == i, format!("id: {}, i: {}", usize::from(new_id), i));
+    }
+
+    let mut egraph = EGraph::<Peg,()>::default();
+    egraph.add_expr(&rec_expr);
+    let egg_size = egraph.total_size();
+    let ser_size = rec_expr.as_ref().len();
+    assert!(ser_size == egg_size, format!("serialized size: {} != egraph size: {}", ser_size, egg_size));
+
 }

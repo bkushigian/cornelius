@@ -12,15 +12,24 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
 
     @Override
     public ExpressionResult visit(BinaryExpr n, PegContext context) {
-        final ExpressionResult lhsExprResult = n.getLeft() .accept(this, context);
-        final PegNode lhs = lhsExprResult.peg;
-        context = lhsExprResult.context;   // This context will keep track of the current context
+        final ExpressionResult lhs = n.getLeft() .accept(this, context);
+        final ExpressionResult rhs = n.getRight().accept(this, lhs.context);
 
-        final ExpressionResult rhsExprResult = n.getRight().accept(this, context);
-        final PegNode rhs = rhsExprResult.peg;
-        context = rhsExprResult.context;
+        if (n.getOperator() == BinaryExpr.Operator.DIVIDE || n.getOperator() == BinaryExpr.Operator.REMAINDER) {
+            // If this is a division or a remainder operator, add a check for div-by-zero
+            final PegNode denominatorIsZero = PegNode.opNode(PegOp.EQ, rhs.peg.id, PegNode.intLit(0).id);
+            PegNode throwCond;
+            if (rhs.context.exitConditions.isEmpty()) {
+                throwCond = denominatorIsZero;
+            } else {
+                // (&& haven-not-exited denominator-is-zero)
+                final PegNode haveNotExited = PegNode.opNode(PegOp.NOT, PegNode.exitConditions(rhs.context.exitConditions).id);
+                throwCond = PegNode.opNode(PegOp.AND, haveNotExited.id, denominatorIsZero.id);
+            }
+            rhs.withContext(rhs.context.withExceptionCondition(throwCond, PegNode.exception("java.lang.DivideByZeroError")));
+        }
 
-        return handleBinExpr(n, lhs, rhs).exprResult(context);
+        return handleBinExpr(n, lhs.peg, rhs.peg).exprResult(rhs.context);
     }
 
     /**
@@ -124,17 +133,31 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
             }
             case DIVIDE:
             {
-                if (li.isPresent() && ri.isPresent() && ri.get() != 0) {
-                    return PegNode.intLit(li.get() / ri.get());
+                if (li.isPresent() && ri.isPresent() ) {
+                    if (ri.get() != 0) {
+                        return PegNode.intLit(li.get() / ri.get());
+                    } else {
+                        // This will never be evaluated since we are dividing by zero
+                        return PegNode.unit();
+                    }
                 }
-                return PegNode.opNodeFromPegs(PegOp.DIVIDE, lhs, rhs);
+                final PegNode cond =  PegNode.opNode(PegOp.EQ, rhs.id, PegNode.intLit(0).id);
+                final PegNode value = PegNode.opNode(PegOp.DIVIDE, lhs.id, rhs.id);
+                return PegNode.phi(cond.id, PegNode.unit().id, value.id);
             }
             case REMAINDER:
             {
-                if (li.isPresent() && ri.isPresent() && ri.get() != 0) {
-                    return PegNode.intLit(li.get() % ri.get());
+                if (li.isPresent() && ri.isPresent()) {
+                    if (ri.get() != 0) {
+                        return PegNode.intLit(li.get() % ri.get());
+                    } else {
+                        // This will never be evaluated since we are dividing by zero
+                        return PegNode.unit();
+                    }
                 }
-                return PegNode.opNodeFromPegs(PegOp.REMAINDER, lhs, rhs);
+                final PegNode cond =  PegNode.opNode(PegOp.EQ, rhs.id, PegNode.intLit(0).id);
+                final PegNode value = PegNode.opNode(PegOp.REMAINDER, lhs.id, rhs.id);
+                return PegNode.phi(cond.id, PegNode.unit().id, value.id);
             }
             default:
                 throw new IllegalStateException("Unrecognized binary operator: " + n.getOperator());
@@ -200,14 +223,15 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     @Override
     public ExpressionResult visit(VariableDeclarator n, PegContext arg) {
         final String name = n.getNameAsString();
+        arg = arg.setLocalVar(name, PegNode.unit());
         final Optional<Expression> initializer = n.getInitializer();
         if (initializer.isPresent()) {
             final ExpressionResult er = initializer.get().accept(this, arg);
-            arg = er.context.set(name, er.peg);
+            arg = er.context.performAssignLocalVar(name, er.peg);
+
         }
         return arg.exprResult(PegNode.unit());
     }
-
 
     @Override
     public ExpressionResult visit(AssignExpr n, PegContext ctx) {
@@ -218,14 +242,15 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
             final String nameString = n.getTarget().asNameExpr().getNameAsString();
 
             if (ctx.isUnshadowedField(nameString)) {
+                // We do not need to explicitly use exit conditions: these are already tracked in the heap
                 final FieldAccessExpr fieldAccess = new FieldAccessExpr(new ThisExpr(), nameString);
                 return performWrite(fieldAccess, value, ctx);
             }
 
-            return er.withContext(ctx.set(n.getTarget().asNameExpr().getNameAsString(), value));
+            return er.withContext(ctx.performAssignLocalVar(nameString, value));
         }
         else if (n.getTarget().isFieldAccessExpr()) {
-            // todo: update heap
+            // todo: can this be done with normal 'visit'?
             final FieldAccessExpr fieldAccess = n.getTarget().asFieldAccessExpr();
             return performWrite(fieldAccess, value, ctx).withPeg(value);
         }
@@ -251,7 +276,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
 
     @Override
     public ExpressionResult visit(NameExpr n, PegContext context) {
-        return context.get(n.getNameAsString()).exprResult(context);
+        return context.getLocalVar(n.getNameAsString()).exprResult(context);
     }
 
     @Override
@@ -267,26 +292,31 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
             return (b.get() ? thn : els).exprResult(b.get() ? thnEr.context : elsEr.context);
         }
         final PegContext combined = PegContext.combine(thnEr.context, elsEr.context, cond.id);
-        return PegNode.opNodeFromPegs(PegOp.ITE, cond, thn, els).exprResult(combined);
+        return PegNode.opNode(PegOp.ITE, cond.id, thn.id, els.id).exprResult(combined);
     }
 
     @Override
     public ExpressionResult visit(ThisExpr n, PegContext arg) {
-        return arg.get("this").exprResult(arg);
+        return arg.getLocalVar("this").exprResult(arg);
     }
 
     @Override
     public ExpressionResult visit(FieldAccessExpr n, PegContext arg) {
         final ExpressionResult scope = n.getScope().accept(this, arg);
         final PegNode path = PegNode.path(scope.peg.id, n.getNameAsString());
-        return scope.withPeg(PegNode.rd(path.id, scope.context.heap.id));
+        final PegNode isnull = PegNode.isnull(scope.peg.id);
+        final PegNode npe = PegNode.exception("java.lang.NullPointerException");
+        final PegContext nullCheck = scope.context.withExceptionCondition(isnull, npe);
+        return PegNode.rd(path.id, scope.context.heap.id).exprResult(nullCheck);
     }
 
     @Override
     public ExpressionResult visit(MethodCallExpr n, final PegContext context) {
+        // TODO: add exit condition
+
         // YUCK: The following Expression result handles two cases: if n has a scope, visit it and capture the
         // resulting ExpressionResult. Otherwise, make  new ExpressionResult from context and "this".
-        final ExpressionResult scope = n.getScope().map(x -> x.accept(this, context)).orElse(context.exprResult(context.get("this")));
+        final ExpressionResult scope = n.getScope().map(x -> x.accept(this, context)).orElse(context.exprResult(context.getLocalVar("this")));
         final List<Integer> actualsPegs = new ArrayList<>();
 
         // The following variable keeps track of the updated context as we visit arguments
@@ -301,7 +331,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         final PegNode invocation = PegNode.invoke(ctx.heap.id, scope.peg.id, n.getNameAsString(), actuals.id);
         // We also need to update the context's heap since we've called a method which may have changed heap state
         ctx = context.withHeap(PegNode.projectHeap(invocation.id));
-        return PegNode.projectVal(invocation.id).exprResult(context);
+        return PegNode.invokeToPeg(invocation.id).exprResult(ctx);
     }
 
     @Override
@@ -328,6 +358,6 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     // Helper function to produce a new Context storing the write
     ExpressionResult performWrite(FieldAccessExpr fieldAccess, PegNode value, PegContext ctx) {
         final ExpressionResult er = getPathFromFieldAccessExpr(fieldAccess, ctx);
-        return er.withHeap(PegNode.wr(er.peg.id, value.id, er.context.heap.id));
+        return er.withHeap(PegNode.wrHeap(er.peg.id, value.id, er.context.heap));
     }
 }

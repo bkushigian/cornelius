@@ -8,6 +8,7 @@ import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
 import com.github.javaparser.ast.type.Type;
+import serializer.peg.testing.TestPairs;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -18,8 +19,22 @@ import java.util.stream.Collectors;
 public class SimpleJavaToPegTranslator {
 
     final SimpleValidator validator = new SimpleValidator();
-    final PegStmtVisitor stmtVisitor = new PegStmtVisitor();
     final PegClassVisitor classVisitor = new PegClassVisitor();
+    final PegStmtVisitor stmtVisitor;
+    /**
+     * For testing infrastructure. This is created by {@code stmtVisitor} and if {@code scrapeComments=true} in this
+     * constructor, this stores test cases by inspecting comments in translated source code.
+     */
+    public final TestPairs testPairs;
+
+    public SimpleJavaToPegTranslator(boolean scrapeComments) {
+        stmtVisitor = new PegStmtVisitor(scrapeComments);
+        testPairs = stmtVisitor.getTestPairs();
+    }
+
+    public SimpleJavaToPegTranslator() {
+        this(false);
+    }
 
     /**
      * Translate a {@code CompilationUnit} into a set of PEGs, one for each method.
@@ -77,15 +92,8 @@ public class SimpleJavaToPegTranslator {
         if (!validator.validate(n)) {
             return Optional.empty();
         }
-        final NodeList<Parameter> parameters = n.getParameters();
-
-        final List<String> params =
-                parameters.stream().map(NodeWithSimpleName::getNameAsString).collect(Collectors.toList());
-        if (!n.isStatic()) {
-            params.add(0, "this");
-        }
-
-        final PegContext initCtx = PegContext.initWithParams(classVisitorResult.getFieldNames(), params);
+        final PegContext initCtx = PegContext.initWithParams(classVisitorResult.getFieldNames(),
+                Util.getParameterList(n));
         final PegContext ctx = n.accept(stmtVisitor, initCtx);
         return ctx.asPeg();
     }
