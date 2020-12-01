@@ -4,9 +4,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
-import serializer.peg.testing.TestPair;
 import serializer.peg.testing.TestPairs;
-import serializer.peg.testing.TestUtil;
 
 import java.util.*;
 
@@ -16,10 +14,6 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
      * Map methods to all collected TestPairs
      */
     public TestPairs testPairs;
-
-    public PegStmtVisitor() {
-        this(false);
-    }
 
     public PegStmtVisitor(boolean scrapeComments) {
         testPairs = new TestPairs(scrapeComments);
