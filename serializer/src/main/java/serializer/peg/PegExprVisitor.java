@@ -355,7 +355,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         final PegNode allocation = PegNode.newObject(n.getType().asString(), actuals.id, ctx.heap.id);
         // We also need to update the context's heap since we've called a method which may have changed heap state
         ctx = ctx.withHeap(PegNode.projectHeap(allocation.id));
-        return PegNode.projectVal(allocation.id).exprResult(ctx);
+        return PegNode.invokeToPeg(allocation.id).exprResult(ctx);
     }
 
     public ExpressionResult getPathFromFieldAccessExpr(FieldAccessExpr n, PegContext ctx) {
