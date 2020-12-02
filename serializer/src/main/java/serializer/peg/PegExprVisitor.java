@@ -339,6 +339,25 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         return PegNode.nullLit().exprResult(arg);
     }
 
+    @Override
+    public ExpressionResult visit(ObjectCreationExpr n, PegContext arg) {
+        final List<Integer> actualsPegs = new ArrayList<>();
+
+        // The following variable keeps track of the updated context as we visit arguments
+        PegContext ctx = arg;
+        for (final Expression actual : n.getArguments()) {
+            final ExpressionResult er = actual.accept(this, ctx);
+            ctx = er.context;
+            actualsPegs.add(er.peg.id);
+        }
+
+        final PegNode actuals = PegNode.actuals(actualsPegs.toArray(new Integer[]{}));
+        final PegNode allocation = PegNode.newObject(n.getType().asString(), actuals.id, ctx.heap.id);
+        // We also need to update the context's heap since we've called a method which may have changed heap state
+        ctx = ctx.withHeap(PegNode.projectHeap(allocation.id));
+        return PegNode.projectVal(allocation.id).exprResult(ctx);
+    }
+
     public ExpressionResult getPathFromFieldAccessExpr(FieldAccessExpr n, PegContext ctx) {
         // TODO: This only works for field access expressions w/ nothing (like arrays, methods) in the middle.
         // For instance, a.b.c().d.e, or a.b.c[0].d.e will both fail!
