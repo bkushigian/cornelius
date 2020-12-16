@@ -221,11 +221,13 @@ public class PegContext {
 
     /**
      * @return a {@code method-result} node tracking the returned value and the updated heap
+     * TODO this is never empty
      */
     public Optional<PegNode> asPeg() {
         if (returnNode == null) {
             returnNode = PegNode.unit();
         }
+
         return Optional.ofNullable(PegNode.returnNode(returnNode.id, heap.id));
     }
 

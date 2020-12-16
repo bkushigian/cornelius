@@ -254,6 +254,9 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
             final FieldAccessExpr fieldAccess = n.getTarget().asFieldAccessExpr();
             return performWrite(fieldAccess, value, ctx).withPeg(value);
         }
+        else if (n.getTarget().isArrayAccessExpr()) {
+            throw new RuntimeException("ArrayAccessExpr");
+        }
         else {
             throw new RuntimeException("Unrecognized assignment target: " + n.getTarget().toString());
         }
@@ -356,6 +359,36 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         // We also need to update the context's heap since we've called a method which may have changed heap state
         ctx = ctx.withHeap(PegNode.projectHeap(allocation.id));
         return PegNode.invokeToPeg(allocation.id).exprResult(ctx);
+    }
+
+    @Override
+    public ExpressionResult visit(CastExpr n, PegContext arg) {
+        throw new RuntimeException("CastExpr");
+    }
+
+    @Override
+    public ExpressionResult visit(ClassExpr n, PegContext arg) {
+        throw new RuntimeException("ClassExpr");
+    }
+
+    @Override
+    public ExpressionResult visit(StringLiteralExpr n, PegContext arg) {
+        throw new RuntimeException("StringLiteralExpr");
+    }
+
+    @Override
+    public ExpressionResult visit(MethodReferenceExpr n, PegContext arg) {
+        throw new RuntimeException("MethodReferenceExpr");
+    }
+
+    @Override
+    public ExpressionResult visit(LambdaExpr n, PegContext arg) {
+        throw new RuntimeException("LambdaExpr");
+    }
+
+    @Override
+    public ExpressionResult visit(LongLiteralExpr n, PegContext arg) {
+        throw new RuntimeException("LongLiteralExpr");
     }
 
     public ExpressionResult getPathFromFieldAccessExpr(FieldAccessExpr n, PegContext ctx) {

@@ -75,7 +75,7 @@ public class PegSubjectSerializer {
             for (String sig : mutantsLog.methodNameMap.keySet()){
                 // TODO: handle class-level mutations
                 if (!sig.contains("@")) continue;
-                final String canonical = Util.canonicalName(sig);
+                final String canonical = Util.canonicalizeMajorName(sig);
                 final String sourceFile = sig.substring(0, sig.indexOf('@')).replace('.', '/') + ".java";
                 if (!methodMap.containsKey(canonical)) {
                     continue;

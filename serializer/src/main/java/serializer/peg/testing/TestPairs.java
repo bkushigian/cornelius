@@ -43,7 +43,7 @@ public class TestPairs {
     }
     if (n instanceof MethodDeclaration) {
       final MethodDeclaration md = (MethodDeclaration)n;
-      final String name = Util.canonicalName(md);
+      final String name = Util.canonicalizeDeclarationName(md);
       final List<String> params = Util.getParameterList(md);
       paramNameLookup.put(name, params);
       testPairLookupTable.put(name, worklist);

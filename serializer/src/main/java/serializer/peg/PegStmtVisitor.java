@@ -22,6 +22,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
     public TestPairs getTestPairs() {
         return testPairs;
     }
+
     @Override
     public PegContext visit(MethodDeclaration n, PegContext ctx) {
         final PegContext result = super.visit(n, ctx);
@@ -67,7 +68,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
         for (Statement s : n.getStatements()) {
             ctx = s.accept(this, ctx);
             if (ctx == null) {
-                throw new IllegalStateException();
+                throw new IllegalStateException("Null context after visit");
             }
         }
         return ctx;
@@ -126,4 +127,49 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
         return ctx;
     }
 
+
+    @Override
+    public PegContext visit(WhileStmt n, PegContext arg) {
+        throw new RuntimeException("WhileStmt");
+    }
+
+    @Override
+    public PegContext visit(DoStmt n, PegContext arg) {
+        throw new RuntimeException("DoStmt");
+    }
+
+    @Override
+    public PegContext visit(ForStmt n, PegContext arg) {
+        throw new RuntimeException("ForStmt");
+    }
+
+    @Override
+    public PegContext visit(BreakStmt n, PegContext arg) {
+        throw new RuntimeException("BreakStmt");
+    }
+
+    @Override
+    public PegContext visit(TryStmt n, PegContext arg) {
+        throw new RuntimeException("TryStmt");
+    }
+
+    @Override
+    public PegContext visit(ThrowStmt n, PegContext arg) {
+        throw new RuntimeException("ThrowStmt");
+    }
+
+    @Override
+    public PegContext visit(YieldStmt n, PegContext arg) {
+        throw new RuntimeException("YieldStmt");
+    }
+
+    @Override
+    public PegContext visit(ExplicitConstructorInvocationStmt n, PegContext arg) {
+        throw new RuntimeException("ExplicitConstructorInvocationStmt");
+    }
+
+    @Override
+    public PegContext visit(LocalClassDeclarationStmt n, PegContext arg) {
+        throw new RuntimeException("LocalClassDeclarationStmt");
+    }
 }

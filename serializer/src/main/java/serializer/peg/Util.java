@@ -3,9 +3,15 @@ package serializer.peg;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.nodeTypes.NodeWithParameters;
 import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
+import com.github.javaparser.ast.nodeTypes.modifiers.NodeWithAccessModifiers;
+import com.github.javaparser.ast.nodeTypes.modifiers.NodeWithStaticModifier;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.type.Type;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,12 +35,12 @@ public class Util {
             md.getDeclarationAsString(false, false, false)));
   }
 
-  public static String canonicalName(String majorSig) {
+  public static String canonicalizeMajorName(String majorSig) {
     return CanonicalNames.fromMajorSig(majorSig);
   }
 
-  public static String canonicalName(MethodDeclaration md) {
-    return CanonicalNames.fromMethodDecl(md);
+  public static <T extends NodeWithSimpleName<?> & NodeWithParameters<?>> String canonicalizeDeclarationName(T md) {
+    return CanonicalNames.fromDecl(md);
   }
 
   /**
@@ -47,19 +53,37 @@ public class Util {
    */
   public static class CanonicalNames {
     /**
-     * Return a canonical version of the method name from a JP MethodDeclaration.
+     * Return a canonical version of the declared name from a JP ConstructorDeclaration or a MethodDeclaration.
      *
-     * @param md
+     * @param decl
      * @return
      */
-    public static String fromMethodDecl(final MethodDeclaration md) {
-      final String methodName = md.getNameAsString();
-      final NodeList<Parameter> params = md.getParameters();
-      final List<String> pTypes =
-              params.stream().map(p -> p.getType().asString()).collect(Collectors.toList());
-      return String.format("%s(%s)", methodName, String.join(",", pTypes));
+    public static <T extends NodeWithSimpleName<?> & NodeWithParameters<?>> String fromDecl(final T decl) {
+      final String methodName = decl instanceof ConstructorDeclaration? "<init>" : decl.getNameAsString();
+      final NodeList<Parameter> params = decl.getParameters();
+      final List<String> pTypes = new ArrayList<>();
+      for (Parameter p : params) {
+        Type type = p.getType();
+        String entry = type.asString();
+        if (type.isClassOrInterfaceType()) {
+          ClassOrInterfaceType ct = type.asClassOrInterfaceType();
+          StringBuilder sb = new StringBuilder();
+          String scope = ct.getScope().map(ClassOrInterfaceType::asString).orElse("");
+          sb.append(scope);
+          if (!scope.isEmpty()) {
+            sb.append('.');
+          }
+          sb.append(ct.getNameAsString());
+          entry = sb.toString();
+        }
+        if (p.isVarArgs()) {
+          entry += "[]";
+        }
+        pTypes.add(entry);
+      }
+      String result = String.format("%s(%s)",  methodName, String.join(",", pTypes));
+      return result;
     }
-
     /**
      * Return the canonical version of the name from a Major signature.
      * @param majorSig
@@ -83,7 +107,7 @@ public class Util {
     }
   }
 
-  public static List<String> getParameterList(MethodDeclaration n) {
+  public static <T extends NodeWithParameters<?> & NodeWithStaticModifier<?>> List<String> getParameterList(T n) {
     final NodeList<Parameter> parameters = n.getParameters();
 
     final List<String> params =

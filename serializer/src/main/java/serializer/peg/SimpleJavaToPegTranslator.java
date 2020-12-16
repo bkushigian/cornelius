@@ -1,17 +1,12 @@
 package serializer.peg;
 
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.TypeDeclaration;
-import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
-import com.github.javaparser.ast.type.Type;
 import serializer.peg.testing.TestPairs;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Translate a SimpleJava program to Peg
@@ -75,7 +70,7 @@ public class SimpleJavaToPegTranslator {
                 final PegClassVisitor.ClassVisitorResult classVisitorResult = classVisitor.visit(ctype);
                 if (ctype.isInterface()) continue;
                 for (MethodDeclaration method : ctype.getMethods()) {
-                    if (canonical.equals(Util.canonicalName(method))) {
+                    if (canonical.equals(Util.canonicalizeDeclarationName(method))) {
                         return translate(method, classVisitorResult);
                     }
                 }
