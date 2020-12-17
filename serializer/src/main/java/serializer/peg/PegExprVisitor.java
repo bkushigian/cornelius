@@ -170,7 +170,9 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
             final Optional<IntegerLiteralExpr> e = n.getExpression().toIntegerLiteralExpr();
             if (e.isPresent()) {
                 IntegerLiteralExpr i = e.get();
-                return PegNode.intLit(Integer.parseInt(String.format("-%s", i.getValue()))).exprResult(context);
+                Optional<Integer> parsed = Util.parseInt(String.format("-%s", i.getValue()));
+                if (parsed.isPresent()) return PegNode.intLit(parsed.get()).exprResult(context);
+                throw new IllegalStateException("Invalid integer literal: " + i.getValue());
             }
 
             final ExpressionResult er = n.getExpression().accept(this, context);
@@ -274,7 +276,10 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
 
     @Override
     public ExpressionResult visit(IntegerLiteralExpr n, PegContext context) {
-        return PegNode.intLit(Integer.parseInt(n.getValue())).exprResult(context);
+
+        Optional<Integer> parsed = Util.parseInt(String.format("%s", n.getValue()));
+        if (parsed.isPresent()) return PegNode.intLit(parsed.get()).exprResult(context);
+        throw new IllegalStateException("Invalid integer literal: " + n.getValue());
     }
 
     @Override

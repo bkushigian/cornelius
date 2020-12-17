@@ -10,9 +10,11 @@ import com.github.javaparser.ast.nodeTypes.NodeWithParameters;
 import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
 import com.github.javaparser.ast.nodeTypes.modifiers.NodeWithAccessModifiers;
 import com.github.javaparser.ast.nodeTypes.modifiers.NodeWithStaticModifier;
+import com.github.javaparser.ast.type.ArrayType;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 
+import javax.swing.text.html.Option;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -63,21 +65,30 @@ public class Util {
       final NodeList<Parameter> params = decl.getParameters();
       final List<String> pTypes = new ArrayList<>();
       for (Parameter p : params) {
-        Type type = p.getType();
+        final Type type = p.getType();
         String entry = type.asString();
         if (type.isClassOrInterfaceType()) {
           ClassOrInterfaceType ct = type.asClassOrInterfaceType();
           StringBuilder sb = new StringBuilder();
-          String scope = ct.getScope().map(ClassOrInterfaceType::asString).orElse("");
-          sb.append(scope);
-          if (!scope.isEmpty()) {
-            sb.append('.');
-          }
+          // String scope = ct.getScope().map(ClassOrInterfaceType::asString).orElse("");
+          // sb.append(scope);
+          // if (!scope.isEmpty()) {
+          //   sb.append('.');
+          // }
           sb.append(ct.getNameAsString());
           entry = sb.toString();
         }
         if (p.isVarArgs()) {
           entry += "[]";
+        }
+        if (type.isArrayType()) {
+          ArrayType at = type.asArrayType();
+          entry = at.asString();
+          Type componentType = at.getComponentType();
+          if (componentType.isClassOrInterfaceType()) {
+            ClassOrInterfaceType cType = componentType.asClassOrInterfaceType();
+            entry = cType.getName() + "[]";
+          }
         }
         pTypes.add(entry);
       }
@@ -116,6 +127,23 @@ public class Util {
       params.add(0, "this");
     }
     return params;
+  }
+
+  /**
+   * Decode an int string. Handles Decimal, hex and octal formats.
+   *
+   * TODO handle binary "[+-]?0bn+" formats
+   * @param s
+   * @return
+   */
+  public static Optional<Integer> parseInt(String s) {
+    if (s == null) return Optional.empty();
+    s = s.toLowerCase();
+    try {
+      return Optional.of(Integer.decode(s));
+    } catch (NumberFormatException e) {
+      return Optional.empty();
+    }
   }
 
 }
