@@ -89,9 +89,9 @@ public class SimpleJavaToPegTranslator {
      */
     public Optional<PegNode> translate(final MethodDeclaration n,
                                        final PegClassVisitor.ClassVisitorResult classVisitorResult) {
-        if (!validator.validate(n)) {
-            return Optional.empty();
-        }
+        // if (!validator.validate(n)) {
+        //     return Optional.empty();
+        // }
         final PegContext initCtx = PegContext.initWithParams(classVisitorResult.getFieldNames(),
                 Util.getParameterList(n));
         final PegContext ctx = n.accept(stmtVisitor, initCtx);

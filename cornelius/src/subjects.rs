@@ -26,6 +26,7 @@ impl Subjects {
   /// Compute a `RecExpr` from `self.id_table`, storing it in
   /// `self.rec_expr`.
   pub fn compute_rec_expr(&self) -> Result<RecExpr<Peg>, String> {
+    info!("Computing RecExpr");
     let mut rec_expr = RecExpr::default();
     //println!("Computing rec_expr from Subjects");
     //println!("Length of id_table is {}", self.id_table.entries.len());
@@ -34,6 +35,7 @@ impl Subjects {
       //println!("Adding entry {} as peg {:?}", entry.peg, peg);
       rec_expr.add(peg);
     }
+    info!("Returning RecExpr");
     Ok(rec_expr)
   }
 }
@@ -60,6 +62,11 @@ fn parse_peg_from_string(peg_str: String) -> Result<Peg, String> {
       return Err(format!("Mismatched PEG string {}", peg_str));
     }
     &peg_str[1..(peg_str.len()-1)]
+  } else if peg_str.starts_with('"') {
+    if !peg_str.ends_with('"') && peg_str.len() > 1 {
+      return Err(format!("invalid String literal {}", peg_str));
+    }
+    return Ok(Peg::Symbol(Symbol::from(&peg_str[1..(peg_str.len()-1)])));
   } else {
     &peg_str
   };
@@ -126,10 +133,12 @@ impl Subject {
 
   pub fn from_file(path: String) -> Result<Subjects, String> {
     use std::fs;
-    println!("Reading from path {}", path);
+    info!("Reading subject file from path {}", path);
     let contents = fs::read_to_string(path).unwrap();
+    info!("Got subject file contents");
     //println!("contents: {}", contents);
     let subjects: Subjects = from_reader(contents.as_bytes()).unwrap();
+    info!("Parsed subjects");
     Ok(subjects)
   }
 
@@ -165,6 +174,7 @@ pub fn run_on_subjects_file(subj_file: &str) -> Result<Subjects, String> {
 
     let subjects: Subjects = Subject::from_file(subj_file.to_string())
         .expect("Error reading subjects");
+    info!("Read in subjects");
 
     run_on_subjects(subjects, &rules)
 }

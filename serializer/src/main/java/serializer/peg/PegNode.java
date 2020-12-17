@@ -60,6 +60,10 @@ public abstract class PegNode {
         return Optional.empty();
     }
 
+    public Optional<String> asString() {
+        return Optional.empty();
+    }
+
     public Optional<Heap> asHeap() {
             return Optional.empty();
     }
@@ -73,6 +77,10 @@ public abstract class PegNode {
     }
 
     public boolean isBoolLit() {
+        return false;
+    }
+
+    public boolean isStringLit() {
         return false;
     }
 
@@ -97,7 +105,7 @@ public abstract class PegNode {
         return new ExpressionResult(this, context);
     }
 
-    public static class IntLit extends PegNode {
+    public final static class IntLit extends PegNode {
         public final int value;
         private IntLit(int value) {
             this.value = value;
@@ -140,7 +148,7 @@ public abstract class PegNode {
 
     }
 
-    public static class BoolLit extends PegNode {
+    public final static class BoolLit extends PegNode {
         public final boolean value;
         private BoolLit(boolean value) {
             this.value = value;
@@ -174,6 +182,49 @@ public abstract class PegNode {
             if (o == null || getClass() != o.getClass()) return false;
             BoolLit boolLit = (BoolLit) o;
             return value == boolLit.value;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(value);
+        }
+    }
+
+    public final static class StringLit extends PegNode {
+        public final String value;
+        private StringLit(String value) {
+            this.value = value;
+            idLookup.put(this.id, this);
+            litLookup.put(value, this);
+        }
+
+        @Override
+        public boolean isStringLit() {
+            return true;
+        }
+
+        @Override
+        public Optional<String> asString() {
+            return Optional.of(value);
+        }
+
+        @Override
+        public boolean isConst() {
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("\"%s\"", value);
+        }
+
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof StringLit)) return false;
+            StringLit stringLit = (StringLit) o;
+            return value.equals(stringLit.value);
         }
 
         @Override
@@ -367,6 +418,13 @@ public abstract class PegNode {
             return new BoolLit(b);
         }
         return litLookup.get(b);
+    }
+
+    public static PegNode stringLit(String s) {
+        if (!litLookup.containsKey(s)) {
+            return new StringLit(s);
+        }
+        return litLookup.get(s);
     }
 
     public static PegNode unit() {

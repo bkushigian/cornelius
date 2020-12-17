@@ -283,6 +283,11 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     }
 
     @Override
+    public ExpressionResult visit(StringLiteralExpr n, PegContext arg) {
+        return PegNode.stringLit(n.getValue()).exprResult(arg);
+    }
+
+    @Override
     public ExpressionResult visit(NameExpr n, PegContext context) {
         return context.getLocalVar(n.getNameAsString()).exprResult(context);
     }
@@ -374,11 +379,6 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     @Override
     public ExpressionResult visit(ClassExpr n, PegContext arg) {
         throw new RuntimeException("ClassExpr");
-    }
-
-    @Override
-    public ExpressionResult visit(StringLiteralExpr n, PegContext arg) {
-        throw new RuntimeException("StringLiteralExpr");
     }
 
     @Override
