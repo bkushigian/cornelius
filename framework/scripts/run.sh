@@ -27,8 +27,8 @@ fi
 
 export MML
 ./mutate.sh "$tmp/$base"
-./regularize.sh --subject "$tmp/$base"
-./serialize.sh "$tmp/regularized/$base"
+#  ./regularize.sh --subject "$tmp/$base"
+./serialize.sh "$tmp/$base"
 xml="$tmp/${base%.*}.xml"
 mv subjects.xml "$xml"
 echo "Serialized subjects file: $xml"
