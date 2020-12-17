@@ -116,7 +116,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
         if (optExpr.isPresent()) {
             final Expression expr = optExpr.get();
             if (ctx.returnNode != null) {
-                throw new IllegalStateException("SIMPLE programs cannot return multiple times");
+                throw new IllegalStateException("Multiple returns");
             }
             final ExpressionResult er = expr.accept(pev, ctx);
             ctx = er.context;
