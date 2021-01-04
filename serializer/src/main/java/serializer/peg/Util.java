@@ -15,6 +15,11 @@ import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 
 import javax.swing.text.html.Option;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -146,4 +151,78 @@ public class Util {
     }
   }
 
+
+
+  /**
+   * Recursively visit a directory structure and collect all Java files
+   * @param file root of file tree to explore: can be a File or a Directory
+   * @param javaFiles set that will be modified to hold all java files. If null, a new set will be created for you.
+   * @return The set with collected Java files
+   */
+  public static Set<File> collectJavaFiles(final File file, final Set<File> javaFiles) {
+    if (file == null) {
+      throw new IllegalArgumentException("Parameter `file` in `collectJavaFiles` is `null`");
+    }
+    if (javaFiles == null) {
+      return collectJavaFiles(file, new HashSet<>());
+    }
+    if (!file.isDirectory()) {
+      if (file.getName().endsWith(".java")) {
+        javaFiles.add(file);
+      }
+      return javaFiles;
+    }
+    final File[] files = file.listFiles();
+    assert files != null;                  // This must hold since file.isDirectory()
+    for (File f : files) {
+      collectJavaFiles(f, javaFiles);
+    }
+    return javaFiles;
+  }
+
+  /**
+   * Collect all Java files from a {@code mutants/} directory, and return
+   * a map from mutant id Strings to the file path.
+   * @param mutantsDir root of file tree to explore: can be a File or a Directory
+   * @return The a mapping from mutant ids to file paths
+   */
+  public static Map<String, File> collectMutantFiles(final File mutantsDir) {
+    if (mutantsDir == null) {
+      throw new IllegalArgumentException("Parameter `file` in `collectJavaFiles` is `null`");
+    }
+    if (! mutantsDir.isDirectory()) {
+      throw new IllegalArgumentException("`mutants` is not a directory: " + mutantsDir);
+    }
+
+    System.out.println("Collecting mutant files");
+    Map<String, File> result = new HashMap<>();
+    final long starttime = System.currentTimeMillis();
+    final File[] files = mutantsDir.listFiles();
+    assert files != null;                  // This must hold since file.isDirectory()
+    for (File f : files) {
+      final String id = f.getName();
+      final Set<File> mutants = collectJavaFiles(f, null);
+      if (mutants.size() != 1) {
+        throw new IllegalStateException("Mutant id " + id + " has " + mutants.size() + " mutants, expected 1");
+      }
+      result.put(f.getName(), mutants.iterator().next());
+    }
+    final long endtime = System.currentTimeMillis();
+    System.out.printf("Collected %d mutant files in %f seconds\n", result.size(), (endtime-starttime)/1000.0);
+
+    return result;
+  }
+
+  public static void recursivelyDelete(File file) throws IOException {
+    recursivelyDelete(file.toPath());
+  }
+
+  public static void recursivelyDelete(Path path) throws IOException {
+    if (!path.toFile().exists()) return;
+    if (!Files.walk(path)
+            .sorted(Comparator.reverseOrder())
+            .map(Path::toFile)
+            .map(File::delete).allMatch(x -> x))
+      throw new IllegalStateException("Could not delete all files in path " + path);
+  }
 }
