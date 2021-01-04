@@ -554,6 +554,33 @@ public abstract class PegNode {
         return opNode("return-node", pegId, heapId);
     }
 
+    /**
+     * @param objId the object to be cast
+     * @param typeId the type to be cast to
+     * @return A PEG representing if a cast is legal or not.
+     */
+    public static PegNode canCast(final Integer objId, final Integer typeId) {
+        return opNode("can-cast?", objId, typeId);
+    }
+
+    /**
+     * Return a node representing a type name, such as "java.lang.Object"
+     * @param name type name to embed in a PEG node
+     * @return a PEG node representing that type name
+     */
+    public static PegNode typeName(final String name) {
+        return opNode("type-name", opNode(name).id);
+    }
+
+    /**
+     * @param objId id of the object to be cast
+     * @param typeId type to cast the object to
+     * @return
+     */
+    public static PegNode cast(final Integer objId, final Integer typeId) {
+        return opNode("cast", objId, typeId);
+    }
+
     public static ExitConditions exitConditions(Collection<PegNode> conditions) {
         for (PegNode c : new HashSet<PegNode>(conditions)) {
             if (c == null) {

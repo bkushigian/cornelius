@@ -95,6 +95,16 @@ define_language! {
     // A list of exit conditions: these are not rewritten for now to avoid AC
     // blowup
     "exit-conditions" = ExitCondition(Box<[Id]>),
+
+    /***                          Cast Stuff                     ***/
+
+    // (can-cast? obj type-name)
+    "can-cast?" = CanCast([Id; 2]),
+    // (cast obj type-name)
+    "cast" = Cast([Id; 2]),
+    // (type-name name)
+    "type-name" = TypeName(Id),
+
   }
 }
 

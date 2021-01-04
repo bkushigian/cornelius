@@ -373,7 +373,14 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
 
     @Override
     public ExpressionResult visit(CastExpr n, PegContext arg) {
-        throw new RuntimeException("CastExpr");
+        final PegNode typeName = PegNode.typeName(n.getType().toString());
+        final ExpressionResult er = n.getExpression().accept(this, arg);
+
+        // Create relevant PegNodes
+        final PegNode canCast = PegNode.canCast(er.peg.id, typeName.id);
+        final PegNode cast = PegNode.cast(er.peg.id, typeName.id);
+        final PegContext ctx = er.context.withExceptionCondition(canCast, PegNode.exception("java.lang.ClassCastException"));
+        return ctx.exprResult(cast);
     }
 
     @Override

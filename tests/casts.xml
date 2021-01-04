@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<subjects>
+<subject method="Casts@castString(java.lang.Object)" sourcefile="tests/subjects/casts/Casts.java">
+<egg>14</egg>
+<mutant id="1">
+<egg>66</egg>
+</mutant>
+</subject>
+<subject method="T@overriddenMethod()" sourcefile="tests/subjects/casts/Casts.java">
+<egg>64</egg>
+<mutant id="9">
+<egg>62</egg>
+</mutant>
+<mutant id="10">
+<egg>62</egg>
+</mutant>
+</subject>
+<subject method="Casts@override(T)" sourcefile="tests/subjects/casts/Casts.java">
+<egg>60</egg>
+<mutant id="6">
+<egg>69</egg>
+</mutant>
+<mutant id="3">
+<egg>94</egg>
+</mutant>
+<mutant id="5">
+<egg>97</egg>
+</mutant>
+<mutant id="2">
+<egg>127</egg>
+</mutant>
+<mutant id="4">
+<egg>130</egg>
+</mutant>
+<mutant id="8">
+<egg>132</egg>
+</mutant>
+<mutant id="7">
+<egg>135</egg>
+</mutant>
+</subject>
+<subject method="S@overriddenMethod()" sourcefile="tests/subjects/casts/Casts.java">
+<egg>64</egg>
+<mutant id="11">
+<egg>136</egg>
+</mutant>
+<mutant id="12">
+<egg>138</egg>
+</mutant>
+</subject>
+<id_table>
+<dedup_entry id="0" peg="this"/>
+<dedup_entry id="1" peg="(var 0)"/>
+<dedup_entry id="2" peg="o"/>
+<dedup_entry id="3" peg="(var 2)"/>
+<dedup_entry id="4" peg="0"/>
+<dedup_entry id="5" peg="unit"/>
+<dedup_entry id="6" peg="(heap 4 5)"/>
+<dedup_entry id="7" peg="String"/>
+<dedup_entry id="8" peg="(type-name 7)"/>
+<dedup_entry id="9" peg="(can-cast? 3 8)"/>
+<dedup_entry id="10" peg="(cast 3 8)"/>
+<dedup_entry id="11" peg="java.lang.ClassCastException"/>
+<dedup_entry id="12" peg="(phi 9 11 5)"/>
+<dedup_entry id="13" peg="(heap 4 12)"/>
+<dedup_entry id="14" peg="(return-node 10 13)"/>
+<dedup_entry id="15" peg="t"/>
+<dedup_entry id="16" peg="(var 15)"/>
+<dedup_entry id="17" peg="S"/>
+<dedup_entry id="18" peg="(type-name 17)"/>
+<dedup_entry id="19" peg="(can-cast? 16 18)"/>
+<dedup_entry id="20" peg="(cast 16 18)"/>
+<dedup_entry id="21" peg="(phi 19 11 5)"/>
+<dedup_entry id="22" peg="(heap 4 21)"/>
+<dedup_entry id="23" peg="(exit-conditions 19)"/>
+<dedup_entry id="24" peg="(phi 23 5 20)"/>
+<dedup_entry id="25" peg="T"/>
+<dedup_entry id="26" peg="(type-name 25)"/>
+<dedup_entry id="27" peg="(can-cast? 24 26)"/>
+<dedup_entry id="28" peg="(cast 24 26)"/>
+<dedup_entry id="29" peg="(isunit? 21)"/>
+<dedup_entry id="30" peg="(phi 27 11 5)"/>
+<dedup_entry id="31" peg="(phi 29 30 21)"/>
+<dedup_entry id="32" peg="(heap 4 31)"/>
+<dedup_entry id="33" peg="(exit-conditions 19 27)"/>
+<dedup_entry id="34" peg="(phi 33 5 28)"/>
+<dedup_entry id="35" peg="actuals"/>
+<dedup_entry id="36" peg="overriddenMethod"/>
+<dedup_entry id="37" peg="(invoke 32 24 36 35)"/>
+<dedup_entry id="38" peg="(invoke-&gt;heap-state 37)"/>
+<dedup_entry id="39" peg="(invoke-&gt;exception-status 37)"/>
+<dedup_entry id="40" peg="(heap 38 39)"/>
+<dedup_entry id="41" peg="(invoke-&gt;peg 37)"/>
+<dedup_entry id="42" peg="(invoke 40 16 36 35)"/>
+<dedup_entry id="43" peg="(invoke-&gt;heap-state 42)"/>
+<dedup_entry id="44" peg="(invoke-&gt;exception-status 42)"/>
+<dedup_entry id="45" peg="(heap 43 44)"/>
+<dedup_entry id="46" peg="(invoke-&gt;peg 42)"/>
+<dedup_entry id="47" peg="(!= 41 46)"/>
+<dedup_entry id="48" peg="(invoke 45 16 36 35)"/>
+<dedup_entry id="49" peg="(invoke-&gt;heap-state 48)"/>
+<dedup_entry id="50" peg="(invoke-&gt;exception-status 48)"/>
+<dedup_entry id="51" peg="(heap 49 50)"/>
+<dedup_entry id="52" peg="(invoke-&gt;peg 48)"/>
+<dedup_entry id="53" peg="(invoke 51 34 36 35)"/>
+<dedup_entry id="54" peg="(invoke-&gt;heap-state 53)"/>
+<dedup_entry id="55" peg="(invoke-&gt;exception-status 53)"/>
+<dedup_entry id="56" peg="(heap 54 55)"/>
+<dedup_entry id="57" peg="(invoke-&gt;peg 53)"/>
+<dedup_entry id="58" peg="(== 52 57)"/>
+<dedup_entry id="59" peg="(&amp;&amp; 47 58)"/>
+<dedup_entry id="60" peg="(return-node 59 56)"/>
+<dedup_entry id="61" peg="1"/>
+<dedup_entry id="62" peg="(return-node 61 6)"/>
+<dedup_entry id="63" peg="2"/>
+<dedup_entry id="64" peg="(return-node 63 6)"/>
+<dedup_entry id="65" peg="null"/>
+<dedup_entry id="66" peg="(return-node 65 6)"/>
+<dedup_entry id="67" peg="(&lt;= 52 57)"/>
+<dedup_entry id="68" peg="(&amp;&amp; 47 67)"/>
+<dedup_entry id="69" peg="(return-node 68 56)"/>
+<dedup_entry id="70" peg="(phi 23 5 65)"/>
+<dedup_entry id="71" peg="(invoke 22 24 36 35)"/>
+<dedup_entry id="72" peg="(invoke-&gt;heap-state 71)"/>
+<dedup_entry id="73" peg="(invoke-&gt;exception-status 71)"/>
+<dedup_entry id="74" peg="(heap 72 73)"/>
+<dedup_entry id="75" peg="(invoke-&gt;peg 71)"/>
+<dedup_entry id="76" peg="(invoke 74 16 36 35)"/>
+<dedup_entry id="77" peg="(invoke-&gt;heap-state 76)"/>
+<dedup_entry id="78" peg="(invoke-&gt;exception-status 76)"/>
+<dedup_entry id="79" peg="(heap 77 78)"/>
+<dedup_entry id="80" peg="(invoke-&gt;peg 76)"/>
+<dedup_entry id="81" peg="(!= 75 80)"/>
+<dedup_entry id="82" peg="(invoke 79 16 36 35)"/>
+<dedup_entry id="83" peg="(invoke-&gt;heap-state 82)"/>
+<dedup_entry id="84" peg="(invoke-&gt;exception-status 82)"/>
+<dedup_entry id="85" peg="(heap 83 84)"/>
+<dedup_entry id="86" peg="(invoke-&gt;peg 82)"/>
+<dedup_entry id="87" peg="(invoke 85 70 36 35)"/>
+<dedup_entry id="88" peg="(invoke-&gt;heap-state 87)"/>
+<dedup_entry id="89" peg="(invoke-&gt;exception-status 87)"/>
+<dedup_entry id="90" peg="(heap 88 89)"/>
+<dedup_entry id="91" peg="(invoke-&gt;peg 87)"/>
+<dedup_entry id="92" peg="(== 86 91)"/>
+<dedup_entry id="93" peg="(&amp;&amp; 81 92)"/>
+<dedup_entry id="94" peg="(return-node 93 90)"/>
+<dedup_entry id="95" peg="(&gt; 41 46)"/>
+<dedup_entry id="96" peg="(&amp;&amp; 95 58)"/>
+<dedup_entry id="97" peg="(return-node 96 56)"/>
+<dedup_entry id="98" peg="(can-cast? 65 26)"/>
+<dedup_entry id="99" peg="(cast 65 26)"/>
+<dedup_entry id="100" peg="(phi 98 11 5)"/>
+<dedup_entry id="101" peg="(heap 4 100)"/>
+<dedup_entry id="102" peg="(exit-conditions 98)"/>
+<dedup_entry id="103" peg="(phi 102 5 99)"/>
+<dedup_entry id="104" peg="(invoke 101 65 36 35)"/>
+<dedup_entry id="105" peg="(invoke-&gt;heap-state 104)"/>
+<dedup_entry id="106" peg="(invoke-&gt;exception-status 104)"/>
+<dedup_entry id="107" peg="(heap 105 106)"/>
+<dedup_entry id="108" peg="(invoke-&gt;peg 104)"/>
+<dedup_entry id="109" peg="(invoke 107 16 36 35)"/>
+<dedup_entry id="110" peg="(invoke-&gt;heap-state 109)"/>
+<dedup_entry id="111" peg="(invoke-&gt;exception-status 109)"/>
+<dedup_entry id="112" peg="(heap 110 111)"/>
+<dedup_entry id="113" peg="(invoke-&gt;peg 109)"/>
+<dedup_entry id="114" peg="(!= 108 113)"/>
+<dedup_entry id="115" peg="(invoke 112 16 36 35)"/>
+<dedup_entry id="116" peg="(invoke-&gt;heap-state 115)"/>
+<dedup_entry id="117" peg="(invoke-&gt;exception-status 115)"/>
+<dedup_entry id="118" peg="(heap 116 117)"/>
+<dedup_entry id="119" peg="(invoke-&gt;peg 115)"/>
+<dedup_entry id="120" peg="(invoke 118 103 36 35)"/>
+<dedup_entry id="121" peg="(invoke-&gt;heap-state 120)"/>
+<dedup_entry id="122" peg="(invoke-&gt;exception-status 120)"/>
+<dedup_entry id="123" peg="(heap 121 122)"/>
+<dedup_entry id="124" peg="(invoke-&gt;peg 120)"/>
+<dedup_entry id="125" peg="(== 119 124)"/>
+<dedup_entry id="126" peg="(&amp;&amp; 114 125)"/>
+<dedup_entry id="127" peg="(return-node 126 123)"/>
+<dedup_entry id="128" peg="(&lt; 41 46)"/>
+<dedup_entry id="129" peg="(&amp;&amp; 128 58)"/>
+<dedup_entry id="130" peg="(return-node 129 56)"/>
+<dedup_entry id="131" peg="(== 47 58)"/>
+<dedup_entry id="132" peg="(return-node 131 56)"/>
+<dedup_entry id="133" peg="(&gt;= 52 57)"/>
+<dedup_entry id="134" peg="(&amp;&amp; 47 133)"/>
+<dedup_entry id="135" peg="(return-node 134 56)"/>
+<dedup_entry id="136" peg="(return-node 4 6)"/>
+<dedup_entry id="137" peg="-1"/>
+<dedup_entry id="138" peg="(return-node 137 6)"/>
+</id_table>
+</subjects>
