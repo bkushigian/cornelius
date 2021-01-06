@@ -1,5 +1,6 @@
 package serializer.peg;
 
+import com.github.javaparser.ast.expr.IntegerLiteralExpr;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.*;
@@ -18,6 +19,16 @@ public abstract class PegNode {
 
     public static void clearIdLookupTable() {
         idLookup.clear();
+    }
+
+    /**
+     * Clear state by resetting id generation to 0 and clearing lookup tables.
+     */
+    public static void clear() {
+        idLookup.clear();
+        litLookup.clear();
+        symbolLookup.clear();
+        _id = 0;
     }
 
     public String toDerefString() {
@@ -244,6 +255,10 @@ public abstract class PegNode {
                         .put(this.children, this);
         }
 
+        public List<PegNode> getChildrenNodes() {
+            return children.stream().map(idLookup::get).collect(Collectors.toList());
+        }
+
         @Override
         public boolean isOpNode() {
             return true;
@@ -308,6 +323,7 @@ public abstract class PegNode {
         public int hashCode() {
             return Objects.hash(op, children);
         }
+
     }
 
     public static class Heap extends OpNode {
@@ -488,11 +504,8 @@ public abstract class PegNode {
     }
 
     public static PegNode newObject(final String type, final Integer actuals, final Integer heap) {
-        return opNode("new", opNode(type).id, actuals, heap);
+        return opNode("new", stringLit(type).id, actuals, heap);
     }
-
-    // differentiate between heaps
-    private static int heapIndex = 1;
 
     /**
      * Get a heap node with {@code state} and {@code status} arguments, creating and caching one if one doesn't
@@ -569,7 +582,7 @@ public abstract class PegNode {
      * @return a PEG node representing that type name
      */
     public static PegNode typeName(final String name) {
-        return opNode("type-name", opNode(name).id);
+        return opNode("type-name", stringLit(name).id);
     }
 
     /**

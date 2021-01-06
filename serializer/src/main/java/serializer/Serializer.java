@@ -1,7 +1,10 @@
 package serializer;
 
+import com.github.javaparser.Problem;
 import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.TokenRange;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.PackageDeclaration;
 import serializer.peg.*;
 
 import java.io.*;
@@ -10,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public class Serializer {
+
   public static void main(String[] args) {
     if (args.length < 2) {
       usage();
@@ -59,9 +63,15 @@ public class Serializer {
   public void run() {
     final MutantsLog mutantsLog = new MutantsLog(mutantLogPath);
     final Map<String, File> idToFiles = Util.collectMutantFiles(new File(mutantsDirectory));
-    final File serializedDirectory = setupSerializedDirectory("serialized-directory");
+    final File serializedDirectory = setupSerializedDirectory("subjects");
 
+    Util.ProgressBar bar = new Util.ProgressBar(files.size());
+    System.out.println("Serializing files...");
+    Map<File, com.github.javaparser.ParseProblemException> failedMutantParseFiles = new HashMap<>();
+
+    long i = 0;
     for (File origFile : files ){
+      bar.printBar(i++);
       try {
         final CompilationUnit cu = StaticJavaParser.parse(origFile);
         final XMLGenerator xmlGen = new XMLGenerator();
@@ -71,23 +81,26 @@ public class Serializer {
         boolean mutatedThisFile = false;
         // Iterate through each method
         for (String sig : mutantsLog.methodNameMap.keySet()){
+          System.out.println("SIG: " + sig);
           if (!sig.contains("@")) continue;  // TODO: handle class-level mutations
           final String canonical = Util.canonicalizeMajorName(sig);
           if (!methodMap.containsKey(canonical)) {
+            System.out.println("continuing: " + canonical);
+            for (String s : methodMap.keySet()) {
+              System.out.println(s);
+            }
+
             continue; // This method was not mutated
           }
           mutatedThisFile = true;
           final String sourceFile = sig.substring(0, sig.indexOf('@')).replace('.', '/') + ".java";
-          System.out.println("================================================================================");
-          System.out.println("[+] Visiting method signature: " + sig);
-          System.out.println("[+] Source file: " + sourceFile);
-          System.out.println("[+] Name: " + canonical);
 
           // Get all rows from MutantsLog corresponding to this method
           final Set<MutantsLog.Row> rowsForMethod = mutantsLog.methodNameMap.get(sig);
 
           List<MutantsLog.Row> rowsToAdd = new ArrayList<>();
           for (MutantsLog.Row row : rowsForMethod) {
+            System.out.println(row);
             final File mutantFile = idToFiles.get(row.id);
             try {
               final CompilationUnit mcu = StaticJavaParser.parse(mutantFile);
@@ -96,14 +109,11 @@ public class Serializer {
                         .orElseThrow(() -> new RuntimeException("Couldn't find mutant"))
                         .id;
                 rowsToAdd.add(row);
-              } catch (IllegalStateException e) {
-                System.err.println("erroneous mutant id: " + row.id);
-                throw e;
-              } catch (RuntimeException e) {
-
-              }
+              } catch (RuntimeException e) {}
             } catch (FileNotFoundException e) {
               throw new RuntimeException("Couldn't find mutant " + row.id);
+            } catch (com.github.javaparser.ParseProblemException e) {
+              failedMutantParseFiles.put(mutantFile, e);
             }
           }
           if (!rowsToAdd.isEmpty()) {
@@ -111,8 +121,6 @@ public class Serializer {
             for (MutantsLog.Row row : rowsToAdd) {
               xmlGen.addMutant(sig, row.id, row.pegId);
             }
-
-
           }
         }
         if (!mutatedThisFile) continue;
@@ -120,15 +128,38 @@ public class Serializer {
         // TODO: this involves giving public access to the idLookup which is sketchy.
         xmlGen.addDeduplicationTable(PegNode.getIdLookup());
 
-        final Path filepath = Paths.get(serializedDirectory.getName(), origFile.getName().replace("/", "_")
-                .replace(".java", "--serialized.xml"));
+        Optional<PackageDeclaration> packageDeclaration = cu.getPackageDeclaration();
+        String pkgString = "";
+        if (packageDeclaration.isPresent()) {
+          pkgString = packageDeclaration.get().getName().toString() + "::";
+        }
+        final String serializedFilename = pkgString + origFile.getName().replace(".java", ".cor");
+        final Path filepath = Paths.get(serializedDirectory.getName(), serializedFilename);
         final String filename = filepath.toString();
+        bar.clearLastBar();
         System.out.println("Creating serialized file: " + filename);
         xmlGen.writeToFile(filename);
-      //} catch (FileNotFoundException e) {
-      //  e.printStackTrace();
+      } catch (FileNotFoundException e) {
+        e.printStackTrace();
       } catch (IOException e) {
         e.printStackTrace();
+      }
+    }
+    bar.clearLastBar();
+    bar.printBar(i);
+
+    i = 1;
+    for (Map.Entry<File, com.github.javaparser.ParseProblemException> entry : failedMutantParseFiles.entrySet()) {
+      final File f = entry.getKey();
+      final com.github.javaparser.ParseProblemException e = entry.getValue();
+      try {
+        System.out.printf("%d: %s\n", i++, f.getCanonicalPath());
+      } catch (IOException ex) {
+        System.out.printf("%d: Failed to get cannonical path...here's what I can give you: %s\n", i++, f);
+      }
+      for (Problem p : e.getProblems()) {
+        Optional<TokenRange> location = p.getLocation();
+        location.ifPresent(javaTokens -> System.out.println("    " + javaTokens.getBegin().getRange()));
       }
     }
   }
