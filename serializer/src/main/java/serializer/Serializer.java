@@ -79,19 +79,17 @@ public class Serializer {
         final Map<String, PegNode> methodMap = translator.translate(cu);
 
         boolean mutatedThisFile = false;
-        // Iterate through each method
+        // Iterate through each method in the mutant log
+        // TODO: This is left over from when I was working with 1 file at a time.
+        //       Now I handle LOTS of files and this is incredibly inefficent.
+        //       To fix this I need the methodMap returned by translator.translate
+        //       to have class info (there might be collisions otherwise, e.g.,
+        //       toString()).
+
         for (String sig : mutantsLog.methodNameMap.keySet()){
-          System.out.println("SIG: " + sig);
           if (!sig.contains("@")) continue;  // TODO: handle class-level mutations
           final String canonical = Util.canonicalizeMajorName(sig);
-          if (!methodMap.containsKey(canonical)) {
-            System.out.println("continuing: " + canonical);
-            for (String s : methodMap.keySet()) {
-              System.out.println(s);
-            }
-
-            continue; // This method was not mutated
-          }
+          if (!methodMap.containsKey(canonical)) continue;
           mutatedThisFile = true;
           final String sourceFile = sig.substring(0, sig.indexOf('@')).replace('.', '/') + ".java";
 
@@ -100,7 +98,6 @@ public class Serializer {
 
           List<MutantsLog.Row> rowsToAdd = new ArrayList<>();
           for (MutantsLog.Row row : rowsForMethod) {
-            System.out.println(row);
             final File mutantFile = idToFiles.get(row.id);
             try {
               final CompilationUnit mcu = StaticJavaParser.parse(mutantFile);
@@ -145,8 +142,7 @@ public class Serializer {
         e.printStackTrace();
       }
     }
-    bar.clearLastBar();
-    bar.printBar(i);
+    bar.printBar(i, "\n");
 
     i = 1;
     for (Map.Entry<File, com.github.javaparser.ParseProblemException> entry : failedMutantParseFiles.entrySet()) {
