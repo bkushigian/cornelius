@@ -62,7 +62,10 @@ public class FileSerializeDataCollector {
   public Set<ClassVisitResult> run() {
     int successes = 0;
     int failures = 0;
+    Util.ProgressBar bar = new Util.ProgressBar(worklist.size());
+    int i = 0;
     for (final String file : worklist) {
+      bar.printBar(i++);
       try {
         CompilationUnit cu = StaticJavaParser.parse(new File(file));
         for (TypeDeclaration<?> type : cu.getTypes()) {
@@ -94,26 +97,30 @@ public class FileSerializeDataCollector {
         e.printStackTrace();
       }
     }
+    bar.printBar(i, "\n");
+
+    final List<String> keys = new ArrayList<>(failureReasons.keySet());
+    keys.sort(Comparator.comparingInt(o -> failureReasons.get(o).size()).reversed());
+    System.out.println(" ----------- Failure Counts ------------ ");
+
+    for (String key : keys) {
+      final Set<VisitResult<?>> mvrs = failureReasons.getOrDefault(key, new HashSet<>());
+      System.out.printf("[[%s]]: %d\n", key, mvrs.size());
+
+      // for (final VisitResult<?> mvr : mvrs) {
+      //   Range range = mvr.decl.getRange().get();
+      //   int line_begin = range.begin.line;
+      //   int line_end = range.end.line;
+      //   final String name = mvr.getQualifiedName();
+      //   System.out.printf("    %s:%d-%d\n", name, line_begin, line_end);
+      // }
+    }
 
     final int total = successes + failures;
     System.out.println(" ============ SUMMARY =============");
     System.out.printf("Total Attempts: %d\n"    , total);
     System.out.printf("Total Success:  %d (%f)\n", successes, 100.0 * successes / total);
     System.out.printf("Total Failures: %d (%f)\n", failures , 100.0 * failures  / total);
-    final List<String> keys = new ArrayList<>(failureReasons.keySet());
-    System.out.println(" ----------- Failure Counts ------------ ");
-
-    for (String key : keys) {
-      final Set<VisitResult<?>> mvrs = failureReasons.getOrDefault(key, new HashSet<>());
-      System.out.printf("[[%s]]: %d\n", key, mvrs.size());
-      for (final VisitResult<?> mvr : mvrs) {
-        Range range = mvr.decl.getRange().get();
-        int line_begin = range.begin.line;
-        int line_end = range.end.line;
-        final String name = mvr.getQualifiedName();
-        System.out.printf("    %s:%d-%d\n", name, line_begin, line_end);
-      }
-    }
     return null;
   }
 
