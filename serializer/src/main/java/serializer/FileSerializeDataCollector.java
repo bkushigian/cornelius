@@ -145,9 +145,9 @@ public class FileSerializeDataCollector {
       final VisitResult<?> vr = cvr.add(decl, ctx.asPeg().get());
       // System.out.println("[ + ] " + vr);
     } catch (RuntimeException e){
-      if (e instanceof NullPointerException) {
-        //e.printStackTrace();
-        //System.exit(1);
+      if (strictCheckNulls && e instanceof NullPointerException) {
+        e.printStackTrace();
+        System.exit(1);
       }
       final VisitResult<?> vr = cvr.add(decl, e);
       // System.out.println("[ - ] " + vr);
