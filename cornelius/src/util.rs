@@ -208,7 +208,7 @@ pub mod io {
                 .collect();
             equiv_classes_as_strings.push(equiv_class_as_string);
         }
-        equiv_classes_as_strings.join("\n")
+        format!("{}\n", equiv_classes_as_strings.join("\n"))
     }
 }
 

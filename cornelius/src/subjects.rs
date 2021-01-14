@@ -29,7 +29,6 @@ impl Subjects {
     info!("Computing RecExpr");
     let mut rec_expr = RecExpr::default();
     //println!("Computing rec_expr from Subjects");
-    //println!("Length of id_table is {}", self.id_table.entries.len());
     for entry in self.id_table.entries.iter() {
       let peg: Peg = parse_peg_from_string(entry.peg.clone())?;
       //println!("Adding entry {} as peg {:?}", entry.peg, peg);
@@ -77,7 +76,7 @@ fn parse_peg_from_string(peg_str: String) -> Result<Peg, String> {
     .iter()
     .map(|s|
         Id::from(s.parse::<u32>()
-                  .unwrap_or_else(|_| panic!(format!("Couldn't parse u32 {}", s)))
+                  .unwrap_or_else(|_| panic!(format!("Couldn't parse u32 {} from {}", s, peg_str)))
                   as usize))
     .collect();
   Peg::from_op_str(op, children)
@@ -194,12 +193,51 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
         }
     }
 
-    println!("rec_expr total_size: {}", rec_expr.as_ref().len());
+    // Insert nodes into a new egraph
+    let mut egraph = EGraph::<Peg, PegAnalysis>::default();
+    let mut id_offset_map = HashMap::<Id, Id>::default();
+    for (idx, node) in rec_expr.as_ref().iter().enumerate() {
+      //let next_id: Id = Id::from(egraph.total_size());
+      let mut node = node.clone();
+      node.for_each_mut(|id: &mut Id| *id = id_offset_map.get(id).unwrap().clone());
+      let id = egraph.add(node.clone());
+      let id = egraph.find(id);
+      id_offset_map.insert(Id::from(idx), id);
+    }
+    debug!("egraph total_size after deserializing: {}", egraph.total_number_of_nodes());
+
     let runner = Runner::default()
-        .with_expr(&rec_expr)
-        .run(rules);
+    .with_egraph(egraph);
+    // let egraph_size = egraph.total_size();
+    // if rec_expr_size != egraph_size {
+    //     println!("rec_expr total_size: {}", rec_expr_size);
+    //     println!("egraph total_size after deserialization: {}", egraph_size);
+    //     println!("Deserialization error: Parsed RecExpr has size {} while the e-graph has size {}", rec_expr_size, egraph_size);
+    //     if log_enabled!(Level::Debug) {
+    //         let rec_expr_ref = rec_expr.as_ref();
+    //         debug!("\nRexExpr:");
+    //         debug!("--------");
+    //         for i in 0..rec_expr_ref.len(){
+    //             let v = rec_expr_ref[0..(i+1)].to_vec();
+    //             let re = RecExpr::from(v);
+    //             debug!("re {}:   {}", i, re.pretty(40));
+    //         }
+    //         debug!("\nEClasses:");
+    //         debug!("---------");
+    //         for c in egraph.classes() {
+    //             debug!("{:?}", c);
+    //             for n in &c.nodes {
+    //                 debug!("    {:?}", n);
+    //             }
+
+    //         }
+    //     }
+    //     panic!("rec-expr and e-graph are different sizes")
+    // }
+
+    let runner = runner.run(rules);
     let egraph = &runner.egraph;
-    println!("egraph total_size: {}", egraph.total_size());
+    debug!("egraph total_size after run: {}", egraph.total_number_of_nodes());
 
     let mut i: u32 = 1;
     for mut subj in &mut subjects.subjects {
@@ -263,8 +301,10 @@ fn analyze_subject(subj: &mut Subject,
 
     for m in &subj.mutants {
         // PEG id
-        let id: u32 = m.peg.parse().unwrap();
-        let canonical_id = egraph.find(Id::from(id as usize));
+        let id: usize = m.peg.parse().unwrap();
+        let id: Id = Id::from(id);
+        let id = id_update.get(&id).unwrap();
+        let canonical_id = egraph.find(*id);
 
         let equiv_ids = rev_can_id_lookup
             .entry(canonical_id)
