@@ -244,10 +244,10 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         if (n.getTarget().isNameExpr()) {
             final String nameString = n.getTarget().asNameExpr().getNameAsString();
 
+            // Check if this is an implicit dereference (e.g., `x` instead of `this.x`)
             if (ctx.isUnshadowedField(nameString)) {
-                // We do not need to explicitly use exit conditions: these are already tracked in the heap
-                final FieldAccessExpr fieldAccess = new FieldAccessExpr(new ThisExpr(), nameString);
-                return performWrite(fieldAccess, value, ctx);
+                // NOTE: We do not need to explicitly use exit conditions: these are already tracked in the heap
+                return performWrite(new FieldAccessExpr(new ThisExpr(), nameString), value, ctx);
             }
 
             return er.withContext(ctx.performAssignLocalVar(nameString, value));
@@ -430,8 +430,14 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         return PegNode.path(base.peg.id, derefs.toString()).exprResult(ctx);
     }
 
-    // Helper function to produce a new Context storing the write
-    ExpressionResult performWrite(FieldAccessExpr fieldAccess, PegNode value, PegContext ctx) {
+    /**
+     * A helper function that produces a new PegContext storing the field write
+     * @param fieldAccess The field that access (e.g., `obj.fld`), that is being updated
+     * @param value the value that is being assigned to the field
+     * @param ctx the context in which this is happening
+     * @return A new ExpressionResult that tracks the updated heap and the resulting value.
+     */
+    private ExpressionResult performWrite(FieldAccessExpr fieldAccess, PegNode value, PegContext ctx) {
         final ExpressionResult er = getPathFromFieldAccessExpr(fieldAccess, ctx);
         return er.withHeap(PegNode.wrHeap(er.peg.id, value.id, er.context.heap));
     }
