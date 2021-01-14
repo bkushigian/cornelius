@@ -41,6 +41,10 @@ define_language! {
     ">="   = Gte([Id; 2]),
     "=="   = Equ([Id; 2]),
     "!="   = Neq([Id; 2]),
+    "_++"  = PostInc(Id),
+    "_--"  = PostDec(Id),
+    "++_"  = PreInc(Id),
+    "--_"  = PreDec(Id),
     "phi"  = Phi([Id; 3]),
     "swap" = Swap([Id; 3]),
     "cond-distr" = EqDistr([Id; 2]),
@@ -105,6 +109,13 @@ define_language! {
     // (type-name name)
     "type-name" = TypeName(Id),
 
+    /***                       Object Creation                  ***/
+    // (new type actuals heap)
+    //
+    // type should be the name of the constructor, actuals should be an (actuals
+    // id1 id2 ...) node (represented by Peg::Actuals), and heap is the heap in
+    // which object creation takes place.
+    "new" = New([Id; 3]),
   }
 }
 

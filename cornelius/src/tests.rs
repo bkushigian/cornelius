@@ -634,7 +634,7 @@ fn test_no_straight_rewrite(start: &str, end: &str, other: &[&str]) -> bool {
                     if debug && ! not_equiv {
                         println!("    Found new minimal config");
                         for (i, rule) in config.iter().enumerate() {
-                            println!("    ({}) {}  {}", i+1, rule.name(), rule.long_name());
+                            println!("    ({}) {}", i+1, rule.name());
                         }
                         println!("--------------------------------------------------------------------------------");
                     }
@@ -647,7 +647,7 @@ fn test_no_straight_rewrite(start: &str, end: &str, other: &[&str]) -> bool {
             let dd_start_time = Instant::now();
 
             for (i, rule) in min_config.iter().enumerate() {
-                println!("({}) {}  {}", i+1, rule.name(), rule.long_name());
+                println!("({}) {}", i+1, rule.name());
             }
             if debug {
                 let seconds = dd_start_time.elapsed().as_secs();
