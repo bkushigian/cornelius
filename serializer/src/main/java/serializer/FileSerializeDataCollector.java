@@ -1,6 +1,5 @@
 package serializer;
 
-import com.github.javaparser.Range;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
@@ -22,16 +21,19 @@ import java.util.*;
  */
 public class FileSerializeDataCollector {
   final List<String> worklist;
+  /**
+   * When true, when a NullPointerException is encountered the stacktrace is printed and we exit.
+   */
+  private boolean strictCheckNulls = false;
+
   final Set<ClassVisitResult> results = new HashSet<>();
   /**
    * map error messages to the number of times they occurred
    */
   final static Map<String, Set<VisitResult<?>>>  failureReasons = new HashMap<>();
 
-  public static void main(String[] args) {
-    final List<String> worklist = new ArrayList<>();
-
-    for (final String arg : args ){
+  private void parseArgs(String...args) {
+    for (final String arg : args ) {
       if (arg.startsWith("@")) {
         final String argFile = arg.substring(1);
         try {
@@ -43,17 +45,23 @@ public class FileSerializeDataCollector {
         } catch (IOException e) {
           e.printStackTrace();
         }
+      } else if ("--strict-npe".equals(arg)) {
+        strictCheckNulls = true;
       }
       else {
         worklist.add(arg);
       }
     }
-    FileSerializeDataCollector dc = new FileSerializeDataCollector(worklist);
+  }
+
+  public static void main(String[] args) {
+    FileSerializeDataCollector dc = new FileSerializeDataCollector(args);
     dc.run();
   }
 
-  public FileSerializeDataCollector(List<String> worklist) {
-    this.worklist = worklist;
+  public FileSerializeDataCollector(String...args) {
+    worklist = new ArrayList<>();
+    parseArgs(args);
   }
 
   final PegClassVisitor classVisitor = new PegClassVisitor();
