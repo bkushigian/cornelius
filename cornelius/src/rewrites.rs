@@ -1,7 +1,7 @@
 use egg::{rewrite as rw, Rewrite};
 use crate::peg::*;
 
-pub type RewriteSystem = [Rewrite<Peg, VarAnalysis>];
+pub type RewriteSystem = [Rewrite<Peg, PegAnalysis>];
 
 
 #[allow(unused_parens)]
