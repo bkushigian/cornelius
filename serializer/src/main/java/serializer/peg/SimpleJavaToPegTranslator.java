@@ -45,7 +45,7 @@ public class SimpleJavaToPegTranslator {
                 if (ctype.isInterface()) continue;
                 final PegClassVisitor.ClassVisitorResult classVisitorResult = classVisitor.visit(ctype);
                 for (MethodDeclaration method : ctype.getMethods()) {
-                    final String methDeclStr = method.getDeclarationAsString(false, false, false);
+                    final String methDeclStr = Util.CanonicalNames.fromDecl(method, cu, ctype);
 
                     try {
                         translate(method, classVisitorResult).ifPresent(t -> result.put(methDeclStr.substring(methDeclStr.indexOf(' ') + 1)

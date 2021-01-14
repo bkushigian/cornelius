@@ -26,11 +26,13 @@ public class PegContext {
     private PegContext(final ImmutableMap<String, PegNode> localVariableLookup,
                        final Set<String> fieldNames,
                        final PegNode.Heap heap,
-                       final ImmutableSet<PegNode> exitConditions) {
+                       final ImmutableSet<PegNode> exitConditions,
+                       final PegNode returnNode) {
         this.localVariableLookup = localVariableLookup;
         this.fieldNames = fieldNames;
         this.heap = heap;
         this.exitConditions = exitConditions;
+        this.returnNode = returnNode;
     }
 
     /**
@@ -54,12 +56,16 @@ public class PegContext {
                 .addAll(c1.exitConditions)
                 .addAll(c2.exitConditions).build();
 
+        if (c1.getReturnNode() != null && c2.getReturnNode() != null) throw new RuntimeException("Multiple returns");
+        final PegNode returnNode = Optional.ofNullable(c1.returnNode).orElse(c2.returnNode);
+
         return initMap(
                 domain,
                 p -> PegNode.phi(guardId, c1.getLocalVar(p).id, c2.getLocalVar(p).id),
                 c1.fieldNames,
                 combinedHeap,
-                combinedExitConditions);
+                combinedExitConditions,
+                returnNode);
     }
 
     /**
@@ -112,7 +118,7 @@ public class PegContext {
         } else {
             b.putAll(localVariableLookup);
         }
-        return new PegContext(b.build(), fieldNames, heap, exitConditions);
+        return new PegContext(b.build(), fieldNames, heap, exitConditions, returnNode);
     }
 
     /**
@@ -136,7 +142,7 @@ public class PegContext {
      *         in {@code heap}'s value
      */
     public PegContext withHeap(final PegNode.Heap heap) {
-      return new PegContext(localVariableLookup, fieldNames, heap, exitConditions);
+      return new PegContext(localVariableLookup, fieldNames, heap, exitConditions, returnNode);
     }
 
     /**
@@ -149,7 +155,7 @@ public class PegContext {
       builder.addAll(exitConditions);
       builder.add(exitCondition);
       final ImmutableSet<PegNode> exitConditions = builder.build();
-      return new PegContext(localVariableLookup, fieldNames, heap, exitConditions);
+      return new PegContext(localVariableLookup, fieldNames, heap, exitConditions, returnNode);
     }
 
     /**
@@ -192,12 +198,13 @@ public class PegContext {
                                      final Function<String, PegNode> f,
                                      final Set<String> fieldNames,
                                      final PegNode.Heap heap,
-                                     final ImmutableSet<PegNode> exitConditions)
+                                     final ImmutableSet<PegNode> exitConditions,
+                                     final PegNode returnNode)
     {
 
         final ImmutableMap.Builder<String, PegNode> builder = ImmutableMap.builderWithExpectedSize(keys.size());
         keys.forEach(k -> builder.put(k, f.apply(k)));
-        return new PegContext(builder.build(), fieldNames, heap, exitConditions);
+        return new PegContext(builder.build(), fieldNames, heap, exitConditions, returnNode);
     }
 
     /**
@@ -216,7 +223,7 @@ public class PegContext {
         for (String param : params) {
             builder.put(param, PegNode.var(param));
         }
-        return new PegContext(builder.build(), fieldNames, PegNode.initialHeap(), ImmutableSet.of());
+        return new PegContext(builder.build(), fieldNames, PegNode.initialHeap(), ImmutableSet.of(), null);
     }
 
     /**

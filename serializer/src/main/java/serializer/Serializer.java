@@ -14,6 +14,8 @@ import java.util.*;
 
 public class Serializer {
 
+  boolean printPegs = false;
+
   public static void main(String[] args) {
     if (args.length < 2) {
       usage();
@@ -47,6 +49,8 @@ public class Serializer {
         } catch (IOException e) {
           e.printStackTrace();
         }
+      } else if ("--print-pegs".equals(arg)){
+        printPegs = true;
       }
       else {
         files.add(new File(arg));
@@ -77,38 +81,47 @@ public class Serializer {
         final XMLGenerator xmlGen = new XMLGenerator();
         final SimpleJavaToPegTranslator translator = new SimpleJavaToPegTranslator();
         final Map<String, PegNode> methodMap = translator.translate(cu);
+        if (methodMap.size() == 0) continue;
 
-        boolean mutatedThisFile = false;
-        // Iterate through each method
-        for (String sig : mutantsLog.methodNameMap.keySet()){
-          System.out.println("SIG: " + sig);
-          if (!sig.contains("@")) continue;  // TODO: handle class-level mutations
-          final String canonical = Util.canonicalizeMajorName(sig);
-          if (!methodMap.containsKey(canonical)) {
-            System.out.println("continuing: " + canonical);
-            for (String s : methodMap.keySet()) {
-              System.out.println(s);
-            }
+        if (printPegs) {
+          System.out.println(origFile.getAbsolutePath());
+        }
+        // There might not be any subjects to add. If not, keep track of this and don't generate a file
+        boolean addedSubjects = false;
 
-            continue; // This method was not mutated
-          }
-          mutatedThisFile = true;
-          final String sourceFile = sig.substring(0, sig.indexOf('@')).replace('.', '/') + ".java";
+        // Iterate through each method in the mutant log
+        // TODO: This is left over from when I was working with 1 file at a time.
+        //       Now I handle LOTS of files and this is incredibly inefficent.
+        //       To fix this I need the methodMap returned by translator.translate
+        //       to have class info (there might be collisions otherwise, e.g.,
+        //       toString()).
+
+        for (String sig : methodMap.keySet()){
+          if (!mutantsLog.methodNameMap.containsKey(sig)) continue;
 
           // Get all rows from MutantsLog corresponding to this method
           final Set<MutantsLog.Row> rowsForMethod = mutantsLog.methodNameMap.get(sig);
+          if (rowsForMethod.isEmpty()) continue;
+          final String unqualifiedSig = sig.contains("@") ? sig.split("@")[1] : sig;
 
           List<MutantsLog.Row> rowsToAdd = new ArrayList<>();
+          if (printPegs) {
+            System.out.println("---------------------------------------");
+            System.out.printf("%s:\n[orig] %s\n\n", sig , methodMap.get(sig).toDerefString());
+          }
           for (MutantsLog.Row row : rowsForMethod) {
             System.out.println(row);
             final File mutantFile = idToFiles.get(row.id);
             try {
               final CompilationUnit mcu = StaticJavaParser.parse(mutantFile);
               try {
-                row.pegId = translator.translate(mcu, canonical)
-                        .orElseThrow(() -> new RuntimeException("Couldn't find mutant"))
-                        .id;
+                PegNode p = translator.translate(mcu, unqualifiedSig)
+                        .orElseThrow(() -> new RuntimeException("Couldn't find mutant")) ;
+                row.pegId = p.id;
                 rowsToAdd.add(row);
+                if (printPegs) {
+                  System.out.printf("[%s] %s\n\n", row.id, p.toDerefString());
+                }
               } catch (RuntimeException e) {}
             } catch (FileNotFoundException e) {
               throw new RuntimeException("Couldn't find mutant " + row.id);
@@ -117,13 +130,14 @@ public class Serializer {
             }
           }
           if (!rowsToAdd.isEmpty()) {
-            xmlGen.addSubject(origFile.getName(), sig, methodMap.get(canonical).id);
+            xmlGen.addSubject(origFile.getName(), sig, methodMap.get(sig).id);
             for (MutantsLog.Row row : rowsToAdd) {
               xmlGen.addMutant(sig, row.id, row.pegId);
             }
+            addedSubjects = true;
           }
         }
-        if (!mutatedThisFile) continue;
+        if (!addedSubjects) continue;
 
         // TODO: this involves giving public access to the idLookup which is sketchy.
         xmlGen.addDeduplicationTable(PegNode.getIdLookup());

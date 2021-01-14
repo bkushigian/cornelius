@@ -1,5 +1,6 @@
 package serializer.peg;
 
+import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
@@ -54,11 +55,25 @@ public class Util {
    * There are different naming conventions between JP and Major, and this makes hashing a PITA. This utility
    * provides a way to create canonical versions of names.
    *
-   * The canonical name will be {@code methodName(type1,type2,type3,...)}, where there are <em>no spaces</em> in the
+   * The canonical name will be {@code pkg.path.ClassName@methodName(type1,type2,type3,...)}, where there are <em>no
+   * spaces</em> in the
    * string. Return types are stripped (no {@code int methodName(...)}) since these aren't provided by Major, and no
    * classes, since these are a pain to find in JP (there is a helper method here, but we shouldn't need it).
+   *
    */
   public static class CanonicalNames {
+    public static
+    <T extends NodeWithSimpleName<?> & NodeWithParameters<?>>
+    String
+    fromDecl(final T decl, final CompilationUnit cu, ClassOrInterfaceDeclaration owner) {
+      final StringBuilder sb = new StringBuilder();
+      if (cu.getPackageDeclaration().isPresent()) {
+        sb.append(cu.getPackageDeclaration().get().getName().asString()).append('.');
+      }
+      return sb.append(owner.getNameAsString())
+              .append('@')
+              .append(fromDecl(decl)).toString();
+    }
     /**
      * Return a canonical version of the declared name from a JP ConstructorDeclaration or a MethodDeclaration.
      *
@@ -107,7 +122,10 @@ public class Util {
      */
     public static String fromMajorSig(final String majorSig) {
       final String[] split = majorSig.split("@");
-      if (split.length != 2) {
+      if (split.length == 1) {
+        // class level mutation
+        return majorSig;
+      } else if (split.length != 2)  {
         throw new IllegalArgumentException(String.format("majorSig %s is not a well formed Major signature", majorSig));
       }
       int openIdx = split[1].indexOf('(');
