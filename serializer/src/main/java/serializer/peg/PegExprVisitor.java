@@ -202,16 +202,31 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
                 return PegNode.opNodeFromPegs(PegOp.NEG, peg).exprResult(context);
             }
             case PREFIX_INCREMENT:
-                return PegNode.opNodeFromPegs(PegOp.PREINC, peg).exprResult(context);
             case PREFIX_DECREMENT:
-                return PegNode.opNodeFromPegs(PegOp.PREDEC, peg).exprResult(context);
             case POSTFIX_INCREMENT:
-                return PegNode.opNodeFromPegs(PegOp.POSTINC, peg).exprResult(context);
             case POSTFIX_DECREMENT:
-                return PegNode.opNodeFromPegs(PegOp.POSTDEC, peg).exprResult(context);
+              return performSideEffectingUnary(n.getExpression(), er, n.getOperator());
             default:
                 throw new IllegalStateException("Unrecognized unary operator: " + n.getOperator());
         }
+    }
+
+    private ExpressionResult performSideEffectingUnary(final Expression target,
+                                                       final ExpressionResult er,
+                                                       final UnaryExpr.Operator op)
+    {
+        String pegOp = "+";
+        if (op == UnaryExpr.Operator.POSTFIX_DECREMENT || op == UnaryExpr.Operator.PREFIX_DECREMENT) {
+            pegOp = "-";
+        }
+        final PegNode value = PegNode.opNode(pegOp, er.peg.id, PegNode.intLit(1).id);
+        if (op.isPrefix()) {
+            return performAssign(target, value, er.context);
+        }
+        else if (op.isPostfix()) {
+            return performAssign(target, value, er.context).withPeg(er.peg);
+        }
+        throw new RuntimeException("UnrecognizedSideEffectingUnaryOp");
     }
 
     @Override
@@ -241,27 +256,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         final ExpressionResult visitValue = n.getValue().accept(this, ctx);
         ctx = visitValue.context;
         final PegNode value = visitValue.peg;
-        if (n.getTarget().isNameExpr()) {
-            final String nameString = n.getTarget().asNameExpr().getNameAsString();
-
-            // Check if this is an implicit dereference (e.g., `x` instead of `this.x`)
-            if (ctx.isUnshadowedField(nameString)) {
-                // NOTE: We do not need to explicitly use exit conditions: these are already tracked in the heap
-                return performWrite(new FieldAccessExpr(new ThisExpr(), nameString), value, ctx);
-            }
-            return visitValue.withContext(ctx.performAssignLocalVar(nameString, value));
-        }
-        else if (n.getTarget().isFieldAccessExpr()) {
-            // todo: can this be done with normal 'visit'?
-            final FieldAccessExpr fieldAccess = n.getTarget().asFieldAccessExpr();
-            return performWrite(fieldAccess, value, ctx).withPeg(value);
-        }
-        else if (n.getTarget().isArrayAccessExpr()) {
-            throw new RuntimeException("ArrayAccessExpr");
-        }
-        else {
-            throw new RuntimeException("Unrecognized assignment target: " + n.getTarget().toString());
-        }
+        return performAssign(n.getTarget(), value, ctx);
     }
 
     @Override
@@ -409,35 +404,30 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     }
 
     /**
-     * Return a path node representing the chain of field accesses.
-     * @param n the field access (e.g., `obj.fld`)
-     * @param ctx the context the field access is happening in
-     * @return a `path` PegNode `(path BASE FIELD)` representing the dereference.
+     * Given a target, a value, and a context, create a new Expression result storing that new value in its target.
+     * @param target
+     * @param value
+     * @param ctx
+     * @return
      */
-    public ExpressionResult getPathFromFieldAccessExpr(FieldAccessExpr n, PegContext ctx) {
-        // TODO: This only works for field access expressions w/ nothing (like arrays, methods) in the middle.
-        // For instance, a.b.c().d.e, or a.b.c[0].d.e will both fail!
-        final StringBuilder derefs = new StringBuilder(n.getNameAsString());
-        FieldAccessExpr fa = n;
-
-        while (fa.getScope().isFieldAccessExpr()) {
-            derefs.insert(0, fa.getName());
-            derefs.insert(0, '.');
-            fa = fa.getScope().toFieldAccessExpr().orElseThrow(() -> new RuntimeException("GetPathFail"));
+    private ExpressionResult performAssign(final Expression target, final PegNode value, final PegContext ctx) {
+        if (target.isNameExpr()) {
+            final String nameString = target.asNameExpr().getNameAsString();
+            // Check if this is an implicit dereference (e.g., `x` instead of `this.x`)
+            if (ctx.isUnshadowedField(nameString)) {
+                // NOTE: We do not need to explicitly use exit conditions: these are already tracked in the heap
+                return ctx.performWrite(new FieldAccessExpr(new ThisExpr(), nameString), value, this);
+            }
+            return value.exprResult(ctx.performAssignLocalVar(nameString, value));
         }
-        final ExpressionResult base = fa.getScope().accept(this, ctx);
-        return PegNode.path(base.peg.id, derefs.toString()).exprResult(ctx);
-    }
-
-    /**
-     * A helper function that produces a new PegContext storing the field write
-     * @param fieldAccess The field that access (e.g., `obj.fld`), that is being updated
-     * @param value the value that is being assigned to the field
-     * @param ctx the context in which this is happening
-     * @return A new ExpressionResult that tracks the updated heap and the resulting value.
-     */
-    private ExpressionResult performWrite(FieldAccessExpr fieldAccess, PegNode value, PegContext ctx) {
-        final ExpressionResult er = getPathFromFieldAccessExpr(fieldAccess, ctx);
-        return er.withHeap(PegNode.wrHeap(er.peg.id, value.id, er.context.heap));
+        else if (target.isFieldAccessExpr()) {
+            return ctx.performWrite(target.asFieldAccessExpr(), value, this).withPeg(value);
+        }
+        else if (target.isArrayAccessExpr()) {
+            throw new RuntimeException("ArrayAccessExpr");
+        }
+        else {
+            throw new RuntimeException("UnrecognizedAssignmentTarget");
+        }
     }
 }

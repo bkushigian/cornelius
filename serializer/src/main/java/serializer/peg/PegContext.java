@@ -1,5 +1,6 @@
 package serializer.peg;
 
+import com.github.javaparser.ast.expr.FieldAccessExpr;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
@@ -138,6 +139,35 @@ public class PegContext {
           return setLocalVar(key, val);
       }
       return setLocalVar(key, PegNode.phi(PegNode.exitConditions(exitConditions).id, getLocalVar(key).id, val.id));
+    }
+
+    public ExpressionResult performWrite(final FieldAccessExpr fieldAccess,
+                                         final PegNode value,
+                                         final PegExprVisitor visitor)
+    {
+        final ExpressionResult er = getPathFromFieldAccessExpr(fieldAccess, visitor);
+        return er.withHeap(PegNode.wrHeap(er.peg.id, value.id, er.context.heap));
+
+    }
+
+    /**
+     * Return a path node representing the chain of field accesses.
+     * @param n the field access (e.g., `obj.fld`)
+     * @return a `path` PegNode `(path BASE FIELD)` representing the dereference.
+     */
+    public ExpressionResult getPathFromFieldAccessExpr(FieldAccessExpr n, PegExprVisitor visitor) {
+        // TODO: This only works for field access expressions w/ nothing (like arrays, methods) in the middle.
+        // For instance, a.b.c().d.e, or a.b.c[0].d.e will both fail!
+        final StringBuilder derefs = new StringBuilder(n.getNameAsString());
+        FieldAccessExpr fa = n;
+
+        while (fa.getScope().isFieldAccessExpr()) {
+            derefs.insert(0, fa.getName());
+            derefs.insert(0, '.');
+            fa = fa.getScope().toFieldAccessExpr().orElseThrow(() -> new RuntimeException("GetPathFail"));
+        }
+        final ExpressionResult base = fa.getScope().accept(visitor, this);
+        return PegNode.path(base.peg.id, derefs.toString()).exprResult(this);
     }
 
     /**
