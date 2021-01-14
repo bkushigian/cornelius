@@ -1,5 +1,6 @@
 package serializer.peg;
 
+import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.*;
@@ -27,6 +28,14 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
     public PegContext visit(MethodDeclaration n, PegContext ctx) {
         final PegContext result = super.visit(n, ctx);
         testPairs.scrape(n, result.exprResult());
+        // Test if there was an implicit return node at the end of the method, and if so, if there was another
+        // explicit return node in the body somewhere
+        if (n.getBody().isPresent()) {
+            NodeList<Statement> statements = n.getBody().get().getStatements();
+            if (!statements.get(statements.size() - 1).isReturnStmt() && ctx.getReturnNode() != null) {
+                throw new RuntimeException("ExplicitAndImplicitReturnNodes");
+            }
+        }
         return result;
     }
 
