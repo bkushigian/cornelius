@@ -409,6 +409,12 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         throw new RuntimeException("InstanceOf");
     }
 
+    /**
+     * Return a path node representing the chain of field accesses.
+     * @param n the field access (e.g., `obj.fld`)
+     * @param ctx the context the field access is happening in
+     * @return a `path` PegNode `(path BASE FIELD)` representing the dereference.
+     */
     public ExpressionResult getPathFromFieldAccessExpr(FieldAccessExpr n, PegContext ctx) {
         // TODO: This only works for field access expressions w/ nothing (like arrays, methods) in the middle.
         // For instance, a.b.c().d.e, or a.b.c[0].d.e will both fail!
@@ -418,11 +424,10 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         while (fa.getScope().isFieldAccessExpr()) {
             derefs.insert(0, fa.getName());
             derefs.insert(0, '.');
-            fa = fa.getScope().asFieldAccessExpr();
+            fa = fa.getScope().toFieldAccessExpr().orElseThrow(() -> new RuntimeException("GetPathFail"));
         }
         final ExpressionResult base = fa.getScope().accept(this, ctx);
         return PegNode.path(base.peg.id, derefs.toString()).exprResult(ctx);
-
     }
 
     // Helper function to produce a new Context storing the write
