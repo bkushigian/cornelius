@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_variables)]
-use crate::peg::{Peg, VarAnalysis};
+use crate::peg::{Peg, PegAnalysis};
 use crate::rewrites::RewriteSystem;
 use egg::{Rewrite, rewrite as rw};
 
@@ -59,9 +59,9 @@ where T: std::fmt::Debug {
 
 /// minimize_buggy_rules
 pub fn minimize_buggy_rules<'a>(
-    rules: &[&'a Rewrite<Peg, VarAnalysis>],
-    oracle: impl FnMut (&[&'a Rewrite<Peg, VarAnalysis>]) -> bool
-) -> Vec<&'a Rewrite<Peg, VarAnalysis>> {
+    rules: &[&'a Rewrite<Peg, PegAnalysis>],
+    oracle: impl FnMut (&[&'a Rewrite<Peg, PegAnalysis>]) -> bool
+) -> Vec<&'a Rewrite<Peg, PegAnalysis>> {
     ddmin2(rules, 2, oracle)
 }
 

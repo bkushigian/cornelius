@@ -3,7 +3,7 @@ use serde::Deserialize;
 use crate::rewrites::RewriteSystem;
 use serde_aux::prelude::*;
 use serde_xml_rs::from_reader;
-use crate::peg::{Peg, VarAnalysis};
+use crate::peg::{Peg, PegAnalysis};
 use std::collections::{HashMap, HashSet};
 
 use log::Level;
@@ -224,7 +224,7 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
             info!("mutant id: {}:\n{}", mid, re.pretty(80));
           }
       }
-        analyze_subject(&mut subj, egraph, &rec_expr);
+        analyze_subject(&mut subj, egraph, &rec_expr, &id_offset_map);
         i += 1;
     }
     Ok(subjects)
@@ -241,8 +241,9 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
 /// TODO We shouldn't be writing directly to a file---we should be returning a
 /// structure that summarizes the analysis.
 fn analyze_subject(subj: &mut Subject,
-                   egraph: &EGraph<Peg, VarAnalysis>,
-                   _expr: &RecExpr<Peg>
+                   egraph: &EGraph<Peg, PegAnalysis>,
+                   _expr: &RecExpr<Peg>,
+                   id_update: &HashMap<Id, Id>
 ) {
 
     // Map canonical_ids (from egg) to mutant ids (from Major)

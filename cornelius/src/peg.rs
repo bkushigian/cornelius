@@ -1,7 +1,7 @@
 use egg::*;
 use std::num::Wrapping;
 
-pub type EGraph = egg::EGraph<Peg, VarAnalysis>;
+pub type EGraph = egg::EGraph<Peg, PegAnalysis>;
 
 define_language! {
   pub enum Peg {
@@ -325,16 +325,16 @@ impl Peg {
   }
 }
 
-/// Data tracked for a VarAnalysis
+/// Data tracked for a PegAnalysis
 #[derive(Default, PartialEq, Debug, Clone)]
-pub struct VarAnalysisData {
+pub struct PegAnalysisData {
   pub constant: Option<Peg>,
   pub variable: Option<Peg>
 }
 
-impl VarAnalysisData {
-  pub fn or(self, a: VarAnalysisData) -> VarAnalysisData {
-    VarAnalysisData {
+impl PegAnalysisData {
+  pub fn or(self, a: PegAnalysisData) -> PegAnalysisData {
+    PegAnalysisData {
       constant: self.constant.or(a.constant),
       variable: self.variable.or(a.variable)
     }
@@ -342,7 +342,7 @@ impl VarAnalysisData {
 }
 
 #[derive(Default)]
-pub struct VarAnalysis;
+pub struct PegAnalysis;
 
 fn eval(egraph: &EGraph, enode: &Peg) -> Option<Peg> {
   let x = |i: &Id| egraph[*i].data.constant.clone();
@@ -399,8 +399,8 @@ fn eval(egraph: &EGraph, enode: &Peg) -> Option<Peg> {
   }
 }
 
-impl Analysis<Peg> for VarAnalysis {
-    type Data = VarAnalysisData;
+impl Analysis<Peg> for PegAnalysis {
+    type Data = PegAnalysisData;
     fn merge(&self, to: &mut Self::Data, from: Self::Data) -> bool {
       merge_if_different(to, to.clone().or(from))
     }
@@ -408,8 +408,8 @@ impl Analysis<Peg> for VarAnalysis {
     fn make(egraph: &EGraph, enode: &Peg) -> Self::Data {
         let _x = |i: &Id| egraph[*i].data.clone();
         match enode {
-          Peg::Var(_) => VarAnalysisData {constant: None, variable: Some(enode.clone())},
-          _ => VarAnalysisData {constant: eval(egraph, enode), variable: None}
+          Peg::Var(_) => PegAnalysisData {constant: None, variable: Some(enode.clone())},
+          _ => PegAnalysisData {constant: eval(egraph, enode), variable: None}
         }
     }
 

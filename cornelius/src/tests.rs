@@ -1,6 +1,6 @@
 use egg::*;
 use crate::rewrites::RewriteSystem;
-use crate::peg::{Peg, VarAnalysis};
+use crate::peg::{Peg, PegAnalysis};
 use crate::util::EqRel;
 use std::env;
 
@@ -615,7 +615,7 @@ fn test_no_straight_rewrite(start: &str, end: &str, other: &[&str]) -> bool {
             let start_expr = start.parse().unwrap();
             let end_expr = end.parse().unwrap();
             let oracle =
-                move |config: &[&Rewrite<Peg,VarAnalysis>]| -> bool {
+                move |config: &[&Rewrite<Peg, PegAnalysis>]| -> bool {
                     if debug {
                         println!("Trial {}: running oracle on len {} config", trial, config.len());
                         trial += 1;
@@ -666,7 +666,7 @@ fn test_no_straight_rewrite(start: &str, end: &str, other: &[&str]) -> bool {
 
 #[allow(dead_code)]
 fn rewrites_do_not_panic(exprs: &[&str]) -> bool{
-    let mut egraph: EGraph<Peg, VarAnalysis> = EGraph::default();
+    let mut egraph: EGraph<Peg, PegAnalysis> = EGraph::default();
     let rules = crate::rewrites::rw_rules();
     let runner = Runner::default();
     for expr in exprs {
