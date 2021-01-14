@@ -72,9 +72,6 @@ public class FileSerializeDataCollector {
           if (type.isClassOrInterfaceDeclaration()) {
             final ClassOrInterfaceDeclaration ctype = type.asClassOrInterfaceDeclaration();
             final ClassVisitResult cvr = new ClassVisitResult(file);
-            // System.out.println("==================");
-            // System.out.println(file);
-            // System.out.println();
             if (ctype.isInterface()) continue;
             final PegClassVisitor.ClassVisitorResult classVisitorResult = classVisitor.visit(ctype);
             for (MethodDeclaration method : ctype.getMethods()) {
@@ -85,10 +82,6 @@ public class FileSerializeDataCollector {
               visitDecl(classVisitorResult, constructor, cvr);
             }
 
-            // System.out.println("---");
-
-            // System.out.println("Failures:" + cvr.numFailure);
-            // System.out.println("Success:" + cvr.numSuccess);
             successes += cvr.numSuccess;
             failures += cvr.numFailure;
           }
