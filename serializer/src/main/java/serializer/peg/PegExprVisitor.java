@@ -238,9 +238,9 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
 
     @Override
     public ExpressionResult visit(AssignExpr n, PegContext ctx) {
-        final ExpressionResult er = n.getValue().accept(this, ctx);
-        ctx = er.context;
-        final PegNode value = er.peg;
+        final ExpressionResult visitValue = n.getValue().accept(this, ctx);
+        ctx = visitValue.context;
+        final PegNode value = visitValue.peg;
         if (n.getTarget().isNameExpr()) {
             final String nameString = n.getTarget().asNameExpr().getNameAsString();
 
@@ -249,8 +249,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
                 // NOTE: We do not need to explicitly use exit conditions: these are already tracked in the heap
                 return performWrite(new FieldAccessExpr(new ThisExpr(), nameString), value, ctx);
             }
-
-            return er.withContext(ctx.performAssignLocalVar(nameString, value));
+            return visitValue.withContext(ctx.performAssignLocalVar(nameString, value));
         }
         else if (n.getTarget().isFieldAccessExpr()) {
             // todo: can this be done with normal 'visit'?
