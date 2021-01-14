@@ -2,14 +2,19 @@
 
 source util.sh
 
+################################################################################
+# run.sh SUBJECT
+# SUBJECT should be of the form path/to/file/file.java
+
 if [ $# != 1 ]
 then
     red "$(bold "usage: ./run.sh file")"
     exit 1
 fi
 
-dir="$(realpath "$(dirname $1)")"
-base="$(basename "$1")"
+fullpath="$(realpath $1)"
+dir="$(realpath "$fullpath")"
+base="$(basename "$fullpath")"
 tmp=$(mktemp -d -t cornelius-)
 echo "Created temp working directory $(green $tmp)"
 cp "$1" "$tmp"
@@ -26,12 +31,18 @@ then
 fi
 
 export MML
-./mutate.sh "$tmp/$base"
-#  ./regularize.sh --subject "$tmp/$base"
-./serialize.sh "$tmp/$base"
-xml="$tmp/${base%.*}.xml"
-mv subjects.xml "$xml"
-echo "Serialized subjects file: $xml"
+
+if [[ "$fullpath" == *.java ]]
+then
+    ./mutate.sh "$tmp/$base"
+    ./serialize.sh "$tmp/$base"
+    xml="$tmp/${base%.*}.xml"
+    mv subjects.xml "$xml"
+    echo "Serialized subjects file: $xml"
+else
+    xml="$fullpath"
+fi
+
 ./cornelius.sh "$xml"
 equiv_classes="$xml.equiv-class"
 

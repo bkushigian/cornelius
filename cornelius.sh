@@ -14,6 +14,17 @@ do
 done
 
 # Run!
+
 target="$(realpath "$1")"
 cd framework/scripts
-./run.sh "$target"
+if [[ -f "$target" ]]
+then
+    ./run.sh "$target"
+elif [[ -d "$target" ]]
+then
+    for f in $(ls "$target/"*.cor)
+    do
+        echo $f
+        ./run.sh "$target/$f"
+    done
+fi

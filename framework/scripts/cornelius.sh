@@ -16,6 +16,6 @@ function run_on_subject {
 echo "================================================================================"
 echo "Running Cornelius! Oh boy!!"
 compile_binary
-cornelius=$(realpath "$CORNELIUS/target/release/cornelius")
+cornelius=$(realpath "$CORNELIUS/target/release/cornelius-bin")
 
 run_on_subject "$1"
