@@ -404,6 +404,11 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         throw new RuntimeException("LongLiteralExpr");
     }
 
+    @Override
+    public ExpressionResult visit(InstanceOfExpr n, PegContext arg) {
+        throw new RuntimeException("InstanceOf");
+    }
+
     public ExpressionResult getPathFromFieldAccessExpr(FieldAccessExpr n, PegContext ctx) {
         // TODO: This only works for field access expressions w/ nothing (like arrays, methods) in the middle.
         // For instance, a.b.c().d.e, or a.b.c[0].d.e will both fail!

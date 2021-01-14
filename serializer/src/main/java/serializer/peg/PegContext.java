@@ -17,11 +17,16 @@ public class PegContext {
     final public ImmutableSet<PegNode> exitConditions;
 
     // FIXME The following relies on there being a _unique_ return node in the AST
-    PegNode returnNode = null;
+    final private PegNode returnNode;
 
     public PegNode getReturnNode() {
         return returnNode;
     }
+
+    public PegContext withReturnNode(PegNode rn) {
+        return new PegContext(localVariableLookup, fieldNames, heap, exitConditions, rn);
+    }
+
 
     private PegContext(final ImmutableMap<String, PegNode> localVariableLookup,
                        final Set<String> fieldNames,
@@ -56,7 +61,7 @@ public class PegContext {
                 .addAll(c1.exitConditions)
                 .addAll(c2.exitConditions).build();
 
-        if (c1.getReturnNode() != null && c2.getReturnNode() != null) throw new RuntimeException("Multiple returns");
+        if (c1.getReturnNode() != null && c2.getReturnNode() != null) throw new RuntimeException("InvalidReturn");
         final PegNode returnNode = Optional.ofNullable(c1.returnNode).orElse(c2.returnNode);
 
         return initMap(
@@ -232,10 +237,9 @@ public class PegContext {
      */
     public Optional<PegNode> asPeg() {
         if (returnNode == null) {
-            returnNode = PegNode.unit();
+            return Optional.of(PegNode.returnNode(PegNode.unit().id, heap.id));
         }
-
-        return Optional.ofNullable(PegNode.returnNode(returnNode.id, heap.id));
+        return Optional.of(PegNode.returnNode(returnNode.id, heap.id));
     }
 
     public ExpressionResult exprResult(final PegNode peg) {
