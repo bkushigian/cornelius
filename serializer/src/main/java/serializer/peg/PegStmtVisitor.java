@@ -1,6 +1,8 @@
 package serializer.peg;
 
+import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
+import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.*;
@@ -33,7 +35,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
         if (n.getBody().isPresent()) {
             NodeList<Statement> statements = n.getBody().get().getStatements();
             if (!statements.get(statements.size() - 1).isReturnStmt() && ctx.getReturnNode() != null) {
-                throw new RuntimeException("ExplicitAndImplicitReturnNodes");
+                throw new RuntimeException("InvalidReturn");
             }
         }
         return result;
@@ -118,23 +120,31 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
 
     @Override
     public PegContext visit(ReturnStmt n, PegContext ctx) {
-        // Here we check if we return anything and then update the ctx to track the name of the returned variable.
-        // We perform some checks to ensure that everything works correctly, including
-        // 1. that the ReturnStmt's expression exists (if not we return an unaltered context
-        // 2. that the expression is a NameExpr
-        // 3. that the PegContext hasn't already had a return value assigned: there can only be _one_ return statement
-        //    per method
-        // Items 2 and 3 are redundant for the validator but we sanity check them anyway.
+        // We sanity check that this return node is the last statement of a method. To do this we get the parent of the
+        // parent of this node and ensure it is a MethodDeclaration. Then, we get the statements block of that method
+        // and ensure that `n` is the last node in that block.
 
-        final Optional<Expression> optExpr = n.getExpression();
-        if (optExpr.isPresent()) {
-            final Expression expr = optExpr.get();
-            if (ctx.returnNode != null) {
-                throw new RuntimeException("Multiple returns");
+        // BEGIN SANITY CHECK
+        Optional<Node> optNode;
+        if ((optNode = n.getParentNode()).isPresent() && (optNode = optNode.get().getParentNode()).isPresent()) {
+            if (! (optNode.get() instanceof MethodDeclaration)) {
+                throw new RuntimeException("InvalidReturn");
             }
-            final ExpressionResult er = expr.accept(pev, ctx);
-            ctx = er.context;
-            ctx.returnNode = er.peg;
+            final MethodDeclaration md = (MethodDeclaration) optNode.get();
+            final NodeList<Statement> statements = md.getBody().get().getStatements();
+            if (statements.get(statements.size() - 1) != n) {
+                throw new RuntimeException("InvalidReturn");
+            }
+        } else {
+            throw new RuntimeException("InvalidReturn");
+        }
+        // END SANITY CHECK
+
+        if (n.getExpression().isPresent()) {
+            final ExpressionResult er = n.getExpression().get().accept(pev, ctx);
+            ctx = er.context.withReturnNode(er.peg);
+        } else {
+            ctx = ctx.withReturnNode(PegNode.unit());
         }
 
         testPairs.scrape(n, ctx.exprResult());
@@ -155,6 +165,11 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
     @Override
     public PegContext visit(ForStmt n, PegContext arg) {
         throw new RuntimeException("ForStmt");
+    }
+
+    @Override
+    public PegContext visit(ForEachStmt n, PegContext arg) {
+        throw new RuntimeException("ForEachStmt");
     }
 
     @Override
@@ -185,5 +200,10 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
     @Override
     public PegContext visit(LocalClassDeclarationStmt n, PegContext arg) {
         throw new RuntimeException("LocalClassDeclarationStmt");
+    }
+
+    @Override
+    public PegContext visit(SwitchStmt n, PegContext arg) {
+        throw new RuntimeException("SwitchStmt");
     }
 }
