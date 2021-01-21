@@ -266,8 +266,8 @@
 (defn file->tests [file-path] (tester->tests (init-tester file-path)))
 
 (defn test-file [file-path]
+  (PegNode/clear)
   (doseq [[method the-test] (file->tests file-path)]
-    ;; (clojure.pprint/pprint the-test)
     (try
       (binding [*ns* (find-ns 'pegnodes.tests.tests)] (eval the-test))
       (catch RuntimeException e
@@ -284,6 +284,7 @@
       (println "Cause:" (:cause (Throwable->map e))))))
 
 (defn test-files [file-paths]
+  (PegNode/clear)
   (let [the-tests (apply concat (for [path file-paths] (file->tests path)))]
     (doseq [the-test the-tests]
       (try
