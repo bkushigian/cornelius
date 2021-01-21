@@ -2,7 +2,6 @@ package serializer.peg;
 
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
-import com.github.javaparser.ast.stmt.SynchronizedStmt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +29,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
             rhs.withContext(rhs.context.withExceptionCondition(throwCond, PegNode.exception("java.lang.DivideByZeroError")));
         }
 
-        return handleBinExpr(n, lhs.peg, rhs.peg).exprResult(rhs.context);
+        return handleBinExpr(n, lhs, rhs);
     }
 
     /**
@@ -40,125 +39,129 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
      * @param rhs right expr
      * @return PegNode representing this binary expression
      */
-    PegNode handleBinExpr(BinaryExpr n, PegNode lhs, PegNode rhs) {
-        final Optional<Integer> li = lhs.asInteger(), ri = rhs.asInteger();
-        final Optional<Boolean> lb = lhs.asBoolean(), rb = rhs.asBoolean();
+    private ExpressionResult handleBinExpr(BinaryExpr n, ExpressionResult lhs, ExpressionResult rhs) {
+        final Optional<Integer> li = lhs.peg.asInteger(), ri = rhs.peg.asInteger();
+        final Optional<Boolean> lb = lhs.peg.asBoolean(), rb = rhs.peg.asBoolean();
 
         switch (n.getOperator()) {
             case OR:
             {
                 if (lb.isPresent() && rb.isPresent()) {
-                    return PegNode.boolLit(lb.get() || rb.get());
+                    return PegNode.boolLit(lb.get() || rb.get()).exprResult(rhs.context);
                 }
-                return PegNode.opNodeFromPegs(PegOp.OR, lhs, rhs);
+                final PegNode phi = PegNode.phi(lhs.peg.id, PegNode.boolLit(true).id, rhs.peg.id);
+                PegContext combined = PegContext.combine(lhs.context, rhs.context, lhs.peg.id);
+                return phi.exprResult(combined);
             }
             case AND:
             {
                 if (lb.isPresent() && rb.isPresent()) {
-                    return PegNode.boolLit(lb.get() && rb.get());
+                    return PegNode.boolLit(lb.get() && rb.get()).exprResult(rhs.context);
                 }
-                return PegNode.opNodeFromPegs(PegOp.AND, lhs, rhs);
+                final PegNode phi = PegNode.phi(lhs.peg.id, rhs.peg.id, PegNode.boolLit(true).id);
+                PegContext combined = PegContext.combine(lhs.context, rhs.context, lhs.peg.id);
+                return phi.exprResult(combined);
             }
             case BINARY_OR:
             {
                 if (li.isPresent() && ri.isPresent()) {
-                    return PegNode.intLit(li.get() | ri.get());
+                    return PegNode.intLit(li.get() | ri.get()).exprResult(rhs.context);
                 }
-                return PegNode.opNodeFromPegs(PegOp.BIN_OR, lhs, rhs);
+                return PegNode.opNodeFromPegs(PegOp.BIN_OR, lhs.peg, rhs.peg).exprResult(rhs.context);
             }
             case BINARY_AND:
             {
                 if (li.isPresent() && ri.isPresent()) {
-                    return PegNode.intLit(li.get() & ri.get());
+                    return PegNode.intLit(li.get() & ri.get()).exprResult(rhs.context);
                 }
-                return PegNode.opNodeFromPegs(PegOp.BIN_AND, lhs, rhs);
+                return PegNode.opNodeFromPegs(PegOp.BIN_AND, lhs.peg, rhs.peg).exprResult(rhs.context);
             }
             case XOR:
             {
                 if (li.isPresent() && ri.isPresent()) {
-                    return PegNode.intLit(li.get() ^ ri.get());
+                    return PegNode.intLit(li.get() ^ ri.get()).exprResult(rhs.context);
                 }
                 if (lb.isPresent() && rb.isPresent()) {
-                    return PegNode.boolLit(lb.get() ^ rb.get());
+                    return PegNode.boolLit(lb.get() ^ rb.get()).exprResult(rhs.context);
                 }
-                return PegNode.opNodeFromPegs(PegOp.XOR, lhs, rhs);
+                return PegNode.opNodeFromPegs(PegOp.XOR, lhs.peg, rhs.peg).exprResult(rhs.context);
             }
             case EQUALS:
             {
                 if (lhs.equals(rhs)) {
-                    return PegNode.boolLit(true);
+                    return PegNode.boolLit(true).exprResult(rhs.context);
                 }
-                return PegNode.opNodeFromPegs(PegOp.EQ, lhs, rhs);
+                return PegNode.opNodeFromPegs(PegOp.EQ, lhs.peg, rhs.peg).exprResult(rhs.context);
             }
             case NOT_EQUALS:
             {
                 if (lhs.equals(rhs)) {
-                    return PegNode.boolLit(false);
+                    return PegNode.boolLit(false).exprResult(rhs.context);
                 }
-                return PegNode.opNodeFromPegs(PegOp.NE, lhs, rhs);
+                return PegNode.opNodeFromPegs(PegOp.NE, lhs.peg, rhs.peg).exprResult(rhs.context);
             }
             case LESS:
-                return PegNode.opNodeFromPegs(PegOp.LT, lhs, rhs);
+                return PegNode.opNodeFromPegs(PegOp.LT, lhs.peg, rhs.peg).exprResult(rhs.context);
             case GREATER:
-                return PegNode.opNodeFromPegs(PegOp.GT, lhs, rhs);
+                return PegNode.opNodeFromPegs(PegOp.GT, lhs.peg, rhs.peg).exprResult(rhs.context);
             case LESS_EQUALS:
-                return PegNode.opNodeFromPegs(PegOp.LE, lhs, rhs);
+                return PegNode.opNodeFromPegs(PegOp.LE, lhs.peg, rhs.peg).exprResult(rhs.context);
             case GREATER_EQUALS:
-                return PegNode.opNodeFromPegs(PegOp.GE, lhs, rhs);
+                return PegNode.opNodeFromPegs(PegOp.GE, lhs.peg, rhs.peg).exprResult(rhs.context);
             case LEFT_SHIFT:
-                return PegNode.opNodeFromPegs(PegOp.LSHIFT, lhs, rhs);
+                return PegNode.opNodeFromPegs(PegOp.LSHIFT, lhs.peg, rhs.peg).exprResult(rhs.context);
             case SIGNED_RIGHT_SHIFT:
-                return PegNode.opNodeFromPegs(PegOp.SRSHIFT, lhs, rhs);
+                return PegNode.opNodeFromPegs(PegOp.SRSHIFT, lhs.peg, rhs.peg).exprResult(rhs.context);
             case UNSIGNED_RIGHT_SHIFT:
-                return PegNode.opNodeFromPegs(PegOp.URSHIFT, lhs, rhs);
+                return PegNode.opNodeFromPegs(PegOp.URSHIFT, lhs.peg, rhs.peg).exprResult(rhs.context);
             case PLUS:
             {
                 if (li.isPresent() && ri.isPresent()) {
-                    return PegNode.intLit(li.get() + ri.get());
+                    return PegNode.intLit(li.get() + ri.get()).exprResult(rhs.context);
                 }
-                return PegNode.opNodeFromPegs(PegOp.PLUS, lhs, rhs);
+                return PegNode.opNodeFromPegs(PegOp.PLUS, lhs.peg, rhs.peg).exprResult(rhs.context);
             }
             case MINUS:
             {
                 if (li.isPresent() && ri.isPresent()) {
-                    return PegNode.intLit(li.get() - ri.get());
+                    return PegNode.intLit(li.get() - ri.get()).exprResult(rhs.context);
                 }
-                return PegNode.opNodeFromPegs(PegOp.MINUS, lhs, rhs);
+                return PegNode.opNodeFromPegs(PegOp.MINUS, lhs.peg, rhs.peg).exprResult(rhs.context);
             }
             case MULTIPLY:
             {
                 if (li.isPresent() && ri.isPresent()) {
-                    return PegNode.intLit(li.get() * ri.get());
+                    return PegNode.intLit(li.get() * ri.get()).exprResult(rhs.context);
                 }
-                return PegNode.opNodeFromPegs(PegOp.TIMES, lhs, rhs);
+                return PegNode.opNodeFromPegs(PegOp.TIMES, lhs.peg, rhs.peg).exprResult(rhs.context);
             }
             case DIVIDE:
             {
                 if (li.isPresent() && ri.isPresent() ) {
                     if (ri.get() != 0) {
-                        return PegNode.intLit(li.get() / ri.get());
+                        return PegNode.intLit(li.get() / ri.get()).exprResult(rhs.context);
                     } else {
                         // This will never be evaluated since we are dividing by zero
-                        return PegNode.unit();
+                        return PegNode.unit().exprResult(rhs.context);
                     }
                 }
-                final PegNode cond =  PegNode.opNode(PegOp.EQ, rhs.id, PegNode.intLit(0).id);
-                final PegNode value = PegNode.opNode(PegOp.DIVIDE, lhs.id, rhs.id);
-                return PegNode.phi(cond.id, PegNode.unit().id, value.id);
+                final PegNode cond =  PegNode.opNode(PegOp.EQ, rhs.peg.id, PegNode.intLit(0).id);
+                final PegNode value = PegNode.opNode(PegOp.DIVIDE, lhs.peg.id, rhs.peg.id);
+                return PegNode.phi(cond.id, PegNode.unit().id, value.id).exprResult(rhs.context);
             }
             case REMAINDER:
             {
                 if (li.isPresent() && ri.isPresent()) {
                     if (ri.get() != 0) {
-                        return PegNode.intLit(li.get() % ri.get());
+                        return PegNode.intLit(li.get() % ri.get()).exprResult(rhs.context);
                     } else {
                         // This will never be evaluated since we are dividing by zero
-                        return PegNode.unit();
+                        return PegNode.unit().exprResult(rhs.context);
                     }
                 }
-                final PegNode cond =  PegNode.opNode(PegOp.EQ, rhs.id, PegNode.intLit(0).id);
-                final PegNode value = PegNode.opNode(PegOp.REMAINDER, lhs.id, rhs.id);
-                return PegNode.phi(cond.id, PegNode.unit().id, value.id);
+                final PegNode cond =  PegNode.opNode(PegOp.EQ, rhs.peg.id, PegNode.intLit(0).id);
+                final PegNode value = PegNode.opNode(PegOp.REMAINDER, lhs.peg.id, rhs.peg.id);
+                return PegNode.phi(cond.id, PegNode.unit().id, value.id).exprResult(rhs.context);
             }
             default:
                 throw new IllegalStateException("Unrecognized binary operator: " + n.getOperator());
