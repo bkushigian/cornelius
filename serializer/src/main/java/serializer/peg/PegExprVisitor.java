@@ -215,18 +215,24 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
                                                        final ExpressionResult er,
                                                        final UnaryExpr.Operator op)
     {
-        String pegOp = "+";
-        if (op == UnaryExpr.Operator.POSTFIX_DECREMENT || op == UnaryExpr.Operator.PREFIX_DECREMENT) {
+        String pegOp;
+        switch (op) {
+        case POSTFIX_DECREMENT:
+        case PREFIX_DECREMENT:
             pegOp = "-";
+            break;
+        case POSTFIX_INCREMENT:
+        case PREFIX_INCREMENT:
+            pegOp = "+";
+            break;
+        default:
+            throw new IllegalArgumentException("Operator " + op + " is not prefix/postfix-increment/decrement");
         }
         final PegNode value = PegNode.opNode(pegOp, er.peg.id, PegNode.intLit(1).id);
         if (op.isPrefix()) {
             return performAssign(target, value, er.context);
         }
-        else if (op.isPostfix()) {
-            return performAssign(target, value, er.context).withPeg(er.peg);
-        }
-        throw new RuntimeException("UnrecognizedSideEffectingUnaryOp");
+        return performAssign(target, value, er.context).withPeg(er.peg);
     }
 
     @Override
