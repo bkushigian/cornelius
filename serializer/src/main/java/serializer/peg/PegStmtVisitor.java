@@ -68,7 +68,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
 
     // Helper function to produce a new Context storing the write
     private PegContext performWrite(FieldAccessExpr fieldAccess, PegNode value, PegContext ctx) {
-        final ExpressionResult er = pev.getPathFromFieldAccessExpr(fieldAccess, ctx);
+        final ExpressionResult er = ctx.getPathFromFieldAccessExpr(fieldAccess, pev);
         ctx = er.context;
         final PegNode target = er.peg;
         return ctx.withHeap(PegNode.wrHeap(target.id, value.id, ctx.heap));
