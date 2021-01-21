@@ -279,6 +279,9 @@ public abstract class PegNode {
                 }
                 added = true;
                 final PegNode p = idLookup.get(child);
+                if (p == null) {
+                    throw new IllegalStateException("OpNode " + op + " child index " + child + " not present");
+                }
                 sb.append(p.toDerefString());
             }
 
