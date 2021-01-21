@@ -266,7 +266,7 @@
 (defn file->tests [file-path] (tester->tests (init-tester file-path)))
 
 (defn test-file [file-path]
-  (PegNode/clear)
+  (println "TESTING FILE " file-path)
   (doseq [[method the-test] (file->tests file-path)]
     (try
       (binding [*ns* (find-ns 'pegnodes.tests.tests)] (eval the-test))
@@ -284,16 +284,8 @@
       (println "Cause:" (:cause (Throwable->map e))))))
 
 (defn test-files [file-paths]
-  (PegNode/clear)
-  (let [the-tests (apply concat (for [path file-paths] (file->tests path)))]
-    (doseq [the-test the-tests]
-      (try
-        (binding [*ns* (find-ns 'pegnodes.tests.tests)] (eval the-test))
-        (catch RuntimeException e
-          (println "Error running test:")
-          (clojure.pprint/pprint the-test)
-          (println e)
-          (println "Cause:" (:cause (Throwable->map e))))))))
+  (doseq [fp file-paths]
+    (test-file fp)))
 
 (def current-directory  (System/getProperty "user.dir"))
 (def subjects-directory "../tests/subjects")
