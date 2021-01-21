@@ -199,7 +199,11 @@ public class Util {
     final long starttime = System.currentTimeMillis();
     final File[] files = mutantsDir.listFiles();
     assert files != null;                  // This must hold since file.isDirectory()
+    ProgressBar bar = new ProgressBar(files.length);
+    long i = 0;
     for (File f : files) {
+      bar.printBar(i);
+      ++i;
       final String id = f.getName();
       final Set<File> mutants = collectJavaFiles(f, null);
       if (mutants.size() != 1) {
@@ -207,6 +211,7 @@ public class Util {
       }
       result.put(f.getName(), mutants.iterator().next());
     }
+    bar.printBar(i, "\n");
     final long endtime = System.currentTimeMillis();
     System.out.printf("Collected %d mutant files in %f seconds\n", result.size(), (endtime-starttime)/1000.0);
 
@@ -224,5 +229,69 @@ public class Util {
             .map(Path::toFile)
             .map(File::delete).allMatch(x -> x))
       throw new IllegalStateException("Could not delete all files in path " + path);
+  }
+
+  public static class ProgressBar {
+    public final long totalJobs;
+    public final int width;
+    public long startTimeMS = -1;
+    private int lastBarSize = 0;
+
+    public ProgressBar(long totalJobs) {
+      this(totalJobs, 80);
+    }
+
+    public ProgressBar(long totalJobs, int width) {
+      startTimeMS = System.currentTimeMillis();
+      this.totalJobs = totalJobs;
+      this.width = width;
+    }
+
+    public String getBar(long completedJobs) {
+      double percentDone = ((double)completedJobs) / totalJobs;
+      final String progressTag = String.format(" (%5.1f%% in %1.1f sec)",
+              percentDone * 100,
+              (System.currentTimeMillis() - startTimeMS) / 1000.0);
+      int maxBarWidth = width - 2 - progressTag.length();
+              StringBuilder sb = new StringBuilder("[");
+      int currentBarWidth = (int)(maxBarWidth * percentDone);
+      for (int i = 0; i < currentBarWidth; ++i) {
+        sb.append('#');
+      }
+      for (int i = 0; i < (maxBarWidth - currentBarWidth); ++i) {
+        sb.append(' ');
+      }
+      sb.append(']');
+      sb.append(progressTag);
+      final String result = sb.toString();
+      lastBarSize = result.length();
+      return result;
+    }
+
+    public String getBar(long completedJobs, final String end) {
+      return getBar(completedJobs) + end;
+    }
+
+    /**
+     * Clear the last bar by printing a bunch of spaces followed by a '\r'
+     */
+    public void clearLastBar() {
+      final StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < lastBarSize; ++i) {
+        sb.append(' ');
+      }
+      sb.append('\r');
+
+      System.out.print(sb.toString());
+    }
+
+    public void printBar(long completedJobs, String end) {
+      clearLastBar();
+      System.out.print(getBar(completedJobs, end));
+    }
+
+    public void printBar(long completedJobs) {
+      printBar(completedJobs, "\r");
+    }
   }
 }

@@ -38,6 +38,7 @@ public class SimpleJavaToPegTranslator {
      */
     public Map<String, PegNode> translate(final CompilationUnit cu) {
         final Map<String, PegNode> result = new HashMap<>();
+        int errors = 0;
         for (TypeDeclaration<?> type : cu.getTypes()) {
             if (type.isClassOrInterfaceDeclaration()) {
                 final ClassOrInterfaceDeclaration ctype = type.asClassOrInterfaceDeclaration();
@@ -50,8 +51,7 @@ public class SimpleJavaToPegTranslator {
                         translate(method, classVisitorResult).ifPresent(t -> result.put(methDeclStr.substring(methDeclStr.indexOf(' ') + 1)
                                 .replaceAll("\\s+", ""), t));
                     } catch (RuntimeException e) {
-                        System.out.println("Exception encountered while translating " + method.getDeclarationAsString());
-                        System.out.println("Exception Message: " + e.getMessage());
+                        ++errors;
                     }
                 }
             }

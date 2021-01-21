@@ -140,8 +140,6 @@ public class XMLGenerator {
             DOMSource domSource = new DOMSource(document);
             StreamResult streamResult = new StreamResult(new File(dirPath + "/" + filename));
             transformer.transform(domSource, streamResult);
-
-            System.out.println("Done creating XML File at: " + dirPath + "/" +  filename);
         } catch (TransformerException e){ // is this right?
             throw new RuntimeException("Failed to make new File");  // check if this is supposed to be runtime or ioexception
         }

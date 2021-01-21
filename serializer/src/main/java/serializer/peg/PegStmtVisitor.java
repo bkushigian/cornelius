@@ -82,6 +82,11 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
     }
 
     @Override
+    public PegContext visit(SynchronizedStmt n, PegContext arg) {
+        throw new RuntimeException("SynchronizedStmt");
+    }
+
+    @Override
     public PegContext visit(IfStmt n, PegContext ctx) {
         final ExpressionResult er = n.getCondition().accept(pev, ctx);
         testPairs.scrape(n, er, "cond");
@@ -116,7 +121,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
         if (optExpr.isPresent()) {
             final Expression expr = optExpr.get();
             if (ctx.returnNode != null) {
-                throw new IllegalStateException("Multiple returns");
+                throw new RuntimeException("Multiple returns");
             }
             final ExpressionResult er = expr.accept(pev, ctx);
             ctx = er.context;

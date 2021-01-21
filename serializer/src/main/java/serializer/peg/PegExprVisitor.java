@@ -2,6 +2,7 @@ package serializer.peg;
 
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.stmt.SynchronizedStmt;
 
 import java.util.ArrayList;
 import java.util.List;
