@@ -53,17 +53,34 @@ class SideEffects {
     }
 
     /*********** SHORT CIRCUITING OPERATORS **********/
-    boolean shortCircuit(boolean cond) {
+    boolean shortCircuitOr(boolean cond) {
         /**
          * <expected>
-         *  [inv (invoke heap (param "this") "getBoolWithSideEffects" (actuals))
-         *   hp2 (invoke->heap inv)
-         *   peg (invoke->peg  inv)
-         *   (snapshot {:peg inv :return (phi (param "cond") (bool-lit false) peg)})
+         *  [inv  (invoke heap (param "this") "getBoolWithSideEffects" (actuals))
+         *   cond (ctx-lookup ctx "cond")
+         *
+         *   (snapshot {:return (phi cond (bool-lit true) (invoke->peg inv))
+         *              :heap   (heap-join cond heap (invoke->heap inv))})
          *   ]
          * </expected>
          */
         return cond || getBoolWithSideEffects();
+    }
+
+    /*********** SHORT CIRCUITING OPERATORS **********/
+    boolean shortCircuitOr(boolean cond) {
+        /**
+         * <expected>
+         *  [inv  (invoke heap (param "this") "getBoolWithSideEffects" (actuals))
+         *   cond (ctx-lookup ctx "cond")
+         *   peg  (phi cond (invoke->peg inv) (bool-lit false))
+         *   heap (heap-join cond heap (invoke->heap inv))
+         *   (snapshot {:return peg
+         *              :heap   heap})
+         *   ]
+         * </expected>
+         */
+        return cond && getBoolWithSideEffects();
     }
 
 }
