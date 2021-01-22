@@ -9,7 +9,10 @@
 (defn -main
   "Run tests"
   []
-  (test-files [pegnodes.tests.statements/file-path
-               pegnodes.tests.field-access/file-path
-               pegnodes.tests.field-write/file-path
-               pegnodes.tests.side-effects/file-path]))
+  (test-files
+   [(str subjects-directory "/statements/Statements.java")
+    (str subjects-directory "/field-access/FieldAccess.java")
+    (str subjects-directory "/field-write/FieldWrite.java")
+    (str subjects-directory "/side-effects/SideEffects.java")
+    (str subjects-directory "/nullity/Nullity.java")
+    ]))

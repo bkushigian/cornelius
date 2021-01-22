@@ -110,7 +110,6 @@ public class Serializer {
             System.out.printf("%s:\n[orig] %s\n\n", sig , methodMap.get(sig).toDerefString());
           }
           for (MutantsLog.Row row : rowsForMethod) {
-            System.out.println(row);
             final File mutantFile = idToFiles.get(row.id);
             try {
               final CompilationUnit mcu = StaticJavaParser.parse(mutantFile);
