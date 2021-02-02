@@ -51,8 +51,10 @@ fn main() -> Result<(), String> {
                 println!("Error running on subject file {}:\n    {}", subj_file, msg),
         };
     }
-    println!("        SUMMARY");
-    println!("        =======");
-    println!("Equivs found: {}", total_equivs_found);
+    if subject_files.len() > 1 {
+        println!("        SUMMARY");
+        println!("        =======");
+        println!("Equivs found: {}", total_equivs_found);
+    }
     Ok(())
 }
