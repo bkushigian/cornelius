@@ -193,21 +193,36 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
         }
     }
 
-    // Insert nodes into a new egraph
+    /*  -*-*- Insert nodes into a new egraph -*-*- */
+
     let mut egraph = EGraph::<Peg, PegAnalysis>::default();
+
+    // We need to keep track of updated ids. This can happen because nodes are
+    // merged during an egraph.add()
+    //
+    // id_offset_map maps the original id (as expressed in the serialized subject)
+    // to id returned by the egraph.
     let mut id_offset_map = HashMap::<Id, Id>::default();
+
+    // Add each node to the egraph, keeping track of ids as we go
     for (idx, node) in rec_expr.as_ref().iter().enumerate() {
-      //let next_id: Id = Id::from(egraph.total_size());
+      // First, we mutably clone the node so that we can update its children
+      // with the updated ids from the egraph.
       let mut node = node.clone();
-      node.for_each_mut(|id: &mut Id| *id = id_offset_map.get(id).unwrap().clone());
+      // Next, for each
+      node.for_each_mut(|id: &mut Id| *id = {
+        let child = id_offset_map.get(id);
+        assert!(child.is_some(), "Node at idx {} has unbound child {}", idx, id);
+        child.unwrap().clone()
+      });
+
       let id = egraph.add(node.clone());
       let id = egraph.find(id);
       id_offset_map.insert(Id::from(idx), id);
     }
     debug!("egraph total_size after deserializing: {}", egraph.total_number_of_nodes());
 
-    let runner = Runner::default()
-    .with_egraph(egraph);
+    let runner = Runner::default().with_egraph(egraph);
     // let egraph_size = egraph.total_size();
     // if rec_expr_size != egraph_size {
     //     println!("rec_expr total_size: {}", rec_expr_size);
@@ -261,7 +276,7 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
             let re = RecExpr::from(v);
             info!("mutant id: {}:\n{}", mid, re.pretty(80));
           }
-      }
+        }
         analyze_subject(&mut subj, egraph, &rec_expr, &id_offset_map);
         i += 1;
     }
@@ -293,7 +308,9 @@ fn analyze_subject(subj: &mut Subject,
 
     // Get the canonical id in the egraph for the subject, and compute the
     // set of equivalent ids (i.e., ids found to be equivalent to the subject)
-    let canonical_id = egraph.find(Id::from(id as usize));
+    let id = Id::from(id as usize);
+    let id = id_update.get(&id).unwrap().clone();
+    let canonical_id = egraph.find(id);
     let equiv_ids = rev_can_id_lookup
         .entry(canonical_id)
         .or_insert_with(HashSet::default);
