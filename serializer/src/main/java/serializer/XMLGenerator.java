@@ -2,7 +2,9 @@ package serializer;//Based on example code from: https://examples.javacodegeeks.
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -104,12 +106,13 @@ public class XMLGenerator {
     public void addDeduplicationTable(Map<Integer, PegNode> dedupTable) {
         Element table = document.createElement("id_table");
         subjects.appendChild(table);
-        for (Map.Entry<Integer, PegNode> e : dedupTable.entrySet()) {
-            final Integer i = e.getKey();
-            final PegNode p = e.getValue();
+        final List<Integer> keys = new ArrayList<>(dedupTable.keySet());
+        keys.sort(null);
+        for (Integer id : keys) {
+            final PegNode p = dedupTable.get(id);
             Element dedupEntry = document.createElement("dedup_entry");
             table.appendChild(dedupEntry);
-            dedupEntry.setAttribute("id", i.toString());
+            dedupEntry.setAttribute("id", id.toString());
             dedupEntry.setAttribute("peg", p.toString());
         }
     }
