@@ -1,6 +1,9 @@
 target
 subjects.xml
 equiv-classes
+*.equiv-class
+*.cor
+*.mml.bin
 
 *.log
 *.aux

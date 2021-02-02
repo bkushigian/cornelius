@@ -1,0 +1,56 @@
+
+// A simple mml file to generate all mutants
+
+list_aor={+,-,*,/};
+list_lor={&,|,^};
+list_sor={<<,>>,>>>};
+list_oru={+,-,~};
+
+BIN(+)->list_aor;
+BIN(-)->list_aor;
+BIN(*)->list_aor;
+BIN(/)->list_aor;
+BIN(%)->list_aor;
+
+BIN(>>)->list_sor;
+BIN(<<)->list_sor;
+BIN(>>>)->list_sor;
+
+BIN(&)->list_lor;
+BIN(|)->list_lor;
+BIN(^)->list_lor;
+
+UNR(+)->list_oru;
+UNR(-)->list_oru;
+UNR(~)->list_oru;
+
+// Use sufficient replacements for ROR
+BIN(>)->{>=,!=,FALSE};
+BIN(<)->{<=,!=,FALSE};
+BIN(>=)->{>,==,TRUE};
+BIN(<=)->{<,==,TRUE};
+BIN(==)->{<=,>=,FALSE,LHS,RHS};
+BIN(!=)->{<,>,TRUE,LHS,RHS};
+
+// Use sufficient replacements for COR
+BIN(&&)->{==,LHS,RHS,FALSE};
+BIN(||)->{!=,LHS,RHS,TRUE};
+
+// Delete all types of supported statements
+DEL(CALL);
+DEL(INC);
+DEL(DEC);
+DEL(ASSIGN);
+DEL(CONT);
+DEL(BREAK);
+DEL(RETURN);
+
+// Enable all operators
+AOR;
+LOR;
+SOR;
+COR;
+ROR;
+LVR;
+ORU;
+STD;

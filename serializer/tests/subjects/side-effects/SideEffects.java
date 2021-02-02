@@ -1,4 +1,10 @@
 class SideEffects {
+    // This adds side effects
+    int counter = 0;
+
+    boolean getBoolWithSideEffects() {
+        return counter++ % 2 == 0;
+    }
     /*********** PRE AND POST INCREMENTS **********/
     int preInc(int a) {
         /**
@@ -39,7 +45,7 @@ class SideEffects {
         return --a + a;
     }
 
-    int preDec(int a) {
+    int postDec(int a) {
         /**
          *  <expected>
          *  [lhs (ctx-lookup ctx "a")
@@ -68,7 +74,7 @@ class SideEffects {
     }
 
     /*********** SHORT CIRCUITING OPERATORS **********/
-    boolean shortCircuitOr(boolean cond) {
+    boolean shortCircuitAnd(boolean cond) {
         /**
          * <expected>
          *  [inv  (invoke heap (param "this") "getBoolWithSideEffects" (actuals))
@@ -83,4 +89,13 @@ class SideEffects {
         return cond && getBoolWithSideEffects();
     }
 
+    boolean nestedShortCircuit(boolean cond1, boolean cond2) {
+        return (cond1 || cond2) || getBoolWithSideEffects();
+    }
+
+    SideEffects ref;
+
+    boolean nullCheck() {
+        return ref != null && !ref.getBoolWithSideEffects();
+    }
 }
