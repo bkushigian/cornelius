@@ -98,4 +98,14 @@ class SideEffects {
     boolean nullCheck() {
         return ref != null && !ref.getBoolWithSideEffects();
     }
+
+    int bytesWritten;
+    int charsWritten;
+    /**
+     *  From org.apache.catalina.connector.OutputBuffer@isNew()::606
+     *
+     */
+    boolean isNew() {
+        return (bytesWritten == 0) && (charsWritten == 0);
+    }
 }

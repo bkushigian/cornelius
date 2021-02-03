@@ -2,6 +2,7 @@
 BIN(&&)->{==,LHS,RHS,FALSE,TRUE};
 BIN(||)->{!=,LHS,RHS,TRUE,FALSE};
 BIN(!=)->{TRUE,FALSE};
+BIN(==)->{TRUE,FALSE};
 
 COR;
 ROR;
