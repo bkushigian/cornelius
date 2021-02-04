@@ -14,6 +14,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import serializer.peg.MutantsLog;
 import serializer.peg.PegNode;
 
 public class XMLGenerator {
@@ -57,9 +58,9 @@ public class XMLGenerator {
 
     /**
      * This method creates a new {@code <subject>} element and stores it in a map associated with key {@code method}
-     * @param sourceFile source file for this method
-     * @param methodString: fully qualified method signature Class@methodName(arg1,arg2,...)
-     * @param pegId: egg-readable form of the program
+     * @param sourceFile name of source file containing the original method
+     * @param methodString fully qualified method signature Class@methodName(T1,T2,T3)
+     * @param pegId: the peg id, produced by serialization, for the original method
      */
     public void addSubject(String sourceFile, String methodString, int pegId) {
         final Element subject = document.createElement("subject");
@@ -72,6 +73,21 @@ public class XMLGenerator {
         subject.appendChild(egg);
 
         methodToSubject.put(methodString, subject);
+    }
+
+    /**
+     * This method creates a new {@code <subject>} element and stores it in a map associated with key {@code method}
+     * and adds all the associated mutants in {@code log} to the created subject.
+     * @param sourceFile name of source file containing the original method
+     * @param methodString fully qualified method signature Class@methodName(T1,T2,T3)
+     * @param pegId: the peg id, produced by serialization, for the original method
+     * @param log a list of log entries of mutants that have been serialized that we should add to this subject field
+     */
+    public void addSubject(String sourceFile, String methodString, int pegId, List<MutantsLog.Row> log) {
+        addSubject(sourceFile, methodString, pegId);
+        for (MutantsLog.Row row : log) {
+            addMutant(methodString, row.id, row.pegId);
+        }
     }
 
     /**

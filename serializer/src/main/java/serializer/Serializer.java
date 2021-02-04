@@ -127,11 +127,8 @@ public class Serializer {
             }
           }
 
-          if (rowsToAdd.isEmpty()) continue;
-
-          xmlGen.addSubject(origFile.getName(), sig, methodMap.get(sig).id);
-          for (MutantsLog.Row row : rowsToAdd) {
-            xmlGen.addMutant(sig, row.id, row.pegId);
+          if (!rowsToAdd.isEmpty()) {
+            xmlGen.addSubject(origFile.getName(), sig, methodMap.get(sig).id, rowsToAdd);
           }
         }
 
