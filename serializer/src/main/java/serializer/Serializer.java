@@ -86,8 +86,6 @@ public class Serializer {
         if (printPegs) {
           System.out.println(origFile.getAbsolutePath());
         }
-        // There might not be any subjects to add. If not, keep track of this and don't generate a file
-        boolean addedSubjects = false;
 
         // Iterate through each method in the mutant log
         // TODO: This is left over from when I was working with 1 file at a time.
@@ -128,15 +126,14 @@ public class Serializer {
               failedMutantParseFiles.put(mutantFile, e);
             }
           }
-          if (!rowsToAdd.isEmpty()) {
-            xmlGen.addSubject(origFile.getName(), sig, methodMap.get(sig).id);
-            for (MutantsLog.Row row : rowsToAdd) {
-              xmlGen.addMutant(sig, row.id, row.pegId);
-            }
-            addedSubjects = true;
+
+          if (rowsToAdd.isEmpty()) continue;
+
+          xmlGen.addSubject(origFile.getName(), sig, methodMap.get(sig).id);
+          for (MutantsLog.Row row : rowsToAdd) {
+            xmlGen.addMutant(sig, row.id, row.pegId);
           }
         }
-        if (!addedSubjects) continue;
 
         // TODO: this involves giving public access to the idLookup which is sketchy.
         xmlGen.addDeduplicationTable(PegNode.getIdLookup());
