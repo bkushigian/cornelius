@@ -119,6 +119,14 @@ public class XMLGenerator {
         }
     }
 
+    public boolean hasSubject() {
+        return subjects.getElementsByTagName("subject").getLength() != 0;
+    }
+
+    public int numSubjects() {
+        return subjects.getElementsByTagName("subject").getLength();
+    }
+
     public void addDeduplicationTable(Map<Integer, PegNode> dedupTable) {
         Element table = document.createElement("id_table");
         subjects.appendChild(table);

@@ -11,6 +11,7 @@ import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Serializer {
 
@@ -75,6 +76,7 @@ public class Serializer {
 
     long i = 0;
     for (File origFile : files ){
+      PegNode.clear();
       bar.printBar(i++);
       try {
         final CompilationUnit cu = StaticJavaParser.parse(origFile);
@@ -94,12 +96,13 @@ public class Serializer {
         //       to have class info (there might be collisions otherwise, e.g.,
         //       toString()).
 
-        for (String sig : methodMap.keySet()){
+        for (String sig : methodMap.keySet().stream().sorted().collect(Collectors.toList())){
           if (!mutantsLog.methodNameMap.containsKey(sig)) continue;
 
           // Get all rows from MutantsLog corresponding to this method
-          final Set<MutantsLog.Row> rowsForMethod = mutantsLog.methodNameMap.get(sig);
+          final List<MutantsLog.Row> rowsForMethod = new ArrayList<>(mutantsLog.methodNameMap.get(sig));
           if (rowsForMethod.isEmpty()) continue;
+          rowsForMethod.sort(Comparator.comparing(a -> a.id));
           final String unqualifiedSig = sig.contains("@") ? sig.split("@")[1] : sig;
 
           List<MutantsLog.Row> rowsToAdd = new ArrayList<>();
@@ -132,7 +135,8 @@ public class Serializer {
           }
         }
 
-        // TODO: this involves giving public access to the idLookup which is sketchy.
+        if (! xmlGen.hasSubject()) continue;
+        // Prepare to write to file
         xmlGen.addDeduplicationTable(PegNode.getIdLookup());
 
         Optional<PackageDeclaration> packageDeclaration = cu.getPackageDeclaration();
@@ -144,7 +148,7 @@ public class Serializer {
         final Path filepath = Paths.get(serializedDirectory.getName(), serializedFilename);
         final String filename = filepath.toString();
         bar.clearLastBar();
-        System.out.println("Creating serialized file: " + filename);
+        System.out.printf("Serialized %d subjects: %s\n", xmlGen.numSubjects(), filename);
         xmlGen.writeToFile(filename);
       } catch (FileNotFoundException e) {
         e.printStackTrace();

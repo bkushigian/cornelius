@@ -1,12 +1,15 @@
 package serializer.peg;
 
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
 import serializer.peg.testing.TestPairs;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Translate a SimpleJava program to Peg
@@ -39,12 +42,18 @@ public class SimpleJavaToPegTranslator {
     public Map<String, PegNode> translate(final CompilationUnit cu) {
         final Map<String, PegNode> result = new HashMap<>();
         int errors = 0;
-        for (TypeDeclaration<?> type : cu.getTypes()) {
+        final List<TypeDeclaration<?>> types = cu.getTypes();
+        types.sort(Comparator.comparing(NodeWithSimpleName::getNameAsString));
+        for (TypeDeclaration<?> type : types) {
             if (type.isClassOrInterfaceDeclaration()) {
                 final ClassOrInterfaceDeclaration ctype = type.asClassOrInterfaceDeclaration();
                 if (ctype.isInterface()) continue;
                 final PegClassVisitor.ClassVisitorResult classVisitorResult = classVisitor.visit(ctype);
-                for (MethodDeclaration method : ctype.getMethods()) {
+                final List<MethodDeclaration> sortedMethods = ctype.getMethods()
+                        .stream()
+                        .sorted(Comparator.comparing(MethodDeclaration::getNameAsString))
+                        .collect(Collectors.toList());
+                for (MethodDeclaration method : sortedMethods) {
                     final String methDeclStr = Util.CanonicalNames.fromDecl(method, cu, ctype);
 
                     try {
@@ -64,7 +73,9 @@ public class SimpleJavaToPegTranslator {
             return Optional.empty();
         }
 
-        for (TypeDeclaration<?> type : cu.getTypes()) {
+        final NodeList<TypeDeclaration<?>> types = cu.getTypes();
+        types.sort(Comparator.comparing(TypeDeclaration::getNameAsString));
+        for (TypeDeclaration<?> type : types) {
             if (type.isClassOrInterfaceDeclaration()) {
                 final ClassOrInterfaceDeclaration ctype = type.asClassOrInterfaceDeclaration();
                 final PegClassVisitor.ClassVisitorResult classVisitorResult = classVisitor.visit(ctype);
@@ -89,9 +100,6 @@ public class SimpleJavaToPegTranslator {
      */
     public Optional<PegNode> translate(final MethodDeclaration n,
                                        final PegClassVisitor.ClassVisitorResult classVisitorResult) {
-        // if (!validator.validate(n)) {
-        //     return Optional.empty();
-        // }
         final PegContext initCtx = PegContext.initWithParams(classVisitorResult.getFieldNames(),
                 Util.getParameterList(n));
         final PegContext ctx = n.accept(stmtVisitor, initCtx);
