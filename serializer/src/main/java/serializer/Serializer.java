@@ -15,6 +15,7 @@ import java.util.*;
 public class Serializer {
 
   boolean printPegs = false;
+  boolean logUnserializable = false;
 
   public static void main(String[] args) {
     if (args.length < 2) {
@@ -49,10 +50,11 @@ public class Serializer {
         } catch (IOException e) {
           e.printStackTrace();
         }
-      } else if ("--print-pegs".equals(arg)){
+      } else if ("--print-pegs".equals(arg)) {
         printPegs = true;
-      }
-      else {
+      } else if ("--log-unserializable".equals(arg)) {
+        logUnserializable = true;
+      } else {
         files.add(new File(arg));
       }
     }
@@ -68,6 +70,7 @@ public class Serializer {
     final MutantsLog mutantsLog = new MutantsLog(mutantLogPath);
     final Map<String, File> idToFiles = Util.collectMutantFiles(new File(mutantsDirectory));
     final File serializedDirectory = setupSerializedDirectory("subjects");
+    final Set<String> unserializable = new HashSet<>();
 
     Util.ProgressBar bar = new Util.ProgressBar(files.size());
     System.out.println("Serializing files...");
@@ -122,7 +125,11 @@ public class Serializer {
                 if (printPegs) {
                   System.out.printf("[%s] %s\n\n", row.id, p.toDerefString());
                 }
-              } catch (RuntimeException e) {}
+              } catch (RuntimeException e) {
+                if (logUnserializable) {
+                  unserializable.add(row.id);
+                }
+              }
             } catch (FileNotFoundException e) {
               throw new RuntimeException("Couldn't find mutant " + row.id);
             } catch (com.github.javaparser.ParseProblemException e) {
@@ -174,6 +181,19 @@ public class Serializer {
       for (Problem p : e.getProblems()) {
         Optional<TokenRange> location = p.getLocation();
         location.ifPresent(javaTokens -> System.out.println("    " + javaTokens.getBegin().getRange()));
+      }
+    }
+
+    if (logUnserializable) {
+      try {
+        BufferedWriter unserializableLog = new BufferedWriter(new FileWriter("unserializable.txt"));
+        for (String id: unserializable) {
+          unserializableLog.write(id);
+          unserializableLog.newLine();
+        }
+        unserializableLog.close();
+      } catch (IOException e) {
+        System.out.println("Failed to log unserializable mutants");
       }
     }
   }
