@@ -37,6 +37,14 @@ impl Subjects {
     info!("Returning RecExpr");
     Ok(rec_expr)
   }
+
+  pub fn num_mutants(&self) -> usize {
+    let mut n = 0;
+    for s in &self.subjects {
+      n += s.mutants.len()
+    }
+    n
+  }
 }
 
 #[derive(Debug, Deserialize)]

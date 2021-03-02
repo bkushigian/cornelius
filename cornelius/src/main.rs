@@ -7,11 +7,13 @@ fn main() -> Result<(), String> {
     let args: Vec<String> = env::args().collect();
     let subject_files = &args[1..];
     let mut total_equivs_found = 0;
+    let mut total_mutants_found = 0;
 
     for subj_file in subject_files {
         match run_on_subjects_file(subj_file) {
             Ok(subjects) => {
                 let mut found = 0;
+                total_mutants_found += subjects.num_mutants();
                 for subj in &subjects.subjects {
                     found += subj.analysis_result.score;
                 }
@@ -54,6 +56,8 @@ fn main() -> Result<(), String> {
     if subject_files.len() > 1 {
         println!("        SUMMARY");
         println!("        =======");
+
+        println!("Mutants found: {}", total_mutants_found);
         println!("Equivs found: {}", total_equivs_found);
     }
     Ok(())

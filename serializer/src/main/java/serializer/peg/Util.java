@@ -300,12 +300,12 @@ public class Util {
       }
       sb.append('\r');
 
-      System.out.print(sb.toString());
+      System.err.print(sb.toString());
     }
 
     public void printBar(long completedJobs, String end) {
       clearLastBar();
-      System.out.print(getBar(completedJobs, end));
+      System.err.print(getBar(completedJobs, end));
     }
 
     public void printBar(long completedJobs) {
