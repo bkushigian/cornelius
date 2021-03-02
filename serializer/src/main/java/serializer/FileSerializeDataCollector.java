@@ -1,5 +1,6 @@
 package serializer;
 
+import com.github.javaparser.Range;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
@@ -26,11 +27,22 @@ public class FileSerializeDataCollector {
    */
   private boolean strictCheckNulls = false;
 
+  /**
+   * Should we log all method names? This is used for checking specifics of which methods failed and
+   * which succeeded.
+   */
+  private boolean logAllMethods = false;
+
   final Set<ClassVisitResult> results = new HashSet<>();
   /**
    * map error messages to the number of times they occurred
    */
   final static Map<String, Set<VisitResult<?>>>  failureReasons = new HashMap<>();
+
+  /**
+   * Keep track of all successful serializations
+   */
+  final static Set<VisitResult<?>> successes = new HashSet<>();
 
   private void parseArgs(String...args) {
     for (final String arg : args ) {
@@ -47,6 +59,9 @@ public class FileSerializeDataCollector {
         }
       } else if ("--strict-npe".equals(arg)) {
         strictCheckNulls = true;
+      }
+      else if ("--log-all-methods".equals(arg)){
+        logAllMethods = true;
       }
       else {
         worklist.add(arg);
@@ -108,13 +123,20 @@ public class FileSerializeDataCollector {
       final Set<VisitResult<?>> mvrs = failureReasons.getOrDefault(key, new HashSet<>());
       System.out.printf("[[%s]]: %d\n", key, mvrs.size());
 
-      // for (final VisitResult<?> mvr : mvrs) {
-      //   Range range = mvr.decl.getRange().get();
-      //   int line_begin = range.begin.line;
-      //   int line_end = range.end.line;
-      //   final String name = mvr.getQualifiedName();
-      //   System.out.printf("    %s:%d-%d\n", name, line_begin, line_end);
-      // }
+      if (logAllMethods) {
+        for (final VisitResult<?> mvr : mvrs) {
+          Range range = mvr.decl.getRange().get();
+          int line_begin = range.begin.line;
+          int line_end = range.end.line;
+          final String name = mvr.getQualifiedName();
+          System.out.printf("    %s:%d-%d\n", name, line_begin, line_end);
+        }
+
+        System.out.println("SUCCESSES");
+        for (VisitResult<?> vr : this.successes) {
+          System.out.printf("++%s\n", vr.getQualifiedName());
+        }
+      }
     }
 
     final int total = successes + failures;
@@ -216,7 +238,9 @@ public class FileSerializeDataCollector {
     }
 
     public static <D extends Node & NodeWithParameters<?> & NodeWithSimpleName<?>> VisitResult<D>  peg(D d, final PegNode peg) {
-      return new VisitResult<D>(d, peg);
+      VisitResult<D> result = new VisitResult<D>(d, peg);
+      successes.add(result);
+      return result;
     }
 
     String getQualifiedName() {
