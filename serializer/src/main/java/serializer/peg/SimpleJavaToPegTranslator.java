@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
  */
 public class SimpleJavaToPegTranslator {
 
+    final Map<String, Integer> failureReasons = new HashMap<>();
     final SimpleValidator validator = new SimpleValidator();
     final PegClassVisitor classVisitor = new PegClassVisitor();
     final PegStmtVisitor stmtVisitor;
@@ -60,6 +61,7 @@ public class SimpleJavaToPegTranslator {
                         translate(method, classVisitorResult).ifPresent(t -> result.put(methDeclStr.substring(methDeclStr.indexOf(' ') + 1)
                                 .replaceAll("\\s+", ""), t));
                     } catch (RuntimeException e) {
+                        failureReasons.put(e.getMessage(), failureReasons.getOrDefault(e.getMessage(), 0) + 1);
                         ++errors;
                     }
                 }
