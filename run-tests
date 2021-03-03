@@ -1,0 +1,15 @@
+#!/bin/sh
+
+cd serializer
+mvn install > /dev/null
+cd pegnodes
+lein run > /dev/null
+RESULT=$?
+if lein run > /dev/null
+then
+    echo "PASS"
+    exit 0
+else
+    echo "FAIL"
+    exit 1
+fi
