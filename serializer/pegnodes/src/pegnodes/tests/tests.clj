@@ -278,14 +278,17 @@
         (println "[!!!] Error defining above test for" method)
         (println "      Cause:" (:cause (Throwable->map e))))))
   (try
-    (binding [*ns* (find-ns 'pegnodes.tests.tests)] (eval `(clojure.test/run-tests)))
+    (let [test-results (binding [*ns* (find-ns 'pegnodes.tests.tests)] (eval `(clojure.test/run-tests)))]
+      (println test-results)
+      (:fail test-results))
     (catch RuntimeException e
       (println "Error running tests")
-      (println "Cause:" (:cause (Throwable->map e))))))
+      (println "Cause:" (:cause (Throwable->map e)))
+      2)))
 
 (defn test-files [file-paths]
-  (doseq [fp file-paths]
-    (test-file fp)))
+  (apply + (for [fp file-paths]
+             (test-file fp))))
 
 (def current-directory  (System/getProperty "user.dir"))
 (def subjects-directory "../tests/subjects")

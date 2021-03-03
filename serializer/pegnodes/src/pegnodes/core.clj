@@ -9,10 +9,11 @@
 (defn -main
   "Run tests"
   []
-  (test-files
-   [(str subjects-directory "/statements/Statements.java")
-    (str subjects-directory "/field-access/FieldAccess.java")
-    (str subjects-directory "/field-write/FieldWrite.java")
-    (str subjects-directory "/side-effects/SideEffects.java")
-    (str subjects-directory "/nullity/Nullity.java")
-    ]))
+  (System/exit
+   (test-files
+    [(str subjects-directory "/statements/Statements.java")
+     (str subjects-directory "/field-access/FieldAccess.java")
+     (str subjects-directory "/field-write/FieldWrite.java")
+     (str subjects-directory "/side-effects/SideEffects.java")
+     (str subjects-directory "/nullity/Nullity.java")
+     ])))
