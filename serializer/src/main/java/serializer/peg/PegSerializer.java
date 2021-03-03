@@ -64,7 +64,7 @@ public class PegSerializer {
    */
   public Map<String, PegNode> serialize(final String javaFile, boolean scrapeComments) throws FileNotFoundException {
     final CompilationUnit cu = StaticJavaParser.parse(new File(javaFile));
-    final SimpleJavaToPegTranslator t = new SimpleJavaToPegTranslator(scrapeComments);
+    final PegTranslator t = new PegTranslator(scrapeComments);
     return t.translate(cu);
   }
 

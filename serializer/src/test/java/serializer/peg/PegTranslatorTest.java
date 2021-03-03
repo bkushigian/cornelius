@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 
-public class SimpleJavaToPegTranslatorTest {
+public class PegTranslatorTest {
   @Test
   public void testFieldAccess() throws FileNotFoundException {
     testJavaFile("tests/subjects/field-access/FieldAccess.java");
@@ -33,7 +33,7 @@ public class SimpleJavaToPegTranslatorTest {
    * @throws FileNotFoundException
    */
   public void testJavaFile(final String javaFile) throws FileNotFoundException {
-    final SimpleJavaToPegTranslator translator = new SimpleJavaToPegTranslator(true);
+    final PegTranslator translator = new PegTranslator(true);
     final CompilationUnit cu = StaticJavaParser.parse(new File(javaFile));
 
     final Map<String, PegNode> translated = translator.translate(cu);

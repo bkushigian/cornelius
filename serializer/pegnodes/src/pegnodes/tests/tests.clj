@@ -3,7 +3,7 @@
   (:require  [clojure.pprint])
   (:require  [clojure.string])
   (:require  [pegnodes.pegs :refer :all])
-  (:import   (serializer.peg PegContext PegNode PegSerializer PegCommentScraperVisitor SimpleJavaToPegTranslator))
+  (:import   (serializer.peg PegContext PegNode PegSerializer PegCommentScraperVisitor PegTranslator))
   (:import   (com.github.javaparser StaticJavaParser))
   (:import   (com.github.javaparser.ast CompilationUnit))
   (:import   (com.github.javaparser.ast.body MethodDeclaration))
@@ -26,7 +26,7 @@
     statement-level data that we will use to generate our tests."
   [file]
   (try
-    (let [t      (SimpleJavaToPegTranslator. true)
+    (let [t      (PegTranslator. true)
           pegs   (. t translate (StaticJavaParser/parse (File. file)))
           pairs  (. t testPairs)
           params (. pairs paramNameLookup)]

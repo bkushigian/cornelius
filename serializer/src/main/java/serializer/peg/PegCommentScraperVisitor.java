@@ -33,7 +33,7 @@ public class PegCommentScraperVisitor extends VoidVisitorAdapter<Map<String, Str
   }
 
   public static Map<String, String> scrape(final String javaFile, final String tag) throws FileNotFoundException {
-    final SimpleJavaToPegTranslator translator = new SimpleJavaToPegTranslator();
+    final PegTranslator translator = new PegTranslator();
     final CompilationUnit cu = StaticJavaParser.parse(new File(javaFile));
     final Map<String, String> commentPegs = new HashMap<>();
     cu.accept(new PegCommentScraperVisitor(tag), commentPegs);

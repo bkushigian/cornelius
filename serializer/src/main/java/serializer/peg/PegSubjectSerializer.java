@@ -67,7 +67,7 @@ public class PegSubjectSerializer {
             final CompilationUnit cu = StaticJavaParser.parse(new File(origPath));
             final MutantsLog mutantsLog = new MutantsLog(logPath);
             final XMLGenerator xmlGen = new XMLGenerator();
-            final SimpleJavaToPegTranslator translator = new SimpleJavaToPegTranslator();
+            final PegTranslator translator = new PegTranslator();
 
             final Map<String, PegNode> methodMap = translator.translate(cu);
 

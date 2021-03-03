@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 /**
  * Translate a SimpleJava program to Peg
  */
-public class SimpleJavaToPegTranslator {
+public class PegTranslator {
 
     final Map<String, Integer> failureReasons = new HashMap<>();
     final SimpleValidator validator = new SimpleValidator();
@@ -26,12 +26,12 @@ public class SimpleJavaToPegTranslator {
      */
     public final TestPairs testPairs;
 
-    public SimpleJavaToPegTranslator(boolean scrapeComments) {
+    public PegTranslator(boolean scrapeComments) {
         stmtVisitor = new PegStmtVisitor(scrapeComments);
         testPairs = stmtVisitor.getTestPairs();
     }
 
-    public SimpleJavaToPegTranslator() {
+    public PegTranslator() {
         this(false);
     }
 

@@ -70,11 +70,14 @@ public class Serializer {
   public void run() {
     final MutantsLog mutantsLog = new MutantsLog(mutantLogPath);
     final Map<String, File> idToFiles = Util.collectMutantFiles(new File(mutantsDirectory));
-    final File serializedDirectory = setupSerializedDirectory("subjects");
-    final Set<String> unserializable = new HashSet<>();
+    File[] dirs = setUpOutputDirectory("cornelius", "serialize", "serialize/subjects", "serialize/logs");
+    final File subjectsDir = dirs[2];
+    final File logsDir = dirs[3];
+
+    final Set<String> attemptedToSerialize = new HashSet<>();
+    final Set<String> serializable = new HashSet<>();
 
     Util.ProgressBar bar = new Util.ProgressBar(files.size());
-    System.out.println("Serializing files...");
     Map<File, com.github.javaparser.ParseProblemException> failedMutantParseFiles = new HashMap<>();
 
     long i = 0;
@@ -84,7 +87,7 @@ public class Serializer {
       try {
         final CompilationUnit cu = StaticJavaParser.parse(origFile);
         final XMLGenerator xmlGen = new XMLGenerator();
-        final SimpleJavaToPegTranslator translator = new SimpleJavaToPegTranslator();
+        final PegTranslator translator = new PegTranslator();
         final Map<String, PegNode> methodMap = translator.translate(cu);
         if (methodMap.size() == 0) continue;
 
@@ -105,6 +108,11 @@ public class Serializer {
           // Get all rows from MutantsLog corresponding to this method
           final List<MutantsLog.Row> rowsForMethod = new ArrayList<>(mutantsLog.methodNameMap.get(sig));
           if (rowsForMethod.isEmpty()) continue;
+
+          for (MutantsLog.Row row : rowsForMethod) {
+            attemptedToSerialize.add(row.id);
+          }
+
           rowsForMethod.sort(Comparator.comparing(a -> a.id));
           final String unqualifiedSig = sig.contains("@") ? sig.split("@")[1] : sig;
 
@@ -121,15 +129,12 @@ public class Serializer {
                 PegNode p = translator.translate(mcu, unqualifiedSig)
                         .orElseThrow(() -> new RuntimeException("Couldn't find mutant")) ;
                 row.pegId = p.id;
+                serializable.add(row.id);
                 rowsToAdd.add(row);
                 if (printPegs) {
                   System.out.printf("[%s] %s\n\n", row.id, p.toDerefString());
                 }
-              } catch (RuntimeException e) {
-                if (logUnserializable) {
-                  unserializable.add(row.id);
-                }
-              }
+              } catch (RuntimeException e) {}
             } catch (FileNotFoundException e) {
               throw new RuntimeException("Couldn't find mutant " + row.id);
             } catch (com.github.javaparser.ParseProblemException e) {
@@ -152,7 +157,7 @@ public class Serializer {
           pkgString = packageDeclaration.get().getName().toString() + "::";
         }
         final String serializedFilename = pkgString + origFile.getName().replace(".java", ".cor");
-        final Path filepath = Paths.get(serializedDirectory.getName(), serializedFilename);
+        final Path filepath = Paths.get(subjectsDir.toString(), serializedFilename);
         final String filename = filepath.toString();
         bar.clearLastBar();
         System.out.printf("Serialized %d subjects: %s\n", xmlGen.numSubjects(), filename);
@@ -182,29 +187,71 @@ public class Serializer {
     }
 
     if (logUnserializable) {
+      final Set<String> allIds = mutantsLog.idMap.keySet();
+      System.out.printf("Found %d ids\n", allIds.size());
+      System.out.printf("Attempted to serialize %d ids\n", attemptedToSerialize.size());
+      allIds.removeAll(serializable);
+      System.out.printf("Found %d unserializable ids\n", allIds.size());
+      System.out.printf("Found %d serializable ids\n", serializable.size());
       try {
-        BufferedWriter unserializableLog = new BufferedWriter(new FileWriter("unserializable.txt"));
-        for (String id: unserializable) {
+
+        Path filepath = Paths.get(logsDir.toString(), "failed");
+        BufferedWriter unserializableLog = new BufferedWriter(new FileWriter(filepath.toString()));
+        for (String id: allIds) {
           unserializableLog.write(id);
           unserializableLog.newLine();
         }
         unserializableLog.close();
+
+        filepath = Paths.get(logsDir.toString(), "succeeded");
+        BufferedWriter serializableLog = new BufferedWriter(new FileWriter(filepath.toString()));
+        for (String id: serializable) {
+          serializableLog.write(id);
+          serializableLog.newLine();
+        }
+        serializableLog.close();
+
+        filepath = Paths.get(logsDir.toString(), "attempted");
+        BufferedWriter attemptedToSerializeLog = new BufferedWriter(new FileWriter(filepath.toString()));
+        for (String id: attemptedToSerialize) {
+          attemptedToSerializeLog.write(id);
+          attemptedToSerializeLog.newLine();
+        }
+        attemptedToSerializeLog.close();
       } catch (IOException e) {
-        System.out.println("Failed to log unserializable mutants");
+        System.err.println("Failed to log unserializable mutants");
+        System.err.println(e);
       }
     }
   }
 
-  private File setupSerializedDirectory(final String path) {
-    final File serializedDirectory = new File(path);
+  /**
+   * Recursively delete `path` and then create a new dir named `path`. Then create subdirs for each
+   * subdir provided.
+   * @param path
+   * @param subdirs
+   * @return
+   */
+  private File[] setUpOutputDirectory(final String path, final String...subdirs) {
+    final File outputdir= new File(path);
     try {
-      Util.recursivelyDelete(serializedDirectory);
-      serializedDirectory.mkdirs();
+      Util.recursivelyDelete(outputdir);
+      outputdir.mkdirs();
     } catch (IOException e) {
-      System.err.println("Failed to delete serialized directory " + serializedDirectory);
+      System.err.println("Failed to delete output directory " + outputdir);
       System.err.println("Exiting with status 1");
       System.exit(1);
     }
-    return serializedDirectory;
+    File[] result = new File[subdirs.length + 1];
+    result[0] = outputdir;
+    int i = 0;
+    for (String subdir : subdirs) {
+      ++i;
+      final Path subdir_p = Paths.get(path, subdir);
+      final File subdir_f = subdir_p.toFile();
+      subdir_f.mkdirs();
+      result[i] = subdir_f;
+    }
+    return result;
   }
 }
