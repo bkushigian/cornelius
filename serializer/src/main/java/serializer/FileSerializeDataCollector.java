@@ -132,10 +132,13 @@ public class FileSerializeDataCollector {
           System.out.printf("    %s:%d-%d\n", name, line_begin, line_end);
         }
 
-        System.out.println("SUCCESSES");
-        for (VisitResult<?> vr : this.successes) {
-          System.out.printf("++%s\n", vr.getQualifiedName());
-        }
+      }
+    }
+
+    if (logAllMethods) {
+      System.out.println("SUCCESSES");
+      for (VisitResult<?> vr : this.successes) {
+        System.out.printf("++%s\n", vr.getQualifiedName());
       }
     }
 
