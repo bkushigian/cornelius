@@ -90,6 +90,20 @@ class SideEffects {
     }
 
     boolean nestedShortCircuit(boolean cond1, boolean cond2) {
+        /**
+         *  <expected>
+         *  [c1 (ctx-lookup ctx "cond1")
+         *   c2 (ctx-lookup ctx "cond2")
+         *   peg (phi cond1 (bool-lit true) cond2)
+         *   inv (invoke invoke heap (param "this") "getBoolWithSideEffects" (actuals))
+         *   inv-peg (invoke->peg inv)
+         *   inv-heap (invoke->heap inv)
+         *   peg2 (phi peg true inv-peg)
+         *   heap (phi peg heap inv-heap)
+         *   (snapshot {:return peg2 :heap heap})
+         *   ]
+         *  </expected>
+         */
         return (cond1 || cond2) || getBoolWithSideEffects();
     }
 
