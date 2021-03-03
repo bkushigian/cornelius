@@ -80,7 +80,7 @@ class SideEffects {
          *  [inv  (invoke heap (param "this") "getBoolWithSideEffects" (actuals))
          *   cond (ctx-lookup ctx "cond")
          *   peg  (phi cond (invoke->peg inv) (bool-lit false))
-         *   heap (heap-join cond heap (invoke->heap inv))
+         *   heap (heap-join cond (invoke->heap inv) heap)
          *   (snapshot {:return peg
          *              :heap   heap})
          *   ]
