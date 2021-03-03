@@ -99,15 +99,6 @@ public abstract class PegNode {
         return false;
     }
 
-    public boolean isExitConditions() {
-        return false;
-    }
-
-
-    public Optional<ExitConditions> asExitConditions() {
-        return Optional.empty();
-    }
-
     public Optional<OpNode> asOpNode() {
         return Optional.empty();
     }
@@ -369,23 +360,6 @@ public abstract class PegNode {
         }
     }
 
-    public static class ExitConditions extends OpNode {
-
-        private ExitConditions(Integer...conditions) {
-            super("exit-conditions", conditions);
-        }
-
-        @Override
-        public boolean isExitConditions() {
-            return true;
-        }
-
-        @Override
-        public Optional<ExitConditions> asExitConditions() {
-            return Optional.of(this);
-        }
-    }
-
     /**
      * lookup the PEG node from an id
      */
@@ -597,25 +571,24 @@ public abstract class PegNode {
         return opNode("cast", objId, typeId);
     }
 
-    public static ExitConditions exitConditions(Collection<PegNode> conditions) {
-        for (PegNode c : new HashSet<PegNode>(conditions)) {
+    public static PegNode exitConditions(Collection<PegNode> conditions) {
+        for (PegNode c : new HashSet<>(conditions)) {
             if (c == null) {
                 throw new IllegalStateException("Found null condition");
             }
         }
-        final String sym = "exit-conditions";
         final List<Integer> childs = new ArrayList<>(conditions.size());
         childs.addAll(conditions.stream().map(c -> c.id).collect(Collectors.toList()));
         childs.sort(null);
 
-        if (!symbolLookup.containsKey(sym) || !symbolLookup.get(sym).containsKey(childs)) {
-            return new ExitConditions(childs.toArray(new Integer[0]));
-        }
-        final PegNode node = symbolLookup.get(sym).get(childs);
-        return node.asExitConditions().orElseThrow(() -> new IllegalStateException(
-                String.format("Unexpected value cached for sym=\"exit-condition\", children=[%s]; expected a " +
-                        "PegNode.ExitConditions " +
-                        "but found %s", childs.toString(), symbolLookup.get(sym).get(childs).toDerefString())));
+        if (childs.isEmpty()) return boolLit(false);
+        if (childs.size() == 1) return idLookup(childs.get(0)).orElseThrow(IllegalStateException::new);
 
+        Integer id = childs.get(0);
+        childs.remove(0);
+        for (Integer childId : childs) {
+            id = opNode("||", id, childId).id;
+        }
+        return idLookup(id).orElseThrow(IllegalStateException::new);
     }
 }
