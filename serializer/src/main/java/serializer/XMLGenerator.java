@@ -168,7 +168,10 @@ public class XMLGenerator {
             StreamResult streamResult = new StreamResult(new File(dirPath + "/" + filename));
             transformer.transform(domSource, streamResult);
         } catch (TransformerException e){ // is this right?
-            throw new RuntimeException("Failed to make new File");  // check if this is supposed to be runtime or ioexception
+            throw new RuntimeException("Failed to make new File " + dirPath + "/" + filename );  // check if this is
+            // supposed to be
+            // runtime or
+            // ioexception
         }
     }
 }
