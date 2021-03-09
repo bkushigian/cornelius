@@ -19,4 +19,13 @@ public class ExpressionResult {
   public ExpressionResult withPeg(PegNode peg) {
     return new ExpressionResult(peg, context);
   }
+
+  /**
+   * Return this {@code ExpressionResult} with a new exit condition added to the context
+   * @param exitCondition
+   * @return
+   */
+  public ExpressionResult withExitCondition(final PegNode exitCondition) {
+    return withContext(context.withExitCondition(exitCondition));
+  }
 }
