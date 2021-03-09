@@ -61,4 +61,14 @@ public class ExpressionResult {
   public ExpressionResult withExitCondition(final PegNode exitCondition) {
     return withContext(context.withExitCondition(exitCondition));
   }
+
+  /**
+   * Return this {@code ExpressionResult} with a new exceptional condition added to the context
+   * @param condition
+   * @param exception
+   * @return
+   */
+  public ExpressionResult withExceptionCondition(final PegNode condition, final PegNode exception) {
+    return withContext(context.withExceptionCondition(condition, exception));
+  }
 }
