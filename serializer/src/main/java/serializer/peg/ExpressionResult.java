@@ -27,9 +27,11 @@ public class ExpressionResult {
   }
 
   /**
-   * Return this {@code ExpressionResult} with {@code this.context.heap} replaced by {@code heap}
-   * @param heap
-   * @return
+   * Return this {@code ExpressionResult} with {@code this.context.heap} replaced by {@code heap}.
+   * This does not modify the existing {@code ExpressionResult}.
+   *
+   * @param heap heap to replace {@code this.heap} with
+   * @return the updated {@code ExpressionResult}
    */
   public ExpressionResult withHeap(PegNode.Heap heap) {
     return new ExpressionResult(peg, context.withHeap(heap));
@@ -37,8 +39,10 @@ public class ExpressionResult {
 
   /**
    * Return this {@code ExpressionResult} with {@code this.context} replaced by {@code context}
-   * @param context
-   * @return
+   * This does not modify the existing {@code ExpressionResult}.
+   *
+   * @param context the context to replace {@code this.context} with
+   * @return the updated {@code ExpressionResult}
    */
   public ExpressionResult withContext(PegContext context) {
     return new ExpressionResult(peg, context);
@@ -46,8 +50,10 @@ public class ExpressionResult {
 
   /**
    * Return this {@code ExpressionResult} with the {@code this.peg} replaced by {@code peg}
-   * @param peg
-   * @return
+   * This does not modify the existing {@code ExpressionResult}.
+   *
+   * @param peg the peg to replace {@code this.peg} with
+   * @return the updated {@code ExpressionResult}
    */
   public ExpressionResult withPeg(PegNode peg) {
     return new ExpressionResult(peg, context);
@@ -55,8 +61,10 @@ public class ExpressionResult {
 
   /**
    * Return this {@code ExpressionResult} with a new exit condition added to the context
-   * @param exitCondition
-   * @return
+   * This does not modify the existing {@code ExpressionResult}.
+   *
+   * @param exitCondition the exit condition to be added to the context
+   * @return the updated {@code ExpressionResult}
    */
   public ExpressionResult withExitCondition(final PegNode exitCondition) {
     return withContext(context.withExitCondition(exitCondition));
@@ -64,9 +72,11 @@ public class ExpressionResult {
 
   /**
    * Return this {@code ExpressionResult} with a new exceptional condition added to the context
-   * @param condition
-   * @param exception
-   * @return
+   * This does not modify the existing {@code ExpressionResult}.
+   *
+   * @param condition the condition that triggers {@code exception}
+   * @param exception the exception that is triggered when {@code condition} is met
+   * @return the updated {@code ExpressionResult}
    */
   public ExpressionResult withExceptionCondition(final PegNode condition, final PegNode exception) {
     return withContext(context.withExceptionCondition(condition, exception));
