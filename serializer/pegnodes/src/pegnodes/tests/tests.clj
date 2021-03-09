@@ -105,19 +105,18 @@
   ([expected-str actual-str] (ensure-strings-are-same expected-str actual-str nil))
   ([expected-str actual-str msg]
    (let [msg (if (nil? msg) "" (str msg ": "))
-         idx (index-of-difference expected-str actual-str)]
+         idx (index-of-difference expected-str actual-str)
+         idx (or (clojure.string/last-index-of expected-str "(" idx) idx)]
      (clojure.test/is (= actual-str expected-str)
            (str msg "First difference at index: "
                 idx
-                "\nexpected :"
-                expected-str
-                "\nactual   :"
-                actual-str
-                "\n"
-                (when (not (nil? idx))
-                  (format "%s%s^\n"
-                          (apply str (repeat 10 \space))
-                          (apply str (repeat idx \-)))))))))
+                "\n    \033[1;31m[  prefix]:  \033[0;1m"
+                (subs actual-str 0 idx)
+                "\n    \033[1;31m[expected]:  \033[94;1m"
+                (subs expected-str idx (min (count expected-str) (+ idx 80)))
+                "\n    \033[1;31m[  actual]:  \033[94;1m"
+                (subs actual-str idx (min (count actual-str) (+ idx 80)))
+                "\033[0m\n")))))
 
 (defn contexts-are-same
   "Create a test ensuring contexts are the 'same'. By 'same' I mean that each
@@ -148,15 +147,16 @@
              `(ensure-strings-are-same
                (to-deref-string ~ret-e)
                ~(to-deref-string ret-a)
-               "Return Values Differ"))))
+               "\033[1;32mReturn Values Differ\033[0m"))))
 
 (defn heaps-are-same
   [heap-e heap-a]
   (and heap-e
        (list 'clojure.test/testing "CHECKING HEAP"
              `(ensure-strings-are-same
-                   (to-deref-string ~heap-e)
-                   ~(to-deref-string heap-a)))))
+               (to-deref-string ~heap-e)
+               ~(to-deref-string heap-a)
+               "\033[1;32mHeap Values Differ\033[0m"))))
 
 (defn snapshot->assertion
   "compare a snapshot and an expr-result. If snapshot is nil, return nil.
@@ -266,25 +266,30 @@
 (defn file->tests [file-path] (tester->tests (init-tester file-path)))
 
 (defn test-file [file-path]
+  (println)
+  (println "\033[1;93m+-------------------------------------------------------------------------+\033[0m")
+  (println "\033[1;93m+-------------------------------------------------------------------------+\033[0m")
+  (println)
   (println "TESTING FILE " file-path)
-  (doseq [[method the-test] (file->tests file-path)]
-    (try
-      (binding [*ns* (find-ns 'pegnodes.tests.tests)] (eval the-test))
-      (catch RuntimeException e
-        (println "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        (printf "                    %s\n" method)
-        (println "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        (clojure.pprint/pprint the-test)
-        (println "[!!!] Error defining above test for" method)
-        (println "      Cause:" (:cause (Throwable->map e))))))
   (try
+    (doseq [[method the-test] (file->tests file-path)]
+      (try
+        (binding [*ns* (find-ns 'pegnodes.tests.tests)] (eval the-test))
+        (catch RuntimeException e
+          (println "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+          (printf "                    %s\n" method)
+          (println "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+          (clojure.pprint/pprint the-test)
+          (println "[!!!] Error defining above test for" method)
+          (println "      Cause:" (:cause (Throwable->map e)))
+          (throw e))))
     (let [test-results (binding [*ns* (find-ns 'pegnodes.tests.tests)] (eval `(clojure.test/run-tests)))]
       (println test-results)
-      (:fail test-results))
+      (+ (:error test-results) (:fail test-results)))
     (catch RuntimeException e
-      (println "Error running tests")
+      (println "Error running tests in" file-path)
       (println "Cause:" (:cause (Throwable->map e)))
-      2)))
+      1)))
 
 (defn test-files [file-paths]
   (apply + (for [fp file-paths]
