@@ -65,6 +65,11 @@
   [var-name]
   (PegNode/var var-name))
 
+(defn short-circuit-or
+  "Create a short-circuiting or operator for a || b"
+  [a b]
+  (phi a (bool-lit true) b))
+
 (defn derefs
   "Create a derefs node"
   [field-name]
