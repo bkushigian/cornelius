@@ -92,15 +92,18 @@ class SideEffects {
     boolean nestedShortCircuit(boolean cond1, boolean cond2) {
         /**
          *  <expected>
-         *  [c1 (ctx-lookup ctx "cond1")
-         *   c2 (ctx-lookup ctx "cond2")
-         *   peg (phi cond1 (bool-lit true) cond2)
-         *   inv (invoke invoke heap (param "this") "getBoolWithSideEffects" (actuals))
-         *   inv-peg (invoke->peg inv)
+         *  [cond1 (ctx-lookup ctx "cond1")
+         *   cond2 (ctx-lookup ctx "cond2")
+         *   peg (short-circuit-or cond1 cond2)
+         *   heap (heap-join cond1 heap heap)
+         *   ctx  (ctx-join cond1 ctx ctx)
+         *   ths (ctx-lookup ctx "this")
+         *   inv (invoke heap ths "getBoolWithSideEffects" (actuals))
+         *   inv-peg  (invoke->peg inv)
          *   inv-heap (invoke->heap inv)
-         *   peg2 (phi peg true inv-peg)
-         *   heap (phi peg heap inv-heap)
-         *   (snapshot {:return peg2 :heap heap})
+         *   peg2 (phi peg (bool-lit true) inv-peg)
+         *   heap2 (heap-join peg heap inv-heap)
+         *   (snapshot {:return peg2 :heap heap2})
          *   ]
          *  </expected>
          */
@@ -110,6 +113,24 @@ class SideEffects {
     SideEffects ref;
 
     boolean nullCheck() {
+        /**
+         *  <expected>
+         *  [ths       (ctx-lookup ctx "this")
+         *   ref       (rd ths "ref" heap)
+         *   lhs       (ne ref (null-lit))
+         *   heap2     (update-status-npe heap ref)
+         *   inv       (invoke heap2 ref "getBoolWithSideEffects" (actuals))
+         *   inv-peg   (invoke->peg inv)
+         *   inv-heap  (invoke->heap inv)
+         *   rhs       (opnode "!" inv-peg)
+         *   heap      (heap-join lhs inv-heap heap)
+         *   ctx       (ctx-join  lhs ctx ctx)
+         *   result    (short-circuit-and lhs rhs)
+         *   (snapshot {:heap heap :return result :ctx ctx})
+         *   ]
+         *
+         *  </expected>
+         */
         return ref != null && !ref.getBoolWithSideEffects();
     }
 
@@ -120,6 +141,59 @@ class SideEffects {
      *
      */
     boolean isNew() {
+        /**
+         *  <expected>
+         *  [ths           (ctx-lookup ctx "this")
+         *   bytes-written (rd ths "bytesWritten" heap)
+         *   lhs           (eq bytes-written (int-lit 0))
+         *   chars-written (rd ths "charsWritten" heap)
+         *   rhs           (eq chars-written (int-lit 0))
+         *   heap          (heap-join lhs heap heap)
+         *   ctx       (ctx-join  lhs ctx ctx)
+         *   result        (short-circuit-and lhs rhs)
+         *   (snapshot {:heap heap :return result :ctx ctx})]
+         *  </expected>
+         */
         return (bytesWritten == 0) && (charsWritten == 0);
+    }
+
+    boolean nestedSideEffects(boolean cond1, boolean cond2) {
+        /**
+         *  <cond>
+         *  [cond1    (ctx-lookup ctx "cond1")
+         *   cond2    (ctx-lookup ctx "cond2")
+         *   cond     (short-circuit-and cond1 cond2)
+         *   heap     (heap-join cond1 heap heap)
+         *   ctx      (ctx-join cond1 ctx ctx)
+         *   (snapshot {:peg cond :heap heap :ctx ctx})
+         *   ]
+         *  </cond>
+         *
+         *  <expected>
+         *  [ctx  (ctx-join cond ctx ctx)
+         *   heap (heap-join cond heap2 heap)
+         *   (snapshot {:heap heap :ctx ctx})]
+         *  </expected>
+         */
+        if (cond1 && cond2) {
+            /**
+             * <expected>
+             * [ref    (rd (ctx-lookup ctx "this") "ref" heap)
+             *  heap2  (update-status-npe heap ref)
+             *  invk   (invoke heap2 ref "getBoolWithSideEffects" (actuals))
+             *  heap2  (invoke->heap invk)
+             *  ]
+             * </expected>
+             */
+            ref.getBoolWithSideEffects();
+        }
+
+        /**
+         * <expected>
+         * [result (bool-lit true)
+         * (snapshot {:return result :heap heap :ctx ctx})]
+         * </expected>
+         */
+        return true;
     }
 }

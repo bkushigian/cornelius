@@ -70,6 +70,11 @@
   [a b]
   (phi a (bool-lit true) b))
 
+(defn short-circuit-and
+  "Create a short-circuiting or operator for a && b"
+  [a b]
+  (phi a b (bool-lit false)))
+
 (defn derefs
   "Create a derefs node"
   [field-name]
@@ -143,6 +148,16 @@
 
 (defn method-root [peg heap]
   (opnode "method-root" peg heap))
+
+(defn eq
+  "Return an '==' node for `a == b`"
+  [a b]
+  (opnode "==" a b))
+
+(defn ne
+  "Return a '!-' node for `a != b`"
+  [a b]
+  (opnode "!=" a b))
 
 (defn id-lookup [id]
   (cond (int? id) (. (PegNode/idLookup (int id)) orElse nil)
