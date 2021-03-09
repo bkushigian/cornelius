@@ -334,9 +334,12 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     public ExpressionResult visit(MethodCallExpr n, final PegContext context) {
         // TODO: add exit condition
 
-        // YUCK: The following Expression result handles two cases: if n has a scope, visit it and capture the
-        // resulting ExpressionResult. Otherwise, make  new ExpressionResult from context and "this".
-        final ExpressionResult scope = n.getScope().map(x -> x.accept(this, context)).orElse(context.exprResult(context.getLocalVar("this")));
+        final ExpressionResult scope = n.getScope()
+                // If n has a scope, visit it
+                .map(x -> x.accept(this, context))
+                // Otherwise, use "this" as the scope
+                .orElse(context.exprResult(context.getLocalVar("this")));
+
         final List<Integer> actualsPegs = new ArrayList<>();
 
         // The following variable keeps track of the updated context as we visit arguments
