@@ -44,9 +44,10 @@ public class FieldAccess {
     FieldAccess methodInvocation2() {
         /**
          * <expected>
-         *  [recv    (rd (param "this") "fa" heap)
-         *   args    (actuals)
-         *   invk    (invoke heap recv "getFieldAccess" args)
+         *  [recv    (rd (param "this") "fa" heap))
+         *   ctx     (ctx-add-exit-condition ctx (is-null? recv))
+         *   invk    (invoke heap recv "getFieldAccess" (actuals)
+         *   invk    (invoke heap recv "getFieldAccess" (actuals))
          *   heap    (invoke->heap invk)
          *   peg     (invoke->peg  invk)
          *   (snapshot {:ctx ctx :heap heap :return peg})]
@@ -60,8 +61,9 @@ public class FieldAccess {
         /**
          * <expected>
          *  [recv    (rd (param "this") "fa" heap)
-         *   args    (actuals)
-         *   invk    (invoke heap recv "getFieldAccess" args)
+         *   heap    (update-status-npe heap recv)
+         *   ctx     (ctx-add-exit-condition ctx (is-null? recv))
+         *   invk    (invoke heap recv "getFieldAccess" (actuals))
          *   heap    (invoke->heap invk)
          *   peg     (invoke->peg  invk)
          *   peg2    (rd peg "fa" heap)
@@ -77,8 +79,9 @@ public class FieldAccess {
         /**
          * <expected>
          *  [recv    (rd (param "this") "fa" heap)
-         *   args    (actuals)
-         *   invk    (invoke heap recv "getFieldAccess" args)
+         *   heap    (update-status-npe heap recv)
+         *   ctx     (ctx-add-exit-condition ctx (is-null? recv))
+         *   invk    (invoke heap recv "getFieldAccess" (actuals))
          *   heap    (invoke->heap invk)
          *   peg     (invoke->peg  invk)
          *   peg2    (rd peg "fa" heap)
@@ -93,39 +96,6 @@ public class FieldAccess {
         return fa.getFieldAccess().fa.y;
     }
 
-    /**
-     * possibleNPEFollowedByContextUpdate()
-     * <eexpected>
-     * (let
-     *  [heap
-     *   (initial-heap)
-     *   ctx
-     *   (new-ctx-from-params)
-     *   peg
-     *   (rd (param "this") "fa" heap)
-     *   peg-tmp
-     *   (rd peg "x" heap)
-     *   exitc
-     *   (is-null? peg)
-     *   heap
-     *   (update-status-npe heap peg)
-     *   ctx
-     *   (ctx-add-exit-condition ctx exitc)
-     *   peg
-     *   peg-tmp
-     *   ctx
-     *   (ctx-update ctx "x" peg)
-     *   x
-     *   (ctx-lookup ctx "x")
-     *   peg
-     *   (opnode "+" x (int-lit 1))
-     *   ctx
-     *   (ctx-update ctx "x" peg)
-     *   peg
-     *   (ctx-lookup ctx "x")]
-     *  (method-root peg heap))
-     * </eexpected>
-     */
     int possibleNPEFollowedByContextUpdate() {
         /**
          * <expected>
