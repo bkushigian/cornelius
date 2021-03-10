@@ -1,15 +1,18 @@
 #!/bin/sh
 
+printf "\033[33;1m--- Building Cornelius ---\033[0m\n"
 cd serializer
 mvn install > /dev/null
+
+printf "\033[33;1m--- Running Pegnode Tests ---\033[0m\n"
 cd pegnodes
 lein run > /dev/null
 RESULT=$?
 if lein run > /dev/null
 then
-    echo "PASS"
+    printf "\033[32;1mPASS\033[0m\n"
     exit 0
 else
-    echo "FAIL"
+    printf "\033[31;1mFAIL\033[0m\n"
     exit 1
 fi
