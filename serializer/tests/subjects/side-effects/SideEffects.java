@@ -157,14 +157,22 @@ class SideEffects {
         return (bytesWritten == 0) && (charsWritten == 0);
     }
 
-    boolean nestedSideEffects(boolean cond1, boolean cond2) {
+    /**
+     * This is a minimal test case that produces a redundant mutant
+     * that Cornelius should catch but misses. Namely:
+     *
+     * - cond1 && (cond2 || cond3) ==> cond1
+     * - cond2 || cond3 ==> true
+     */
+    boolean nestedMethodInvoke(boolean cond1, boolean cond2, boolean cond3) {
         /**
          *  <cond>
          *  [cond1    (ctx-lookup ctx "cond1")
          *   cond2    (ctx-lookup ctx "cond2")
-         *   cond     (short-circuit-and cond1 cond2)
-         *   heap     (heap-join cond1 heap heap)
-         *   ctx      (ctx-join cond1 ctx ctx)
+         *   cond3    (ctx-lookup ctx "cond3")
+         *   cond     (short-circuit-and cond1 (short-circuit-or cond2 cond3))
+         *   heap     (heap-join cond1 (heap-join cond2 heap heap) heap)
+         *   ctx      (ctx-join cond1 (ctx-join cond2 ctx ctx) ctx)
          *   (snapshot {:peg cond :heap heap :ctx ctx})
          *   ]
          *  </cond>
@@ -175,7 +183,7 @@ class SideEffects {
          *   (snapshot {:heap heap :ctx ctx})]
          *  </expected>
          */
-        if (cond1 && cond2) {
+        if (cond1 && (cond2 || cond3)) {
             /**
              * <expected>
              * [ref    (rd (ctx-lookup ctx "this") "ref" heap)
@@ -186,6 +194,45 @@ class SideEffects {
              * </expected>
              */
             ref.getBoolWithSideEffects();
+        }
+
+        /**
+         * <expected>
+         * [result (bool-lit true)
+         * (snapshot {:return result :heap heap :ctx ctx})]
+         * </expected>
+         */
+        return true;
+    }
+
+    boolean nestedRead(boolean cond1, boolean cond2, boolean cond3) {
+        /**
+         *  <cond>
+         *  [cond1    (ctx-lookup ctx "cond1")
+         *   cond2    (ctx-lookup ctx "cond2")
+         *   cond3    (ctx-lookup ctx "cond3")
+         *   cond     (short-circuit-and cond1 (short-circuit-or cond2 cond3))
+         *   heap     (heap-join cond1 (heap-join cond2 heap heap) heap)
+         *   ctx      (ctx-join cond1 (ctx-join cond2 ctx ctx) ctx)
+         *   (snapshot {:peg cond :heap heap :ctx ctx})
+         *   ]
+         *  </cond>
+         *
+         *  <expected>
+         *  [ctx  (ctx-join cond ctx ctx)
+         *   heap (heap-join cond heap heap)
+         *   (snapshot {:heap heap :ctx ctx})]
+         *  </expected>
+         */
+        if (cond1 && (cond2 || cond3)) {
+            /**
+             * <expected>
+             * [ref     (rd (ctx-lookup ctx "this") "ref" heap)
+             *  ctx     (ctx-update ctx "sideEffects" ref)
+             *  ]
+             * </expected>
+             */
+            SideEffects sideEffects = ref.ref;
         }
 
         /**
