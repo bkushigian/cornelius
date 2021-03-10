@@ -129,7 +129,7 @@
                (conj (for [k (filter string? the-keys)]
                        `(ensure-strings-are-same (to-deref-string   (~ctx-expected ~k))
                                                  ~(to-deref-string  (ctx-actual   k))
-                                                 ~(str "difference at key " k)))
+                                                 ~(str "\033[1;32mContexts Differ @\033[0m " k)))
                      'do)))))
 
 (defn pegs-are-same
@@ -137,8 +137,9 @@
   (and peg-e
        (list 'clojure.test/testing "CHECKING:PEG"
              `(ensure-strings-are-same
-                   (to-deref-string ~peg-e)
-                   ~(to-deref-string peg-a)))))
+               (to-deref-string ~peg-e)
+               ~(to-deref-string peg-a)
+               "\033[1;32mPegs Differ\033[0m"))))
 
 (defn returns-are-same
   [ret-e ret-a]
