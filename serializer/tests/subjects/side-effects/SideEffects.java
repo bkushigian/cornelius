@@ -220,15 +220,17 @@ class SideEffects {
          *
          *  <expected>
          *  [ctx  (ctx-join cond ctx ctx)
-         *   heap (heap-join cond heap heap)
+         *   heap (heap-join cond heap-thn heap)
          *   (snapshot {:heap heap :ctx ctx})]
          *  </expected>
          */
         if (cond1 && (cond2 || cond3)) {
             /**
              * <expected>
-             * [ref     (rd (ctx-lookup ctx "this") "ref" heap)
-             *  ctx     (ctx-update ctx "sideEffects" ref)
+             * [ref      (rd (ctx-lookup ctx "this") "ref" heap)
+             *  heap-thn (update-status-npe heap ref)
+             *  ref-ref  (rd ref "ref" heap-thn)
+             *  ctx      (ctx-update ctx "sideEffects" ref-ref)
              *  ]
              * </expected>
              */
