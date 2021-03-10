@@ -81,4 +81,17 @@ public class ExpressionResult {
   public ExpressionResult withExceptionCondition(final PegNode condition, final PegNode exception) {
     return withContext(context.withExceptionCondition(condition, exception));
   }
+
+  /**
+   * Combine two ExpressionResults based on guard
+   * @param guard the condition determining if the first or second ExpressionResult is used
+   * @param thn the then-branch ExpressionResult to use
+   * @param els the else-branch ExpressionResult to use
+   * @return a new ExpressionResult where context is combined based on guard, and peg is a phi node:
+   *       {@code (phi guard thn.peg els.peg)}
+   */
+  public static ExpressionResult combine(final PegNode guard, final ExpressionResult thn, final ExpressionResult els) {
+    return new ExpressionResult(PegNode.phi(guard.id, thn.peg.id, els.peg.id),
+            PegContext.combine(thn.context, els.context, guard.id));
+  }
 }

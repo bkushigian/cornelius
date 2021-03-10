@@ -11,7 +11,7 @@ import serializer.peg.testing.TestPairs;
 
 import java.util.*;
 
-public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext> {
+public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegContext> {
     final PegExprVisitor pev = new PegExprVisitor();
     /**
      * Map methods to all collected TestPairs
@@ -27,9 +27,9 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
     }
 
     @Override
-    public PegContext visit(MethodDeclaration n, PegContext ctx) {
-        final PegContext result = super.visit(n, ctx);
-        testPairs.scrape(n, result.exprResult());
+    public ExpressionResult visit(MethodDeclaration n, PegContext ctx) {
+        final ExpressionResult result = super.visit(n, ctx);
+        testPairs.scrape(n, result);
         // Test if there was an implicit return node at the end of the method, and if so, if there was another
         // explicit return node in the body somewhere
         if (n.getBody().isPresent()) {
@@ -42,7 +42,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
     }
 
     @Override
-    public PegContext visit(AssignExpr n, PegContext ctx) {
+    public ExpressionResult visit(AssignExpr n, PegContext ctx) {
         final ExpressionResult er = n.getValue().accept(pev, ctx);
         ctx = er.context;
         final PegNode value = er.peg;
@@ -51,15 +51,15 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
 
             if (ctx.isUnshadowedField(nameString)) {
                 final FieldAccessExpr fieldAccess = new FieldAccessExpr(new ThisExpr(), nameString);
-                return performWrite(fieldAccess, value, ctx);
+                return performWrite(fieldAccess, value, ctx).exprResult();
             }
 
-            return ctx.setLocalVar(n.getTarget().asNameExpr().getNameAsString(), value);
+            return ctx.setLocalVar(n.getTarget().asNameExpr().getNameAsString(), value).exprResult();
         }
         else if (n.getTarget().isFieldAccessExpr()) {
             // todo: update heap
             final FieldAccessExpr fieldAccess = n.getTarget().asFieldAccessExpr();
-            return performWrite(fieldAccess, value, ctx);
+            return performWrite(fieldAccess, value, ctx).exprResult();
         }
         else {
             throw new RuntimeException("Unrecognized assignment target: " + n.getTarget().toString());
@@ -75,51 +75,50 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
     }
 
     @Override
-    public PegContext visit(BlockStmt n, PegContext ctx) {
+    public ExpressionResult visit(BlockStmt n, PegContext ctx) {
+        ExpressionResult er = ctx.exprResult();
         for (Statement s : n.getStatements()) {
-            ctx = s.accept(this, ctx);
-            if (ctx == null) {
+            er = s.accept(this, er.context);
+            if (er == null || er.context == null) {
                 throw new IllegalStateException("Null context after visit");
             }
         }
-        return ctx;
+        return er;
     }
 
     @Override
-    public PegContext visit(ExpressionStmt n, PegContext ctx) {
-        PegContext result = n.accept(pev, ctx).context;
-        testPairs.scrape(n, result.exprResult());
+    public ExpressionResult visit(ExpressionStmt n, PegContext ctx) {
+        final ExpressionResult result = n.accept(pev, ctx).withPeg(PegNode.unit());
+        testPairs.scrape(n, result);
         return result;
     }
 
     @Override
-    public PegContext visit(SynchronizedStmt n, PegContext arg) {
+    public ExpressionResult visit(SynchronizedStmt n, PegContext arg) {
         throw new RuntimeException("SynchronizedStmt");
     }
 
     @Override
-    public PegContext visit(IfStmt n, PegContext ctx) {
+    public ExpressionResult visit(IfStmt n, PegContext ctx) {
         final ExpressionResult er = n.getCondition().accept(pev, ctx);
         testPairs.scrape(n, er, "cond");
-        ctx = er.context;
         final PegNode guard = er.peg;
-        final PegContext c1 = n.getThenStmt().accept(this, ctx);
+        final ExpressionResult resultThen = n.getThenStmt().accept(this, er.context);
         testPairs.scrape(n, er, "then");
-        final PegContext c2 = n.getElseStmt().isPresent() ? n.getElseStmt().get().accept(this, ctx)
-                                                          : ctx;
+        final ExpressionResult resultElse = n.getElseStmt().isPresent() ? n.getElseStmt().get().accept(this, er.context) : er;
         testPairs.scrape(n, er, "else");
-        PegContext combined = PegContext.combine(c1, c2, guard.id);
-        testPairs.scrape(n, combined.exprResult());
+        ExpressionResult combined = ExpressionResult.combine(guard, resultThen, resultElse);
+        testPairs.scrape(n, combined);
         return combined;
     }
 
     @Override
-    public PegContext visit(EmptyStmt n, PegContext ctx) {
-        return ctx;
+    public ExpressionResult visit(EmptyStmt n, PegContext ctx) {
+        return ctx.exprResult();
     }
 
     @Override
-    public PegContext visit(ReturnStmt n, PegContext ctx) {
+    public ExpressionResult visit(ReturnStmt n, PegContext ctx) {
         // We sanity check that this return node is the last statement of a method. To do this we get the parent of the
         // parent of this node and ensure it is a MethodDeclaration. Then, we get the statements block of that method
         // and ensure that `n` is the last node in that block.
@@ -131,7 +130,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
                 throw new RuntimeException("InvalidReturn");
             }
             final MethodDeclaration md = (MethodDeclaration) optNode.get();
-            final NodeList<Statement> statements = md.getBody().get().getStatements();
+            final NodeList<Statement> statements = md.getBody().orElseThrow(IllegalStateException::new).getStatements();
             if (statements.get(statements.size() - 1) != n) {
                 throw new RuntimeException("InvalidReturn");
             }
@@ -148,62 +147,62 @@ public class PegStmtVisitor extends GenericVisitorAdapter<PegContext, PegContext
         }
 
         testPairs.scrape(n, ctx.exprResult());
-        return ctx;
+        return ctx.exprResult();
     }
 
 
     @Override
-    public PegContext visit(WhileStmt n, PegContext arg) {
+    public ExpressionResult visit(WhileStmt n, PegContext arg) {
         throw new RuntimeException("WhileStmt");
     }
 
     @Override
-    public PegContext visit(DoStmt n, PegContext arg) {
+    public ExpressionResult visit(DoStmt n, PegContext arg) {
         throw new RuntimeException("DoStmt");
     }
 
     @Override
-    public PegContext visit(ForStmt n, PegContext arg) {
+    public ExpressionResult visit(ForStmt n, PegContext arg) {
         throw new RuntimeException("ForStmt");
     }
 
     @Override
-    public PegContext visit(ForEachStmt n, PegContext arg) {
+    public ExpressionResult visit(ForEachStmt n, PegContext arg) {
         throw new RuntimeException("ForEachStmt");
     }
 
     @Override
-    public PegContext visit(BreakStmt n, PegContext arg) {
+    public ExpressionResult visit(BreakStmt n, PegContext arg) {
         throw new RuntimeException("BreakStmt");
     }
 
     @Override
-    public PegContext visit(TryStmt n, PegContext arg) {
+    public ExpressionResult visit(TryStmt n, PegContext arg) {
         throw new RuntimeException("TryStmt");
     }
 
     @Override
-    public PegContext visit(ThrowStmt n, PegContext arg) {
+    public ExpressionResult visit(ThrowStmt n, PegContext arg) {
         throw new RuntimeException("ThrowStmt");
     }
 
     @Override
-    public PegContext visit(YieldStmt n, PegContext arg) {
+    public ExpressionResult visit(YieldStmt n, PegContext arg) {
         throw new RuntimeException("YieldStmt");
     }
 
     @Override
-    public PegContext visit(ExplicitConstructorInvocationStmt n, PegContext arg) {
+    public ExpressionResult visit(ExplicitConstructorInvocationStmt n, PegContext arg) {
         throw new RuntimeException("ExplicitConstructorInvocationStmt");
     }
 
     @Override
-    public PegContext visit(LocalClassDeclarationStmt n, PegContext arg) {
+    public ExpressionResult visit(LocalClassDeclarationStmt n, PegContext arg) {
         throw new RuntimeException("LocalClassDeclarationStmt");
     }
 
     @Override
-    public PegContext visit(SwitchStmt n, PegContext arg) {
+    public ExpressionResult visit(SwitchStmt n, PegContext arg) {
         throw new RuntimeException("SwitchStmt");
     }
 }

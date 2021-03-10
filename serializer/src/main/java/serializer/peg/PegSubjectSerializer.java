@@ -106,9 +106,7 @@ public class PegSubjectSerializer {
                     try {
                         final CompilationUnit mcu = StaticJavaParser.parse(javaFiles.iterator().next());
                         try {
-                            row.pegId = translator.translate(mcu, canonical)
-                                    .orElseThrow(() -> new RuntimeException("Couldn't find mutant"))
-                                    .id;
+                            row.pegId = translator.translate(mcu, canonical).id;
                         } catch (IllegalStateException e) {
                           System.err.println("erroneous mutant id: " + row.id);
                           throw e;

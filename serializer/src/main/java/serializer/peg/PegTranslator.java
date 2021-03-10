@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 public class PegTranslator {
 
     final Map<String, Integer> failureReasons = new HashMap<>();
-    final SimpleValidator validator = new SimpleValidator();
     final PegClassVisitor classVisitor = new PegClassVisitor();
     final PegStmtVisitor stmtVisitor;
     /**
@@ -42,7 +41,6 @@ public class PegTranslator {
      */
     public Map<String, PegNode> translate(final CompilationUnit cu) {
         final Map<String, PegNode> result = new HashMap<>();
-        int errors = 0;
         final List<TypeDeclaration<?>> types = cu.getTypes();
         types.sort(Comparator.comparing(NodeWithSimpleName::getNameAsString));
         for (TypeDeclaration<?> type : types) {
@@ -58,11 +56,13 @@ public class PegTranslator {
                     final String methDeclStr = Util.CanonicalNames.fromDecl(method, cu, ctype);
 
                     try {
-                        translate(method, classVisitorResult).ifPresent(t -> result.put(methDeclStr.substring(methDeclStr.indexOf(' ') + 1)
-                                .replaceAll("\\s+", ""), t));
+                        final String key = methDeclStr
+                                .substring(methDeclStr.indexOf(' ') + 1)
+                                .replaceAll("\\s+", "");
+                        result.put(key, translate(method, classVisitorResult));
+
                     } catch (RuntimeException e) {
                         failureReasons.put(e.getMessage(), failureReasons.getOrDefault(e.getMessage(), 0) + 1);
-                        ++errors;
                     }
                 }
             }
@@ -70,10 +70,8 @@ public class PegTranslator {
         return result;
     }
 
-    public Optional<PegNode> translate(final CompilationUnit cu, final String canonical) {
-        if (canonical == null) {
-            return Optional.empty();
-        }
+    public PegNode translate(final CompilationUnit cu, final String canonical) {
+        if (canonical == null) return PegNode.unit();
 
         final NodeList<TypeDeclaration<?>> types = cu.getTypes();
         types.sort(Comparator.comparing(TypeDeclaration::getNameAsString));
@@ -89,7 +87,7 @@ public class PegTranslator {
                 }
             }
         }
-        return Optional.empty();
+        return PegNode.unit();
     }
 
     /**
@@ -100,12 +98,12 @@ public class PegTranslator {
      * @return {@code Optional.empty} if the method cannot be translated, and {@code Optional.of(peg)}, where
      *     {@code peg} is a PEG node representing the method
      */
-    public Optional<PegNode> translate(final MethodDeclaration n,
+    public PegNode translate(final MethodDeclaration n,
                                        final PegClassVisitor.ClassVisitorResult classVisitorResult) {
         final PegContext initCtx = PegContext.initWithParams(classVisitorResult.getFieldNames(),
                 Util.getParameterList(n));
-        final PegContext ctx = n.accept(stmtVisitor, initCtx);
-        return ctx.asPeg();
+        final ExpressionResult result = n.accept(stmtVisitor, initCtx);
+        return result.peg;
     }
 
 }

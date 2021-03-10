@@ -197,7 +197,7 @@ public class PegContext {
      * Update this context's exception status to reflect possible exceptional behavior
      * @param condition the boolean condition that implies exceptional behavior
      * @param exception the exception
-     * @return
+     * @return a new PegContext with the new exceptional condition
      */
     public PegContext withExceptionCondition(final PegNode condition, final PegNode exception) {
         PegNode.Heap newHeap;

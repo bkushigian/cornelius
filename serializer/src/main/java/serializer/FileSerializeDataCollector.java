@@ -166,8 +166,8 @@ public class FileSerializeDataCollector {
     final PegContext initCtx = PegContext.initWithParams(classVisitorResult.getFieldNames(),
             Util.getParameterList(decl));
     try {
-      final PegContext ctx = decl.accept(stmtVisitor, initCtx);
-      final VisitResult<?> vr = cvr.add(decl, ctx.asPeg().get());
+      final PegContext ctx = decl.accept(stmtVisitor, initCtx).context;
+      final VisitResult<?> vr = cvr.add(decl, ctx.asPeg().orElseThrow(IllegalStateException::new));
       // System.out.println("[ + ] " + vr);
     } catch (RuntimeException e){
       if (strictCheckNulls && e instanceof NullPointerException) {

@@ -423,10 +423,11 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
 
     /**
      * Given a target, a value, and a context, create a new Expression result storing that new value in its target.
-     * @param target
-     * @param value
-     * @param ctx
-     * @return
+     * @param target target of assignment
+     * @param value value to assign
+     * @param ctx context that assignment is happening in
+     * @return the {@code ExpressionResult} resulting from the assignment, including {@code value} as the
+     *         {@code peg} field.
      */
     private ExpressionResult performAssign(final Expression target, final PegNode value, final PegContext ctx) {
         if (target.isNameExpr()) {

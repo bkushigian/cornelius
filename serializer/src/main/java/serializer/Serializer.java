@@ -126,8 +126,7 @@ public class Serializer {
             try {
               final CompilationUnit mcu = StaticJavaParser.parse(mutantFile);
               try {
-                PegNode p = translator.translate(mcu, unqualifiedSig)
-                        .orElseThrow(() -> new RuntimeException("Couldn't find mutant")) ;
+                PegNode p = translator.translate(mcu, unqualifiedSig);
                 row.pegId = p.id;
                 serializable.add(row.id);
                 rowsToAdd.add(row);
