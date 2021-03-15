@@ -1,8 +1,5 @@
 package serializer.peg;
 
-import com.github.javaparser.ast.expr.IntegerLiteralExpr;
-import com.google.common.collect.ImmutableSet;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -487,9 +484,9 @@ public abstract class PegNode {
     /**
      * Get a heap node with {@code state} and {@code status} arguments, creating and caching one if one doesn't
      * already exist.
-     * @param state
-     * @param status
-     * @return t
+     * @param state Id of a {@code PegNode} describing the global state of this heap
+     * @param status Id of a {@code PegNode} describing the exceptional status of this heap.
+     * @return a new heap
      * @throws IllegalStateException if the cached node is not a {@code PegNode.Heap}
      * @throws NullPointerException if either argument is {@code null}
      */
@@ -565,7 +562,7 @@ public abstract class PegNode {
     /**
      * @param objId id of the object to be cast
      * @param typeId type to cast the object to
-     * @return
+     * @return a "cast" opnode with the specified children
      */
     public static PegNode cast(final Integer objId, final Integer typeId) {
         return opNode("cast", objId, typeId);
