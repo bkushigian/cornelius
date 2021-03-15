@@ -96,6 +96,14 @@ public abstract class PegNode {
         return false;
     }
 
+    public boolean isPhiNode() {
+        return false;
+    }
+
+    public Optional<PhiNode> asPhiNode() {
+        return Optional.empty();
+    }
+
     public Optional<OpNode> asOpNode() {
         return Optional.empty();
     }
@@ -317,6 +325,28 @@ public abstract class PegNode {
 
     }
 
+    public static class PhiNode extends OpNode {
+        public final Integer guard;
+        public final Integer thn;
+        public final Integer els;
+        private PhiNode(final Integer guard, final Integer thn, final Integer els) {
+            super("phi", guard, thn, els);
+            this.guard = guard;
+            this.thn = thn;
+            this.els = els;
+        }
+
+        @Override
+        public Optional<PhiNode> asPhiNode() {
+            return Optional.of(this);
+        }
+
+        @Override
+        public boolean isPhiNode() {
+            return true;
+        }
+    }
+
     public static class Heap extends OpNode {
         /**
          * The heap state's id
@@ -421,8 +451,20 @@ public abstract class PegNode {
         return opNode("unit");
     }
 
-    public static PegNode phi(Integer guard, Integer then, Integer els) {
-      return opNode("phi", guard, then, els);
+    public static PhiNode phi(Integer guard, Integer then, Integer els) {
+      final String sym = "phi";
+      final List<Integer> childs = new ArrayList<>(3);
+      childs.add(guard);
+      childs.add(then);
+      childs.add(els);
+      if (!symbolLookup.containsKey(sym) || !symbolLookup.get(sym).containsKey(childs)) {
+          return new PhiNode(guard, then, els);
+      }
+      final PegNode node = symbolLookup.get(sym).get(childs);
+      return node.asPhiNode().orElseThrow(() -> new IllegalStateException(
+              String.format("Unexpected value cached for sym=\"phi\", children=[%d, %d, %d];" +
+                      " expected a PegNode.PhiNode but found %s",
+                      guard, then, els, symbolLookup.get(sym).get(childs).toDerefString())));
     }
 
     public static PegNode var(String name) {
