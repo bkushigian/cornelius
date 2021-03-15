@@ -10,6 +10,33 @@ import serializer.peg.testing.TestPairs;
 
 import java.util.*;
 
+/**
+ * Visit the statements in a method and translate it into a PEG.
+ *
+ * Each {@code visit} method expects a {@code PegContext} as an argument and returns
+ * a {@code ExpressionResult} containing the resulting {@code PegContext} and any
+ * returned values wrapped in appropriate control flow guards. Consider the following
+ * if statement:
+ *
+ * <pre>
+ *  if (a > 0) {
+ *    return a;
+ *  } else {
+ *    return -a;
+ *  }
+ * </pre>
+ *
+ * Recursively visiting the first {@code return} statement should yield an {@code ExpressionResult}
+ * with a {@code PegContext} with updated exit conditions to account for the return, and a {@code PegNode}
+ * {@code (var a)} to represent the returned value. Similarly, the second return should have a {@code PegNode}
+ * with value {@code (- (var a))}. Visiting the {@code if} statement should return an {@code ExpressionResult} with
+ * a {@code PegNode} with value:
+ *
+ * <pre>
+ *   (phi (> (var a) (int-lit 0)) a (- a))
+ * </pre>
+ *
+ */
 public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegContext> {
     final PegExprVisitor pev = new PegExprVisitor();
     /**
