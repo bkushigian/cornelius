@@ -12,6 +12,9 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
 
     @Override
     public ExpressionResult visit(BinaryExpr n, PegContext context) {
+        // TODO: this method uses handleBinExpr, and this separation is unclear and probably not needed. Either
+        //       (a) justify and document this separation, or
+        //       (b) combine the two methods
         final ExpressionResult lhs = n.getLeft() .accept(this, context);
         ExpressionResult rhs = n.getRight().accept(this, lhs.context);
 
