@@ -13,7 +13,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     @Override
     public ExpressionResult visit(BinaryExpr n, PegContext context) {
         final ExpressionResult lhs = n.getLeft() .accept(this, context);
-        final ExpressionResult rhs = n.getRight().accept(this, lhs.context);
+        ExpressionResult rhs = n.getRight().accept(this, lhs.context);
 
         if (n.getOperator() == BinaryExpr.Operator.DIVIDE || n.getOperator() == BinaryExpr.Operator.REMAINDER) {
             // If this is a division or a remainder operator, add a check for div-by-zero
@@ -26,7 +26,8 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
                 final PegNode haveNotExited = PegNode.opNode(PegOp.NOT, PegNode.exitConditions(rhs.context.exitConditions).id);
                 throwCond = PegNode.opNode(PegOp.AND, haveNotExited.id, denominatorIsZero.id);
             }
-            rhs.withContext(rhs.context.withExceptionCondition(throwCond, PegNode.exception("java.lang.DivideByZeroError")));
+            rhs = rhs.withContext(rhs.context.withExceptionCondition(throwCond, PegNode.exception("java.lang" +
+                    ".DivideByZeroError")));
         }
 
         return handleBinExpr(n, lhs, rhs);
