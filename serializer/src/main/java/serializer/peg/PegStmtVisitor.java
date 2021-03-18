@@ -127,14 +127,17 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
 
     @Override
     public ExpressionResult visit(IfStmt n, PegContext ctx) {
-        final ExpressionResult er = n.getCondition().accept(pev, ctx);
-        testPairs.scrape(n, er, "cond");
-        final PegNode guard = er.peg;
-        final ExpressionResult resultThen = n.getThenStmt().accept(this, er.context);
-        testPairs.scrape(n, er, "then");
-        final ExpressionResult resultElse = n.getElseStmt().isPresent() ? n.getElseStmt().get().accept(this, er.context) : er;
-        testPairs.scrape(n, er, "else");
-        ExpressionResult combined = ExpressionResult.combine(guard, resultThen, resultElse);
+        final ExpressionResult resultGuard = n.getCondition().accept(pev, ctx);
+        testPairs.scrape(n, resultGuard, "cond");
+        final PegNode guard = resultGuard.peg;
+
+        final ExpressionResult resultThen = n.getThenStmt().accept(this, resultGuard.context);
+        testPairs.scrape(n, resultGuard, "then");
+
+        final ExpressionResult resultElse = n.getElseStmt().isPresent() ? n.getElseStmt().get().accept(this, resultGuard.context) : resultGuard;
+        testPairs.scrape(n, resultGuard, "else");
+
+        final ExpressionResult combined = ExpressionResult.combine(guard, resultThen, resultElse);
         testPairs.scrape(n, combined);
         return combined;
     }
