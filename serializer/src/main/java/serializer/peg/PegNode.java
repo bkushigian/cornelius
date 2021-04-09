@@ -96,6 +96,22 @@ public abstract class PegNode {
         return false;
     }
 
+    public boolean isUnit() {
+        return false;
+    }
+
+    public Optional<Unit> asUnit() {
+        return Optional.empty();
+    }
+
+    public boolean isVoid() {
+        return false;
+    }
+
+    public Optional<Void> asVoid() {
+        return Optional.empty();
+    }
+
     public boolean isPhiNode() {
         return false;
     }
@@ -325,6 +341,48 @@ public abstract class PegNode {
 
     }
 
+    public static class Unit extends OpNode {
+        /**
+         * A singleton copy of unit
+         */
+        public final static Unit unitSingleton = new Unit();
+
+        private Unit() {
+            super("unit");
+        }
+
+        @Override
+        public boolean isUnit() {
+            return true;
+        }
+
+        @Override
+        public Optional<Unit> asUnit() {
+            return Optional.of(this);
+        }
+    }
+
+    public static class Void extends OpNode {
+        /**
+         * A singleton copy of unit
+         */
+        public final static Void voidSingleton = new Void();
+
+        private Void() {
+            super("void");
+        }
+
+        @Override
+        public boolean isVoid() {
+            return true;
+        }
+
+        @Override
+        public Optional<Void> asVoid() {
+            return Optional.of(this);
+        }
+    }
+
     public static class PhiNode extends OpNode {
         public final Integer guard;
         public final Integer thn;
@@ -447,8 +505,12 @@ public abstract class PegNode {
         return litLookup.get(s);
     }
 
-    public static PegNode unit() {
-        return opNode("unit");
+    public static Unit unit() {
+        return Unit.unitSingleton;
+    }
+
+    public static Void voidNode() {
+        return Void.voidSingleton;
     }
 
     public static PhiNode phi(Integer guard, Integer then, Integer els) {
