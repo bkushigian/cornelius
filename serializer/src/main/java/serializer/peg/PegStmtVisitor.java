@@ -8,6 +8,7 @@ import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
 import serializer.peg.testing.TestPairs;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.*;
 
@@ -152,8 +153,49 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
 
 
     @Override
-    public ExpressionResult visit(WhileStmt n, PegContext arg) {
-        throw new RuntimeException("WhileStmt");
+    public ExpressionResult visit(WhileStmt n, PegContext ctx) {
+        // init theta nodes
+        ImmutableSet<String> vars = ctx.localVariableLookup.keySet();
+        for (String var: vars) {
+            PegNode.ThetaNode theta = PegNode.theta(ctx.getLocalVar(var).id, PegNode.blank().id);
+            ctx = ctx.setLocalVar(var, theta);
+        }
+        PegNode state = PegNode.theta(ctx.heap.state, PegNode.blank().id);
+        PegNode status = PegNode.theta(ctx.heap.status, PegNode.blank().id);
+        PegContext initCtx = ctx.withHeap(PegNode.heap(state.id, status.id));
+
+        // visit cond + body, apply side effects to theta nodes
+        ExpressionResult cond = n.getCondition().accept(pev, initCtx);
+        ctx = cond.context;
+        ExpressionResult body = n.getBody().accept(pev, ctx);
+        ctx = body.context;
+
+        // blank replacement
+        for (String var: vars) {
+            PegNode val = ctx.getLocalVar(var);
+            Optional<PegNode.ThetaNode> thetaOpt = initCtx.getLocalVar(var).asThetaNode();
+            if (thetaOpt.isPresent()) {
+                PegNode.ThetaNode theta = thetaOpt.get();
+                PegNode.replace(theta.next, val.id);
+            } else {
+                throw new IllegalStateException();
+            }
+        }
+        PegNode.replace(initCtx.heap.state, ctx.heap.state);
+        PegNode.replace(initCtx.heap.status, ctx.heap.status);
+
+        // construct eval nodes
+        ctx = cond.context;
+        PegNode pass = PegNode.pass(cond.peg.id);
+        for (String var: vars) {
+            PegNode val = ctx.getLocalVar(var);
+            ctx = ctx.setLocalVar(var, PegNode.eval(val.id, pass.id));
+        }
+        state = PegNode.eval(ctx.heap.state, pass.id);
+        status = PegNode.eval(ctx.heap.status, pass.id);
+        ctx = ctx.withHeap(PegNode.heap(state.id, status.id));
+       
+        return ctx.exprResult();
     }
 
     @Override
