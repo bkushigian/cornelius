@@ -172,11 +172,10 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
 
         // blank replacement
         for (String var: vars) {
-            PegNode val = ctx.getLocalVar(var);
             Optional<PegNode.ThetaNode> thetaOpt = initCtx.getLocalVar(var).asThetaNode();
             if (thetaOpt.isPresent()) {
                 PegNode.ThetaNode theta = thetaOpt.get();
-                PegNode.replace(theta.next, val.id);
+                PegNode.replace(theta.next, ctx.getLocalVar(var).id);
             } else {
                 throw new IllegalStateException();
             }
