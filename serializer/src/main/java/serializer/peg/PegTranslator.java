@@ -103,7 +103,7 @@ public class PegTranslator {
         final PegContext initCtx = PegContext.initWithParams(classVisitorResult.getFieldNames(),
                 Util.getParameterList(n));
         final ExpressionResult result = n.accept(stmtVisitor, initCtx);
-        return result.context.asPeg().orElseThrow(IllegalStateException::new);
+        return result.peg;
     }
 
 }
