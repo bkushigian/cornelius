@@ -95,8 +95,28 @@ public abstract class PegNode {
         return false;
     }
 
+    public boolean isBlankNode() {
+        return false;
+    }
+
     public boolean isOpNode() {
         return false;
+    }
+
+    public boolean isPhiNode() {
+        return false;
+    }
+
+    public boolean isThetaNode() {
+        return false;
+    }
+
+    public Optional<PhiNode> asPhiNode() {
+        return Optional.empty();
+    }
+
+    public Optional<ThetaNode> asThetaNode() {
+        return Optional.empty();
     }
 
     public Optional<OpNode> asOpNode() {
@@ -235,6 +255,17 @@ public abstract class PegNode {
         }
     }
 
+    public static class BlankNode extends PegNode {
+        private BlankNode() {
+            idLookup.put(id, this);
+        }
+
+        @Override
+        public boolean isBlankNode() {
+            return true;
+        }
+    }
+
     public static class OpNode extends PegNode {
         public final String op;
 
@@ -318,6 +349,48 @@ public abstract class PegNode {
             return Objects.hash(op, children);
         }
 
+    }
+
+    public static class PhiNode extends OpNode {
+        public final Integer guard;
+        public final Integer thn;
+        public final Integer els;
+        private PhiNode(final Integer guard, final Integer thn, final Integer els) {
+            super("phi", guard, thn, els);
+            this.guard = guard;
+            this.thn = thn;
+            this.els = els;
+        }
+
+        @Override
+        public Optional<PhiNode> asPhiNode() {
+            return Optional.of(this);
+        }
+
+        @Override
+        public boolean isPhiNode() {
+            return true;
+        }
+    }
+
+    public static class ThetaNode extends OpNode {
+        public final Integer init;
+        public final Integer next;
+        private ThetaNode(final Integer init, final Integer next) {
+            super("theta", init, next);
+            this.init = init;
+            this.next = next;
+        }
+
+        @Override
+        public Optional<ThetaNode> asThetaNode() {
+            return Optional.of(this);
+        }
+
+        @Override
+        public boolean isThetaNode() {
+            return true;
+        }
     }
 
     public static class Heap extends OpNode {
@@ -420,12 +493,31 @@ public abstract class PegNode {
         return litLookup.get(s);
     }
 
+    public static PegNode blank() {
+        return new BlankNode();
+    }
+
     public static PegNode unit() {
         return opNode("unit");
     }
 
     public static PegNode phi(Integer guard, Integer then, Integer els) {
       return opNode("phi", guard, then, els);
+    }
+
+    public static ThetaNode theta(Integer init, Integer next) {
+      final String sym = "theta";
+      final List<Integer> childs = new ArrayList<>(3);
+      childs.add(init);
+      childs.add(next);
+      if (!symbolLookup.containsKey(sym) || !symbolLookup.get(sym).containsKey(childs)) {
+          return new ThetaNode(init, next);
+      }
+      final PegNode node = symbolLookup.get(sym).get(childs);
+      return node.asThetaNode().orElseThrow(() -> new IllegalStateException(
+              String.format("Unexpected value cached for sym=\"theta\", children=[%d, %d];" +
+                      " expected a PegNode.ThetaNode but found %s",
+                      init, next, symbolLookup.get(sym).get(childs).toDerefString())));
     }
 
     public static PegNode var(String name) {
@@ -482,6 +574,14 @@ public abstract class PegNode {
 
     public static PegNode newObject(final String type, final Integer actuals, final Integer heap) {
         return opNode("new", stringLit(type).id, actuals, heap);
+    }
+
+    public static PegNode pass(Integer condition) {
+        return opNode("pass", condition);
+    }
+
+    public static PegNode eval(Integer theta, Integer pass) {
+        return opNode("eval", theta, pass);
     }
 
     /**
@@ -590,5 +690,10 @@ public abstract class PegNode {
             id = opNode("||", id, childId).id;
         }
         return idLookup(id).orElseThrow(IllegalStateException::new);
+    }
+
+    public static void replace(Integer blank, Integer value) {
+        // maybe add arg checks later?
+        idLookup.put(blank, idLookup.get(value));
     }
 }
