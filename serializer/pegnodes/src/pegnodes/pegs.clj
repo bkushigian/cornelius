@@ -55,10 +55,20 @@
   []
   (PegNode/unit))
 
+(defn blank
+  "Create a blank PEG"
+  []
+  (PegNode/blank))
+
 (defn phi
   "Create a phi node (if/then/else expression)."
   [cond then else]
   (PegNode/phi (object->id cond) (object->id then) (object->id else)))
+
+(defn theta
+  "Create a theta node (sequence expression)."
+  [init next]
+  (PegNode/theta (object->id init) (object->id next)))
 
 (defn param
   "Create a parameter node"
@@ -283,3 +293,28 @@ EXCEPTION: the exception to be thrown"
 (defn update-status-npe
   [heap-or-status possibly-null-peg]
   (update-exception-status heap-or-status (is-null? possibly-null-peg) (exception "java.lang.NullPointerException")))
+
+;; Theta
+(defn theta->next [theta]
+  (.. theta next))
+
+(defn theta-init [init]
+  (theta init (blank)))
+
+(defn theta-init-heap [hp]
+  (heap (theta-init (heap->state hp)) (theta-init (heap->status hp))))
+
+(defn repl [init new]
+  (PegNode/replace (object->id init) (object->id new)))
+
+(defn repl-heap [init new]
+  (do (repl (heap->state init) (heap->state new)) (repl (heap->status init) (heap->status new))))
+  
+(defn evl [id pass]
+  (opnode "eval" id (opnode "pass" pass)))
+
+(defn eval-heap [heap pass]
+  (heap (evl (heap->state heap) pass) (evl (heap->status heap) pass)))
+
+(defn make-heap [state status]
+  (heap state status))

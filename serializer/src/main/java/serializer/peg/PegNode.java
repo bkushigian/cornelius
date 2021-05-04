@@ -264,6 +264,11 @@ public abstract class PegNode {
         public boolean isBlankNode() {
             return true;
         }
+
+        @Override
+        public String toString() {
+            return "blank";
+        }
     }
 
     public static class OpNode extends PegNode {
@@ -376,10 +381,13 @@ public abstract class PegNode {
     public static class ThetaNode extends OpNode {
         public final Integer init;
         public final Integer next;
+        private boolean expand;   // indicates whether to expand during printing
+
         private ThetaNode(final Integer init, final Integer next) {
             super("theta", init, next);
             this.init = init;
             this.next = next;
+            this.expand = true;
         }
 
         @Override
@@ -390,6 +398,34 @@ public abstract class PegNode {
         @Override
         public boolean isThetaNode() {
             return true;
+        }
+
+        @Override
+        public String toDerefString() {
+            if (!expand) {
+                //return op + this.id;
+                return op;
+            }
+            expand = false;
+            final StringBuilder sb = new StringBuilder("(");
+            //sb.append(op + this.id);
+            sb.append(op);
+            sb.append(' ');
+            boolean added = false;
+            for (Integer child : children) {
+                if (added) {
+                    sb.append(' ');
+                }
+                added = true;
+                final PegNode p = idLookup.get(child);
+                if (p == null) {
+                    throw new IllegalStateException("OpNode " + op + " child index " + child + " not present");
+                }
+                sb.append(p.toDerefString());
+            }
+            expand = true;
+
+            return sb.append(")").toString();
         }
     }
 

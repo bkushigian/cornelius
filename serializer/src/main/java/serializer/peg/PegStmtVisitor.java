@@ -163,12 +163,16 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         PegNode state = PegNode.theta(ctx.heap.state, PegNode.blank().id);
         PegNode status = PegNode.theta(ctx.heap.status, PegNode.blank().id);
         PegContext initCtx = ctx.withHeap(PegNode.heap(state.id, status.id));
+        testPairs.scrape(n, initCtx.exprResult(), "init");
 
         // visit cond + body, apply side effects to theta nodes
         ExpressionResult cond = n.getCondition().accept(pev, initCtx);
         ctx = cond.context;
-        ExpressionResult body = n.getBody().accept(pev, ctx);
+        testPairs.scrape(n, cond, "cond");
+
+        ExpressionResult body = n.getBody().accept(this, ctx);
         ctx = body.context;
+        testPairs.scrape(n, body, "body");
 
         // blank replacement
         for (String var: vars) {
@@ -180,8 +184,9 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
                 throw new IllegalStateException();
             }
         }
-        PegNode.replace(initCtx.heap.state, ctx.heap.state);
-        PegNode.replace(initCtx.heap.status, ctx.heap.status);
+        PegNode.replace(state.asThetaNode().get().next, ctx.heap.state);
+        PegNode.replace(status.asThetaNode().get().next, ctx.heap.status);
+        testPairs.scrape(n, cond, "replace");
 
         // construct eval nodes
         ctx = cond.context;
@@ -194,6 +199,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         status = PegNode.eval(ctx.heap.status, pass.id);
         ctx = ctx.withHeap(PegNode.heap(state.id, status.id));
        
+        testPairs.scrape(n, ctx.exprResult(), "eval");
         return ctx.exprResult();
     }
 
