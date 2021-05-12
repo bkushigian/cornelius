@@ -1,6 +1,6 @@
 public class Loops {
 
-    int program1() {
+    int program01() {
         /**
          * <cond>
          *  [blank1     (blank-node)
@@ -8,12 +8,15 @@ public class Loops {
          *   state      (theta-node (heap->state heap) blank1)
          *   status     (theta-node (heap->status heap) blank2)
          *   heap       (make-heap state status)
-         *   condition  (bool-lit false)]
+         *   condition  (bool-lit false)
+         *   (snapshot {:peg condition :heap heap})]
          * </cond>
+         * <body>
+         *  [heap       heap
+             (snapshot {:heap heap})]
+         * </body> 
          * <expected>
-         *  [update     (replace-node blank1 state)
-         *   update     (replace-node blank2 status)
-         *   pass       (pass-node condition)   
+         *  [pass       (pass-node condition)   
          *   state      (eval-node state pass)
          *   status     (eval-node status pass)
          *   heap       (make-heap state status)
@@ -44,26 +47,23 @@ public class Loops {
          *  [blank1         (blank-node)
          *   blank2         (blank-node)
          *   blank3         (blank-node)
-         *   blank4         (blank-node)
          *   theta-x        (theta-node (ctx-lookup ctx "x") blank1)
-         *   theta-this     (theta-node (ctx-lookup ctx "this") blank2)
-         *   theta-state    (theta-node (heap->state heap) blank3)
-         *   theta-status   (theta-node (heap->status heap) blank4)
+         *   theta-state    (theta-node (heap->state heap) blank2)
+         *   theta-status   (theta-node (heap->status heap) blank3)
          *   ctx            (ctx-update ctx "x" theta-x)
-         *   ctx            (ctx-update ctx "this" theta-this)
          *   heap           (make-heap theta-state theta-status)
-         *   condition      (bool-lit false)]
+         *   condition      (bool-lit false)
+         *   (snapshot {:peg condition :heap heap})]
          * </cond>
+         * <body>
+         *  [heap           heap
+             (snapshot {:heap heap})]
+         * </body> 
          * <expected>
-         *  [update     (replace-node blank1 (ctx-lookup ctx "x"))
-         *   update     (replace-node blank2 (ctx-lookup ctx "this"))
-         *   update     (replace-node blank3 (heap->state heap))
-         *   update     (replace-node blank4 (heap->status heap))
-         *   pass       (pass-node condition)     
+         *  [pass       (pass-node condition)     
          *   ctx        (ctx-update ctx "x" (eval-node theta-x pass))
-         *   ctx        (ctx-update ctx "this" (eval-node theta-this pass))
          *   heap       (make-heap (eval-node theta-state pass) (eval-node theta-status pass))     
-         *   (snapshot {:ctx ctx :heap heap})]
+         *   (snapshot {:heap heap})]
          * </expected>
          */
         while (false) {
@@ -107,17 +107,17 @@ public class Loops {
          *  [blank1     (blank-node)
          *   blank2     (blank-node)
          *   theta-x    (theta-node (ctx-lookup ctx "x") blank1)
-         *   theta-this (theta-node (ctx-lookup ctx "this") blank2)
          *   ctx        (ctx-update ctx "x" theta-x)
-         *   ctx        (ctx-update ctx "this" theta-this)
-         *   condition  (opnode "<" theta-x (int-lit 3))]
+         *   condition  (opnode "<" theta-x (int-lit 3))
+         *   (snapshot {:peg condition :ctx ctx})]
          * </cond> 
+         * <body>
+         *  [ctx        ctx
+             (snapshot {:ctx ctx})]
+         * </body> 
          * <expected>     
-         *  [update     (replace-node blank1 (ctx-lookup ctx "x"))
-         *   update     (replace-node blank2 (ctx-lookup ctx "this"))
-         *   pass       (pass-node condition)
+         *  [pass       (pass-node condition)
          *   ctx        (ctx-update ctx "x" (eval-node theta-x pass))
-         *   ctx        (ctx-update ctx "this" (eval-node theta-this pass))
          *   (snapshot {:ctx ctx})]
          * </expected>
          */
@@ -154,18 +154,18 @@ public class Loops {
          *  [blank1     (blank-node)
          *   blank2     (blank-node)
          *   theta-x    (theta-node (ctx-lookup ctx "x") blank1)
-         *   theta-this (theta-node (ctx-lookup ctx "this") blank2)
          *   cond-x     (opnode "+" theta-x (int-lit 1))
          *   ctx        (ctx-update ctx "x" cond-x)
-         *   ctx        (ctx-update ctx "this" theta-this)
-         *   condition  (opnode "<" cond-x (int-lit 3))]
-         * </cond> 
+         *   condition  (opnode "<" cond-x (int-lit 3))
+         *   (snapshot {:peg condition :ctx ctx})]
+         * </cond>
+         * <body>
+         *  [ctx        ctx
+             (snapshot {:ctx ctx})]
+         * </body> 
          * <expected>      
-         *  [update     (replace-node blank1 (ctx-lookup ctx "x"))
-         *   update     (replace-node blank2 (ctx-lookup ctx "this"))
-         *   pass       (pass-node condition)
+         *  [pass       (pass-node condition)
          *   ctx        (ctx-update ctx "x" (eval-node cond-x pass))
-         *   ctx        (ctx-update ctx "this" (eval-node theta-this pass))
          *   (snapshot {:ctx ctx})]
          * </expected>
          */
@@ -182,7 +182,7 @@ public class Loops {
 
         /**
          * <expected>
-         *  [x       (ctx-lookup ctx "x") 
+         *  [x  (ctx-lookup ctx "x") 
          *   (snapshot {:return x})]
          * </expected>
          */

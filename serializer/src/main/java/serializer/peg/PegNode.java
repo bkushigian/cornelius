@@ -95,10 +95,6 @@ public abstract class PegNode {
         return false;
     }
 
-    public boolean isBlankNode() {
-        return false;
-    }
-
     public boolean isOpNode() {
         return false;
     }
@@ -107,19 +103,27 @@ public abstract class PegNode {
         return false;
     }
 
+    public boolean isBlankNode() {
+        return false;
+    }
+
     public boolean isThetaNode() {
         return false;
+    }
+
+    public Optional<OpNode> asOpNode() {
+        return Optional.empty();
     }
 
     public Optional<PhiNode> asPhiNode() {
         return Optional.empty();
     }
 
-    public Optional<ThetaNode> asThetaNode() {
+    public Optional<BlankNode> asBlankNode() {
         return Optional.empty();
     }
 
-    public Optional<OpNode> asOpNode() {
+    public Optional<ThetaNode> asThetaNode() {
         return Optional.empty();
     }
 
@@ -255,22 +259,6 @@ public abstract class PegNode {
         }
     }
 
-    public static class BlankNode extends PegNode {
-        private BlankNode() {
-            idLookup.put(id, this);
-        }
-
-        @Override
-        public boolean isBlankNode() {
-            return true;
-        }
-
-        @Override
-        public String toString() {
-            return "blank";
-        }
-    }
-
     public static class OpNode extends PegNode {
         public final String op;
 
@@ -374,6 +362,27 @@ public abstract class PegNode {
 
         @Override
         public boolean isPhiNode() {
+            return true;
+        }
+    }
+
+    public static class BlankNode extends OpNode {
+        static int _blankId = 0;
+        private final int blankId;
+
+        private BlankNode(Integer idLit) {
+            super("blank", idLit);
+            blankId = idLookup(idLit).orElseThrow(IllegalStateException::new)
+                      .asInteger().orElseThrow(IllegalStateException::new);
+        }
+
+        @Override
+        public Optional<BlankNode> asBlankNode() {
+            return Optional.of(this);
+        }
+
+        @Override
+        public boolean isBlankNode() {
             return true;
         }
     }
@@ -487,6 +496,8 @@ public abstract class PegNode {
 
     private static Map<Object, PegNode> litLookup = new HashMap<>();
 
+    private static Map<Integer, Integer> blankLookup = new HashMap<>();
+
     /**
      * Get an OpNode for sym being applied to children. This creates a new
      * OpNode if needed (i.e., if one with the same sym and children doesn't
@@ -529,16 +540,16 @@ public abstract class PegNode {
         return litLookup.get(s);
     }
 
-    public static PegNode blank() {
-        return new BlankNode();
-    }
-
     public static PegNode unit() {
         return opNode("unit");
     }
 
     public static PegNode phi(Integer guard, Integer then, Integer els) {
       return opNode("phi", guard, then, els);
+    }
+
+    public static PegNode blank() {
+        return new BlankNode(intLit(BlankNode._blankId++).id);
     }
 
     public static ThetaNode theta(Integer init, Integer next) {
@@ -728,8 +739,8 @@ public abstract class PegNode {
         return idLookup(id).orElseThrow(IllegalStateException::new);
     }
 
-    public static void replace(Integer blank, Integer value) {
+    public static void assignBlank(Integer blank, Integer value) {
         // maybe add arg checks later?
-        idLookup.put(blank, idLookup.get(value));
+        blankLookup.put(blank, value);
     }
 }

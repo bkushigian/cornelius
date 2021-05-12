@@ -80,11 +80,6 @@
   [expr pass]
   (opnode "eval" expr pass))
 
-(defn replace-node
-  "Replace an id with with a different peg (intended for blank nodes)"
-  [init new]
-  (PegNode/replace (object->id init) (object->id new)))
-
 (defn param
   "Create a parameter node"
   [var-name]
