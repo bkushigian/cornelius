@@ -20,7 +20,7 @@ public class Loops {
          *   state      (eval-node state pass)
          *   status     (eval-node status pass)
          *   heap       (make-heap state status)
-         *   (snapshot {:ctz ctx :heap heap})]
+         *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */
         while(false) {}
@@ -113,16 +113,16 @@ public class Loops {
          *   theta-status   (theta-node (heap->status heap) blank3)
          *   heap           (make-heap theta-state theta-status)
          *   condition      (opnode "<" theta-x (int-lit 3))
-         *   (snapshot {:peg condition :ctx ctx})]
+         *   (snapshot {:peg condition :ctx ctx :heap heap})]
          * </cond> 
          * <body>
          *  [ctx        ctx
-             (snapshot {:ctx ctx})]
+             (snapshot {:ctx ctx :heap heap})]
          * </body> 
          * <expected>     
          *  [pass       (pass-node condition)
          *   ctx        (ctx-update ctx "x" (eval-node theta-x pass))
-         *   (snapshot {:ctx ctx})]
+         *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */
         while (x < 3) {
@@ -165,16 +165,16 @@ public class Loops {
          *   cond-x     (opnode "+" theta-x (int-lit 1))
          *   ctx        (ctx-update ctx "x" cond-x)
          *   condition  (opnode "<" cond-x (int-lit 3))
-         *   (snapshot {:peg condition :ctx ctx})]
+         *   (snapshot {:peg condition :ctx ctx :heap heap})]
          * </cond>
          * <body>
          *  [ctx        ctx
-             (snapshot {:ctx ctx})]
+             (snapshot {:ctx ctx :heap heap})]
          * </body> 
          * <expected>      
          *  [pass       (pass-node condition)
          *   ctx        (ctx-update ctx "x" (eval-node cond-x pass))
-         *   (snapshot {:ctx ctx})]
+         *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */
         while ((x = x + 1) < 3) {
