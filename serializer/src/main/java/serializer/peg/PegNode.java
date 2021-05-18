@@ -28,7 +28,9 @@ public abstract class PegNode {
         idLookup.clear();
         litLookup.clear();
         symbolLookup.clear();
+        blankLookup.clear();
         _id = 0;
+        BlankNode._blankId = 0;
     }
 
     public String toDerefString() {
