@@ -12,8 +12,9 @@ public class Loops {
          *   (snapshot {:peg condition :ctx ctx :heap heap})]
          * </cond>
          * <body>
-         *  [heap       heap
-             (snapshot {:ctx ctx :heap heap})]
+         *  [update     (assign-blank blank1 state)
+         *   update     (assign-blank blank2 status)
+         *   (snapshot {:ctx ctx :heap heap})]
          * </body> 
          * <expected>
          *  [pass       (pass-node condition)   
@@ -56,8 +57,13 @@ public class Loops {
          *   (snapshot {:peg condition :ctx ctx :heap heap})]
          * </cond>
          * <body>
-         *  [heap           heap
-             (snapshot {:ctx ctx :heap heap})]
+         *  [x              (ctx-lookup ctx "x")
+         *   state          (heap->state heap)
+         *   status         (heap->status heap)
+         *   update         (assign-blank blank1 x)
+         *   update         (assign-blank blank2 state)
+         *   update         (assign-blank blank3 status)
+         *   (snapshot {:ctx ctx :heap heap})]
          * </body> 
          * <expected>
          *  [pass       (pass-node condition)     
@@ -116,12 +122,18 @@ public class Loops {
          *   (snapshot {:peg condition :ctx ctx :heap heap})]
          * </cond> 
          * <body>
-         *  [ctx        ctx
-             (snapshot {:ctx ctx :heap heap})]
+         *  [x              (ctx-lookup ctx "x")
+         *   state          (heap->state heap)
+         *   status         (heap->status heap)
+         *   update         (assign-blank blank1 x)
+         *   update         (assign-blank blank2 state)
+         *   update         (assign-blank blank3 status)
+         *   (snapshot {:ctx ctx :heap heap})]
          * </body> 
          * <expected>     
          *  [pass       (pass-node condition)
          *   ctx        (ctx-update ctx "x" (eval-node theta-x pass))
+         *   heap       (make-heap (eval-node theta-state pass) (eval-node theta-status pass))
          *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */
@@ -155,25 +167,31 @@ public class Loops {
 
         /**
          * <cond>
-         *  [blank1     (blank-node)
-         *   blank2     (blank-node)
-         *   blank3     (blank-node)
-         *   theta-x    (theta-node (ctx-lookup ctx "x") blank1)
+         *  [blank1         (blank-node)
+         *   blank2         (blank-node)
+         *   blank3         (blank-node)
+         *   theta-x        (theta-node (ctx-lookup ctx "x") blank1)
          *   theta-state    (theta-node (heap->state heap) blank2)
          *   theta-status   (theta-node (heap->status heap) blank3)
          *   heap           (make-heap theta-state theta-status)
-         *   cond-x     (opnode "+" theta-x (int-lit 1))
-         *   ctx        (ctx-update ctx "x" cond-x)
-         *   condition  (opnode "<" cond-x (int-lit 3))
+         *   cond-x         (opnode "+" theta-x (int-lit 1))
+         *   ctx            (ctx-update ctx "x" cond-x)
+         *   condition      (opnode "<" cond-x (int-lit 3))
          *   (snapshot {:peg condition :ctx ctx :heap heap})]
          * </cond>
          * <body>
-         *  [ctx        ctx
-             (snapshot {:ctx ctx :heap heap})]
+         *  [x              (ctx-lookup ctx "x")
+         *   state          (heap->state heap)
+         *   status         (heap->status heap)
+         *   update         (assign-blank blank1 x)
+         *   update         (assign-blank blank2 state)
+         *   update         (assign-blank blank3 status)
+         *   (snapshot {:ctx ctx :heap heap})]
          * </body> 
          * <expected>      
          *  [pass       (pass-node condition)
          *   ctx        (ctx-update ctx "x" (eval-node cond-x pass))
+         *   heap       (make-heap (eval-node theta-state pass) (eval-node theta-status pass))
          *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */

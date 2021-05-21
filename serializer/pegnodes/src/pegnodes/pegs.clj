@@ -55,15 +55,15 @@
   []
   (PegNode/unit))
 
-(defn blank-node
-  "Create a blank PEG"
-  []
-  (PegNode/blank))
-
 (defn phi
   "Create a phi node (if/then/else expression)."
   [cond then else]
   (PegNode/phi (object->id cond) (object->id then) (object->id else)))
+
+(defn blank-node
+  "Create a blank PEG"
+  []
+  (PegNode/blank))
 
 (defn theta-node
   "Create a theta node (sequence expression)."
@@ -79,6 +79,11 @@
   "Create an eval node (value of sequence after termination)"
   [expr pass]
   (opnode "eval" expr pass))
+
+(defn assign-blank
+  "Assign a blank node to the peg it should point to"
+  [blank value]
+  (PegNode/assignBlank (object->id blank) (object->id value)))                  
 
 (defn param
   "Create a parameter node"

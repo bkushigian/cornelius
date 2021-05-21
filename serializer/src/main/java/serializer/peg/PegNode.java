@@ -741,8 +741,64 @@ public abstract class PegNode {
         return idLookup(id).orElseThrow(IllegalStateException::new);
     }
 
+    /**
+     * @param blank id of an unassigned Blank node
+     * @param value id of the peg that blank should be assigned to
+     */
     public static void assignBlank(Integer blank, Integer value) {
-        // maybe add arg checks later?
+        PegNode blankNode = idLookup(blank).orElseThrow(IllegalStateException::new);
+        if (!blankNode.isBlankNode() || blankLookup.containsKey(blank)) {
+            throw new IllegalStateException();
+        }
         blankLookup.put(blank, value);
+    }
+
+    // checks that the pegs form a strucutal bijection
+    public static boolean isStructuralBijection(Integer id1, Integer id2) {
+        if (!idLookup.containsKey(id1) || !idLookup.containsKey(id2)) {
+            throw new IllegalArgumentException();
+        }
+        Map<Integer, Integer> bijection1 = new HashMap<>();
+        Map<Integer, Integer> bijection2 = new HashMap<>();
+        Stack<Integer> s1 = new Stack<>();
+        Stack<Integer> s2 = new Stack<>();
+        s1.add(id1);
+        s2.add(id2);
+        while (!s1.isEmpty() && !s2.isEmpty()) {
+            Integer node1 = s1.pop();
+            Integer node2 = s2.pop(); 
+            PegNode peg1 = idLookup.get(node1);
+            PegNode peg2 = idLookup.get(node2);
+            if (peg1.isBlankNode() && peg2.isBlankNode()) {
+                if (bijection1.containsKey(node1) && bijection2.containsKey(node2)) {
+                    if (bijection1.get(node1) != node2 || bijection2.get(node2) != node1) {
+                        return false;
+                    }
+                } else if (bijection1.containsKey(node1) || bijection2.containsKey(node2)) {
+                    return false;
+                } else {
+                    bijection1.put(node1, node2);
+                    bijection2.put(node2, node1);
+                    if (blankLookup.containsKey(node1) && blankLookup.containsKey(node2)) {
+                        s1.push(blankLookup.get(node1));
+                        s2.push(blankLookup.get(node2));
+                    }
+                }
+            } else if (peg1.isOpNode() && peg2.isOpNode()) {
+                OpNode opnode1 = peg1.asOpNode().get();
+                OpNode opnode2 = peg2.asOpNode().get();
+                if (!opnode1.op.equals(opnode2.op)) {
+                    return false;
+                }
+                s1.addAll(opnode1.children);
+                s2.addAll(opnode2.children);
+            } else if (!node1.equals(node2)) {
+                return false;
+            }
+        }
+        if (!s1.isEmpty() || !s2.isEmpty()) {
+            throw new IllegalStateException();
+        }
+        return true;
     }
 }

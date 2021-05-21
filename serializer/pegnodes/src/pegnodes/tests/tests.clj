@@ -118,6 +118,16 @@
                 (subs actual-str idx (min (count actual-str) (+ idx 80)))
                 "\033[0m\n")))))
 
+(defn ensure-ids-are-equiv
+  "ensure, the ids point to pegs that form a structual bijection"
+
+  ([expected-id actual-id expected-string actual-string] (ensure-ids-are-equiv expected-id actual-id nil))
+  ([expected-id actual-id expected-string actual-string msg]
+   (let [bijection (PegNode/isStructuralBijection expected-id actual-id)]
+      (if bijection
+          (clojure.test/is bijection "fail")
+          (ensure-strings-are-same expected-string actual-string msg)))))
+
 (defn contexts-are-same
   "Create a test ensuring contexts are the 'same'. By 'same' I mean that each
   context has identical keys, and that `(to-deref-string (ctx-expected key)) =
@@ -127,16 +137,20 @@
        (let [the-keys (into #{} (filter string? (keys ctx-actual)))]
          (list 'clojure.test/testing "CHECKING:CONTEXT"
                (conj (for [k (filter string? the-keys)]
-                       `(ensure-strings-are-same (to-deref-string   (~ctx-expected ~k))
-                                                 ~(to-deref-string  (ctx-actual   k))
-                                                 ~(str "\033[1;32mContexts Differ @\033[0m " k)))
+                       `(ensure-ids-are-equiv (.-id (~ctx-expected ~k))
+                                              ~(.-id (ctx-actual   k))
+                                              (to-deref-string   (~ctx-expected ~k))
+                                              ~(to-deref-string  (ctx-actual   k))
+                                              ~(str "\033[1;32mContexts Differ @\033[0m " k)))
                      'do)))))
 
 (defn pegs-are-same
   [peg-e peg-a]
   (and peg-e
        (list 'clojure.test/testing "CHECKING:PEG"
-             `(ensure-strings-are-same
+             `(ensure-ids-are-equiv
+               (.-id ~peg-e)
+               ~(.-id peg-a)
                (to-deref-string ~peg-e)
                ~(to-deref-string peg-a)
                "\033[1;32mPegs Differ\033[0m"))))
@@ -145,7 +159,9 @@
   [ret-e ret-a]
   (and ret-e
        (list 'clojure.test/testing "CHECKING:RETURN-VALUE"
-             `(ensure-strings-are-same
+             `(ensure-ids-are-equiv
+               (.-id ~ret-e)
+               ~(.-id ret-a)
                (to-deref-string ~ret-e)
                ~(to-deref-string ret-a)
                "\033[1;32mReturn Values Differ\033[0m"))))
@@ -154,7 +170,9 @@
   [heap-e heap-a]
   (and heap-e
        (list 'clojure.test/testing "CHECKING HEAP"
-             `(ensure-strings-are-same
+             `(ensure-ids-are-equiv
+               (.-id ~heap-e)
+               ~(.-id heap-a) 
                (to-deref-string ~heap-e)
                ~(to-deref-string heap-a)
                "\033[1;32mHeap Values Differ\033[0m"))))
