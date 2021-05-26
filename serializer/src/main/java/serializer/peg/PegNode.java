@@ -366,6 +366,30 @@ public abstract class PegNode {
         public boolean isPhiNode() {
             return true;
         }
+
+        /**
+         * @return the guard node for this {@code PhiNode} if it exists
+         * @throws IllegalStateException when the guard id isn't associated with an {@code PegNode}
+         */
+        public PegNode getGuard() {
+            return PegNode.idLookup(guard).orElseThrow(IllegalStateException::new);
+        }
+
+        /**
+         * @return the then node for this {@code PhiNode} if it exists
+         * @throws IllegalStateException when the then id isn't associated with an {@code PegNode}
+         */
+        public PegNode getThen() {
+            return PegNode.idLookup(thn).orElseThrow(IllegalStateException::new);
+        }
+
+        /**
+         * @return the else node for this {@code PhiNode} if it exists
+         * @throws IllegalStateException when the else id isn't associated with an {@code PegNode}
+         */
+        public PegNode getElse() {
+            return PegNode.idLookup(els).orElseThrow(IllegalStateException::new);
+        }
     }
 
     public static class BlankNode extends OpNode {
@@ -437,6 +461,22 @@ public abstract class PegNode {
             expand = true;
 
             return sb.append(")").toString();
+        }
+
+        /**
+         * @return the initializer node for this {@code ThetaNode} if it exists
+         * @throws IllegalStateException when the initializer id isn't associated with an {@code PegNode}
+         */
+        public PegNode getInitializer() {
+            return PegNode.idLookup(init).orElseThrow(IllegalStateException::new);
+        }
+
+        /**
+         * @return the continuation node for this {@code ThetaNode} if it exists
+         * @throws IllegalStateException when the continuation id isn't associated with an {@code PegNode}
+         */
+        public PegNode getContinuation() {
+            return PegNode.idLookup(next).orElseThrow(IllegalStateException::new);
         }
     }
 
