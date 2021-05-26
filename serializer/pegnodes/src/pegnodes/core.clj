@@ -12,4 +12,5 @@
      (str subjects-directory "/field-write/FieldWrite.java")
      (str subjects-directory "/side-effects/SideEffects.java")
      (str subjects-directory "/nullity/Nullity.java")
+     (str subjects-directory "/loops/Loops.java")
      ])))

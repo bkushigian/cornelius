@@ -28,7 +28,9 @@ public abstract class PegNode {
         idLookup.clear();
         litLookup.clear();
         symbolLookup.clear();
+        blankLookup.clear();
         _id = 0;
+        BlankNode._blankId = 0;
     }
 
     public String toDerefString() {
@@ -99,7 +101,31 @@ public abstract class PegNode {
         return false;
     }
 
+    public boolean isPhiNode() {
+        return false;
+    }
+
+    public boolean isBlankNode() {
+        return false;
+    }
+
+    public boolean isThetaNode() {
+        return false;
+    }
+
     public Optional<OpNode> asOpNode() {
+        return Optional.empty();
+    }
+
+    public Optional<PhiNode> asPhiNode() {
+        return Optional.empty();
+    }
+
+    public Optional<BlankNode> asBlankNode() {
+        return Optional.empty();
+    }
+
+    public Optional<ThetaNode> asThetaNode() {
         return Optional.empty();
     }
 
@@ -320,6 +346,100 @@ public abstract class PegNode {
 
     }
 
+    public static class PhiNode extends OpNode {
+        public final Integer guard;
+        public final Integer thn;
+        public final Integer els;
+        private PhiNode(final Integer guard, final Integer thn, final Integer els) {
+            super("phi", guard, thn, els);
+            this.guard = guard;
+            this.thn = thn;
+            this.els = els;
+        }
+
+        @Override
+        public Optional<PhiNode> asPhiNode() {
+            return Optional.of(this);
+        }
+
+        @Override
+        public boolean isPhiNode() {
+            return true;
+        }
+    }
+
+    public static class BlankNode extends OpNode {
+        static int _blankId = 0;
+        private final int blankId;
+
+        private BlankNode(Integer idLit) {
+            super("blank", idLit);
+            blankId = idLookup(idLit).orElseThrow(IllegalStateException::new)
+                      .asInteger().orElseThrow(IllegalStateException::new);
+        }
+
+        @Override
+        public Optional<BlankNode> asBlankNode() {
+            return Optional.of(this);
+        }
+
+        @Override
+        public boolean isBlankNode() {
+            return true;
+        }
+    }
+
+    public static class ThetaNode extends OpNode {
+        public final Integer init;
+        public final Integer next;
+        private boolean expand;   // indicates whether to expand during printing
+
+        private ThetaNode(final Integer init, final Integer next) {
+            super("theta", init, next);
+            this.init = init;
+            this.next = next;
+            this.expand = true;
+        }
+
+        @Override
+        public Optional<ThetaNode> asThetaNode() {
+            return Optional.of(this);
+        }
+
+        @Override
+        public boolean isThetaNode() {
+            return true;
+        }
+
+        @Override
+        public String toDerefString() {
+            if (!expand) {
+                //return op + this.id;
+                return op;
+            }
+            expand = false;
+            final StringBuilder sb = new StringBuilder("(");
+            //sb.append(op + this.id);
+            sb.append(op);
+            sb.append(' ');
+            boolean added = false;
+            for (Integer child : children) {
+                if (added) {
+                    sb.append(' ');
+                }
+                added = true;
+                final PegNode p = idLookup.get(child);
+                if (p == null) {
+                    throw new IllegalStateException("OpNode " + op + " child index " + child + " not present");
+                }
+                sb.append(p.toDerefString());
+            }
+            expand = true;
+
+            return sb.append(")").toString();
+        }
+    }
+
     public static class Heap extends OpNode {
         /**
          * The heap state's id
@@ -378,6 +498,8 @@ public abstract class PegNode {
 
     private static Map<Object, PegNode> litLookup = new HashMap<>();
 
+    private static Map<Integer, Integer> blankLookup = new HashMap<>();
+
     /**
      * Get an OpNode for sym being applied to children. This creates a new
      * OpNode if needed (i.e., if one with the same sym and children doesn't
@@ -426,6 +548,25 @@ public abstract class PegNode {
 
     public static PegNode phi(Integer guard, Integer then, Integer els) {
       return opNode("phi", guard, then, els);
+    }
+
+    public static PegNode blank() {
+        return new BlankNode(intLit(BlankNode._blankId++).id);
+    }
+
+    public static ThetaNode theta(Integer init, Integer next) {
+      final String sym = "theta";
+      final List<Integer> childs = new ArrayList<>(3);
+      childs.add(init);
+      childs.add(next);
+      if (!symbolLookup.containsKey(sym) || !symbolLookup.get(sym).containsKey(childs)) {
+          return new ThetaNode(init, next);
+      }
+      final PegNode node = symbolLookup.get(sym).get(childs);
+      return node.asThetaNode().orElseThrow(() -> new IllegalStateException(
+              String.format("Unexpected value cached for sym=\"theta\", children=[%d, %d];" +
+                      " expected a PegNode.ThetaNode but found %s",
+                      init, next, symbolLookup.get(sym).get(childs).toDerefString())));
     }
 
     public static PegNode var(String name) {
@@ -482,6 +623,14 @@ public abstract class PegNode {
 
     public static PegNode newObject(final String type, final Integer actuals, final Integer heap) {
         return opNode("new", stringLit(type).id, actuals, heap);
+    }
+
+    public static PegNode pass(Integer condition) {
+        return opNode("pass", condition);
+    }
+
+    public static PegNode eval(Integer theta, Integer pass) {
+        return opNode("eval", theta, pass);
     }
 
     /**
@@ -590,5 +739,66 @@ public abstract class PegNode {
             id = opNode("||", id, childId).id;
         }
         return idLookup(id).orElseThrow(IllegalStateException::new);
+    }
+
+    /**
+     * @param blank id of an unassigned Blank node
+     * @param value id of the peg that blank should be assigned to
+     */
+    public static void assignBlank(Integer blank, Integer value) {
+        PegNode blankNode = idLookup(blank).orElseThrow(IllegalStateException::new);
+        if (!blankNode.isBlankNode() || blankLookup.containsKey(blank)) {
+            throw new IllegalStateException();
+        }
+        blankLookup.put(blank, value);
+    }
+
+    // checks that the pegs form a strucutal bijection
+    public static boolean isStructuralBijection(Integer id1, Integer id2) {
+        if (!idLookup.containsKey(id1) || !idLookup.containsKey(id2)) {
+            throw new IllegalArgumentException();
+        }
+        Map<Integer, Integer> bijection1 = new HashMap<>();
+        Map<Integer, Integer> bijection2 = new HashMap<>();
+        Stack<Integer> s1 = new Stack<>();
+        Stack<Integer> s2 = new Stack<>();
+        s1.add(id1);
+        s2.add(id2);
+        while (!s1.isEmpty() && !s2.isEmpty()) {
+            Integer node1 = s1.pop();
+            Integer node2 = s2.pop(); 
+            PegNode peg1 = idLookup.get(node1);
+            PegNode peg2 = idLookup.get(node2);
+            if (peg1.isBlankNode() && peg2.isBlankNode()) {
+                if (bijection1.containsKey(node1) && bijection2.containsKey(node2)) {
+                    if (bijection1.get(node1) != node2 || bijection2.get(node2) != node1) {
+                        return false;
+                    }
+                } else if (bijection1.containsKey(node1) || bijection2.containsKey(node2)) {
+                    return false;
+                } else {
+                    bijection1.put(node1, node2);
+                    bijection2.put(node2, node1);
+                    if (blankLookup.containsKey(node1) && blankLookup.containsKey(node2)) {
+                        s1.push(blankLookup.get(node1));
+                        s2.push(blankLookup.get(node2));
+                    }
+                }
+            } else if (peg1.isOpNode() && peg2.isOpNode()) {
+                OpNode opnode1 = peg1.asOpNode().get();
+                OpNode opnode2 = peg2.asOpNode().get();
+                if (!opnode1.op.equals(opnode2.op)) {
+                    return false;
+                }
+                s1.addAll(opnode1.children);
+                s2.addAll(opnode2.children);
+            } else if (!node1.equals(node2)) {
+                return false;
+            }
+        }
+        if (!s1.isEmpty() || !s2.isEmpty()) {
+            throw new IllegalStateException();
+        }
+        return true;
     }
 }
