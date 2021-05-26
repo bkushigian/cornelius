@@ -1,12 +1,13 @@
 package serializer.peg;
 
-import com.github.javaparser.ast.expr.IntegerLiteralExpr;
-import com.google.common.collect.ImmutableSet;
+import serializer.peg.visitor.PegVisitor;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class PegNode {
+
+    public abstract <R, A> R accept(PegVisitor<R, A> visitor, A arg);
 
     // TODO: make not static
     public static Map<Integer, PegNode> getIdLookup() {
@@ -152,6 +153,11 @@ public abstract class PegNode {
         }
 
         @Override
+        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
+            return null;
+        }
+
+        @Override
         public boolean isConst() {
             return true;
         }
@@ -192,6 +198,11 @@ public abstract class PegNode {
         @Override
         public Optional<Boolean> asBoolean() {
             return Optional.of(value);
+        }
+
+        @Override
+        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
+            return null;
         }
 
         @Override
@@ -237,6 +248,11 @@ public abstract class PegNode {
         }
 
         @Override
+        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
+            return null;
+        }
+
+        @Override
         public boolean isConst() {
             return true;
         }
@@ -279,6 +295,11 @@ public abstract class PegNode {
         @Override
         public boolean isOpNode() {
             return true;
+        }
+
+        @Override
+        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
+            return visitor.visit(this, arg);
         }
 
         @Override
@@ -360,6 +381,11 @@ public abstract class PegNode {
         @Override
         public Optional<PhiNode> asPhiNode() {
             return Optional.of(this);
+        }
+
+        @Override
+        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
+            return visitor.visit(this, arg);
         }
 
         @Override
