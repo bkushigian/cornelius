@@ -154,7 +154,7 @@ public abstract class PegNode {
 
         @Override
         public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
-            return null;
+            return visitor.visit(this, arg);
         }
 
         @Override
@@ -431,6 +431,11 @@ public abstract class PegNode {
         @Override
         public Optional<BlankNode> asBlankNode() {
             return Optional.of(this);
+        }
+
+        @Override
+        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
+            return visitor.visit(this, arg);
         }
 
         @Override
