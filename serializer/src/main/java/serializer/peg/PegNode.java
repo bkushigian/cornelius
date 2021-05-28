@@ -1,12 +1,13 @@
 package serializer.peg;
 
-import com.github.javaparser.ast.expr.IntegerLiteralExpr;
-import com.google.common.collect.ImmutableSet;
+import serializer.peg.visitor.PegVisitor;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class PegNode {
+
+    public abstract <R, A> R accept(PegVisitor<R, A> visitor, A arg);
 
     // TODO: make not static
     public static Map<Integer, PegNode> getIdLookup() {
@@ -152,6 +153,11 @@ public abstract class PegNode {
         }
 
         @Override
+        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
+            return visitor.visit(this, arg);
+        }
+
+        @Override
         public boolean isConst() {
             return true;
         }
@@ -192,6 +198,11 @@ public abstract class PegNode {
         @Override
         public Optional<Boolean> asBoolean() {
             return Optional.of(value);
+        }
+
+        @Override
+        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
+            return visitor.visit(this, arg);
         }
 
         @Override
@@ -237,6 +248,11 @@ public abstract class PegNode {
         }
 
         @Override
+        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
+            return visitor.visit(this, arg);
+        }
+
+        @Override
         public boolean isConst() {
             return true;
         }
@@ -279,6 +295,11 @@ public abstract class PegNode {
         @Override
         public boolean isOpNode() {
             return true;
+        }
+
+        @Override
+        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
+            return visitor.visit(this, arg);
         }
 
         @Override
@@ -363,8 +384,37 @@ public abstract class PegNode {
         }
 
         @Override
+        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
+            return visitor.visit(this, arg);
+        }
+
+        @Override
         public boolean isPhiNode() {
             return true;
+        }
+
+        /**
+         * @return the guard node for this {@code PhiNode} if it exists
+         * @throws IllegalStateException when the guard id isn't associated with an {@code PegNode}
+         */
+        public PegNode getGuard() {
+            return PegNode.idLookup(guard).orElseThrow(IllegalStateException::new);
+        }
+
+        /**
+         * @return the then node for this {@code PhiNode} if it exists
+         * @throws IllegalStateException when the then id isn't associated with an {@code PegNode}
+         */
+        public PegNode getThen() {
+            return PegNode.idLookup(thn).orElseThrow(IllegalStateException::new);
+        }
+
+        /**
+         * @return the else node for this {@code PhiNode} if it exists
+         * @throws IllegalStateException when the else id isn't associated with an {@code PegNode}
+         */
+        public PegNode getElse() {
+            return PegNode.idLookup(els).orElseThrow(IllegalStateException::new);
         }
     }
 
@@ -381,6 +431,11 @@ public abstract class PegNode {
         @Override
         public Optional<BlankNode> asBlankNode() {
             return Optional.of(this);
+        }
+
+        @Override
+        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
+            return visitor.visit(this, arg);
         }
 
         @Override
@@ -404,6 +459,11 @@ public abstract class PegNode {
         @Override
         public Optional<ThetaNode> asThetaNode() {
             return Optional.of(this);
+        }
+
+        @Override
+        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
+            return visitor.visit(this, arg);
         }
 
         @Override
@@ -437,6 +497,22 @@ public abstract class PegNode {
             expand = true;
 
             return sb.append(")").toString();
+        }
+
+        /**
+         * @return the initializer node for this {@code ThetaNode} if it exists
+         * @throws IllegalStateException when the initializer id isn't associated with an {@code PegNode}
+         */
+        public PegNode getInitializer() {
+            return PegNode.idLookup(init).orElseThrow(IllegalStateException::new);
+        }
+
+        /**
+         * @return the continuation node for this {@code ThetaNode} if it exists
+         * @throws IllegalStateException when the continuation id isn't associated with an {@code PegNode}
+         */
+        public PegNode getContinuation() {
+            return PegNode.idLookup(next).orElseThrow(IllegalStateException::new);
         }
     }
 
