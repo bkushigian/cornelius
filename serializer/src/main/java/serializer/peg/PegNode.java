@@ -622,8 +622,20 @@ public abstract class PegNode {
         return opNode("unit");
     }
 
-    public static PegNode phi(Integer guard, Integer then, Integer els) {
-      return opNode("phi", guard, then, els);
+    public static PhiNode phi(Integer guard, Integer then, Integer els) {
+      final String sym = "theta";
+      final List<Integer> childs = new ArrayList<>(3);
+      childs.add(guard);
+      childs.add(then);
+      childs.add(els);
+      if (!symbolLookup.containsKey(sym) || !symbolLookup.get(sym).containsKey(childs)) {
+          return new PhiNode(guard, then, els);
+      }
+      final PegNode node = symbolLookup.get(sym).get(childs);
+      return node.asPhiNode().orElseThrow(() -> new IllegalStateException(
+              String.format("Unexpected value cached for sym=\"theta\", children=[%d, %d, %d];" +
+                              " expected a PegNode.PhiNode but found %s",
+                      guard, then, els, symbolLookup.get(sym).get(childs).toDerefString())));
     }
 
     public static PegNode blank() {
