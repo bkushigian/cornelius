@@ -1,7 +1,7 @@
 package serializer.peg.visitor;
 
+import org.junit.Test;
 import serializer.peg.PegNode;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,36 +9,98 @@ import java.util.Map;
 import static org.junit.Assert.*;
 
 public class PegVisitorTest {
-  static class TestPegVisitor extends PegVisitor<Void, Map<PegNode, Integer>> {
-    @Override
-    public Void visit(PegNode.ThetaNode node, Map<PegNode, Integer> arg) {
-      throw new NotImplementedException();
-    }
 
-    @Override
-    public Void visit(PegNode.StringLit node, Map<PegNode, Integer> arg) {
-      throw new NotImplementedException();
-    }
+  final PreOrderEnumeratorVisitor v = new PreOrderEnumeratorVisitor();
+  final PegNode zero = PegNode.intLit(0);
+  final PegNode one = PegNode.intLit(1);
+  final PegNode two = PegNode.intLit(2);
+  final PegNode tru = PegNode.boolLit(true);
+  final PegNode fls = PegNode.boolLit(false);
+  final PegNode blank0 = PegNode.blank();
 
-    @Override
-    public Void visit(PegNode.PhiNode node, Map<PegNode, Integer> arg) {
-      throw new NotImplementedException();
-    }
+  // (theta[0] (int-lit 0) blank[0])
+  final PegNode.ThetaNode theta0 = PegNode.theta(zero.id, blank0.id);
 
-    @Override
-    public Void visit(PegNode.BoolLit node, Map<PegNode, Integer> arg) {
-      throw new NotImplementedException();
-    }
+  // (phi (bool-lit true) (int-lit 1) (int-lit 2))
+  final PegNode.PhiNode phi0 = PegNode.phi(tru.id, one.id, two.id);
 
-    @Override
-    public Void visit(PegNode.OpNode node, Map<PegNode, Integer> arg) {
-      throw new NotImplementedException();
-    }
+  // (phi (bool-lit false)
+  //      (phi (bool-lit true) (int-lit 1) (int-lit 2))
+  //      (phi (bool-lit true) (int-lit 1) (int-lit 2)))
+  final PegNode.PhiNode phi1 = PegNode.phi(fls.id, phi0.id, phi0.id);
 
-    @Override
-    public Void visit(PegNode.IntLit node, Map<PegNode, Integer> arg) {
-      throw new NotImplementedException();
+  @Test
+  public void testTheta() {
+    final Map<PegNode, Integer> map = new HashMap<>();
+    theta0.accept(v, map);
+    assertOrder(map, theta0, zero, blank0);
+  }
+
+  @Test
+  public void testPhiNodeWithRepeats() {
+    final Map<PegNode, Integer> map = new HashMap<>();
+    phi1.accept(v, map);
+    assertOrder(map, phi1, fls, phi0, tru, one, two);
+  }
+
+  @Test
+  public void testIdentifiedEdgeIsFollowed() {
+    // (blank --> (theta 0 blank))
+    final PegNode blank = PegNode.blank();
+    final PegNode.ThetaNode theta = PegNode.theta(zero.id, blank.id);
+    PegNode.assignBlank(blank.id, theta.id);
+
+    final Map<PegNode, Integer> map = new HashMap<>();
+    blank.accept(v, map);
+    assertOrder(map, blank, theta, zero, theta);
+  }
+
+  public void assertOrder(Map<PegNode, Integer> map, PegNode...nodes) {
+    int i = 0;
+    for (PegNode n : nodes) {
+      final Integer id = map.get(n);
+      assertNotNull("Expected node " + n + " to be enumerated", id);
+      assertEquals("Unexpected node index:", i++, map.get(n).intValue());
     }
   }
 
+
+  public class PreOrderEnumeratorVisitor extends PegVisitor<Void, Map<PegNode, Integer>>  {
+    protected int idx = 0;
+
+    @Override
+    protected void preVisit(PegNode.IntLit node, Map<PegNode, Integer> arg) {
+      arg.put(node, idx++);
+    }
+
+    @Override
+    protected void preVisit(PegNode.OpNode node, Map<PegNode, Integer> arg) {
+      arg.put(node, idx++);
+    }
+
+    @Override
+    protected void preVisit(PegNode.BoolLit node, Map<PegNode, Integer> arg) {
+      arg.put(node, idx++);
+    }
+
+    @Override
+    protected void preVisit(PegNode.PhiNode node, Map<PegNode, Integer> arg) {
+      arg.put(node, idx++);
+    }
+
+    @Override
+    protected void preVisit(PegNode.BlankNode node, Map<PegNode, Integer> arg) {
+      arg.put(node, idx++);
+    }
+
+    @Override
+    protected void preVisit(PegNode.StringLit node, Map<PegNode, Integer> arg) {
+      arg.put(node, idx++);
+    }
+
+    @Override
+    protected void preVisit(PegNode.ThetaNode node, Map<PegNode, Integer> arg) {
+      arg.put(node, idx++);
+    }
+  }
 }
