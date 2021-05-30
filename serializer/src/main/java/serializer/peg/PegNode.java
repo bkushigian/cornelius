@@ -428,6 +428,19 @@ public abstract class PegNode {
                       .asInteger().orElseThrow(IllegalStateException::new);
         }
 
+        /**
+         * A {@code BlankNode} may be identified with another {@code PegNode}. This method checks
+         * to see if it is and, if so, returns an {@code Optional.of(PegNode)} wrapping the identified
+         * node. Otherwise, returns empty.
+         *
+         * @return {@code Optional.of(node)} if this BlankNode is identified with {@code node}; if {@code this}
+         * isn't identified with any nodes, return {@code Optional.empty()}
+         */
+        public Optional<PegNode> getIdentifiedNode() {
+            return Optional.ofNullable(blankLookup.get(this.id))
+                    .flatMap(i -> Optional.ofNullable(idLookup.get(i)));
+        }
+
         @Override
         public Optional<BlankNode> asBlankNode() {
             return Optional.of(this);
