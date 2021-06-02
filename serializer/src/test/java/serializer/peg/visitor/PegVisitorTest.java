@@ -62,7 +62,7 @@ public class PegVisitorTest {
 
     final Map<PegNode, Integer> map = new HashMap<>();
     theta.accept(v, map);
-    assertOrder(map, theta, zero, plus, theta, one);
+    assertOrder(map, theta, zero, plus, one);
   }
 
   public void assertOrder(Map<PegNode, Integer> map, PegNode...nodes) {

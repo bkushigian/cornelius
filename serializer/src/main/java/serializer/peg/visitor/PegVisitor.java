@@ -129,9 +129,9 @@ public class PegVisitor<R, A> {
     preVisit(node, arg);
     final R init = node.getInitializer().accept(this, arg);
     final Optional<PegNode> identNode = node.getIdentifiedNode();
-    identNode.ifPresent(pegNode -> pegNode.accept(this, arg));
     final R combined = identNode.isPresent() ? combine(node, arg, init, identNode.get()) : combine(node, arg, init);
     table.put(node, combined);
+    identNode.ifPresent(pegNode -> pegNode.accept(this, arg));
     return combined;
   }
 
