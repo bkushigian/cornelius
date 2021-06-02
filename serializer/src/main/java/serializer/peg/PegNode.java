@@ -29,9 +29,9 @@ public abstract class PegNode {
         idLookup.clear();
         litLookup.clear();
         symbolLookup.clear();
-        blankLookup.clear();
+        thetaLookup.clear();
         _id = 0;
-        BlankNode._blankId = 0;
+        ThetaNode._thetaId = 0;
     }
 
     public String toDerefString() {
@@ -106,10 +106,6 @@ public abstract class PegNode {
         return false;
     }
 
-    public boolean isBlankNode() {
-        return false;
-    }
-
     public boolean isThetaNode() {
         return false;
     }
@@ -119,10 +115,6 @@ public abstract class PegNode {
     }
 
     public Optional<PhiNode> asPhiNode() {
-        return Optional.empty();
-    }
-
-    public Optional<BlankNode> asBlankNode() {
         return Optional.empty();
     }
 
@@ -418,60 +410,36 @@ public abstract class PegNode {
         }
     }
 
-    public static class BlankNode extends OpNode {
-        static int _blankId = 0;
-        private final int blankId;
-
-        private BlankNode(Integer idLit) {
-            super("blank", idLit);
-            blankId = idLookup(idLit).orElseThrow(IllegalStateException::new)
-                      .asInteger().orElseThrow(IllegalStateException::new);
-        }
-
-        /**
-         * A {@code BlankNode} may be identified with another {@code PegNode}. This method checks
-         * to see if it is and, if so, returns an {@code Optional.of(PegNode)} wrapping the identified
-         * node. Otherwise, returns empty.
-         *
-         * @return {@code Optional.of(node)} if this BlankNode is identified with {@code node}; if {@code this}
-         * isn't identified with any nodes, return {@code Optional.empty()}
-         */
-        public Optional<PegNode> getIdentifiedNode() {
-            return Optional.ofNullable(blankLookup.get(this.id))
-                    .flatMap(i -> Optional.ofNullable(idLookup.get(i)));
-        }
-
-        @Override
-        public Optional<BlankNode> asBlankNode() {
-            return Optional.of(this);
-        }
-
-        @Override
-        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
-            return visitor.visit(this, arg);
-        }
-
-        @Override
-        public boolean isBlankNode() {
-            return true;
-        }
-    }
-
     public static class ThetaNode extends OpNode {
+        static int _thetaId = 0;
+        private final int thetaId;
         public final Integer init;
-        public final Integer next;
         private boolean expand;   // indicates whether to expand during printing
 
-        private ThetaNode(final Integer init, final Integer next) {
-            super("theta", init, next);
+        private ThetaNode(final Integer idLit, final Integer init) {
+            super("theta", idLit, init);
+            thetaId = idLookup(idLit).orElseThrow(IllegalStateException::new)
+                      .asInteger().orElseThrow(IllegalStateException::new);
             this.init = init;
-            this.next = next;
             this.expand = true;
         }
 
         @Override
         public Optional<ThetaNode> asThetaNode() {
             return Optional.of(this);
+        }
+
+        /**
+         * A {@code ThetaNode} may be identified with another {@code PegNode}. This method checks
+         * to see if it is and, if so, returns an {@code Optional.of(PegNode)} wrapping the identified
+         * node. Otherwise, returns empty.
+         *
+         * @return {@code Optional.of(node)} if this ThetaNode is identified with {@code node}; if {@code this}
+         * isn't identified with any nodes, return {@code Optional.empty()}
+         */
+        public Optional<PegNode> getIdentifiedNode() {
+            return Optional.ofNullable(thetaLookup.get(this.id))
+                    .flatMap(i -> Optional.ofNullable(idLookup.get(i)));
         }
 
         @Override
@@ -518,14 +486,6 @@ public abstract class PegNode {
          */
         public PegNode getInitializer() {
             return PegNode.idLookup(init).orElseThrow(IllegalStateException::new);
-        }
-
-        /**
-         * @return the continuation node for this {@code ThetaNode} if it exists
-         * @throws IllegalStateException when the continuation id isn't associated with an {@code PegNode}
-         */
-        public PegNode getContinuation() {
-            return PegNode.idLookup(next).orElseThrow(IllegalStateException::new);
         }
     }
 
@@ -587,7 +547,7 @@ public abstract class PegNode {
 
     private static Map<Object, PegNode> litLookup = new HashMap<>();
 
-    private static Map<Integer, Integer> blankLookup = new HashMap<>();
+    private static Map<Integer, Integer> thetaLookup = new HashMap<>();
 
     /**
      * Get an OpNode for sym being applied to children. This creates a new
@@ -636,38 +596,23 @@ public abstract class PegNode {
     }
 
     public static PhiNode phi(Integer guard, Integer then, Integer els) {
-      final String sym = "theta";
-      final List<Integer> childs = new ArrayList<>(3);
-      childs.add(guard);
-      childs.add(then);
-      childs.add(els);
-      if (!symbolLookup.containsKey(sym) || !symbolLookup.get(sym).containsKey(childs)) {
-          return new PhiNode(guard, then, els);
-      }
-      final PegNode node = symbolLookup.get(sym).get(childs);
-      return node.asPhiNode().orElseThrow(() -> new IllegalStateException(
-              String.format("Unexpected value cached for sym=\"theta\", children=[%d, %d, %d];" +
+        final String sym = "theta";
+        final List<Integer> childs = new ArrayList<>(3);
+        childs.add(guard);
+        childs.add(then);
+        childs.add(els);
+        if (!symbolLookup.containsKey(sym) || !symbolLookup.get(sym).containsKey(childs)) {
+            return new PhiNode(guard, then, els);
+        }
+        final PegNode node = symbolLookup.get(sym).get(childs);
+        return node.asPhiNode().orElseThrow(() -> new IllegalStateException(
+                String.format("Unexpected value cached for sym=\"theta\", children=[%d, %d, %d];" +
                               " expected a PegNode.PhiNode but found %s",
-                      guard, then, els, symbolLookup.get(sym).get(childs).toDerefString())));
+                        guard, then, els, symbolLookup.get(sym).get(childs).toDerefString())));
     }
 
-    public static PegNode blank() {
-        return new BlankNode(intLit(BlankNode._blankId++).id);
-    }
-
-    public static ThetaNode theta(Integer init, Integer next) {
-      final String sym = "theta";
-      final List<Integer> childs = new ArrayList<>(3);
-      childs.add(init);
-      childs.add(next);
-      if (!symbolLookup.containsKey(sym) || !symbolLookup.get(sym).containsKey(childs)) {
-          return new ThetaNode(init, next);
-      }
-      final PegNode node = symbolLookup.get(sym).get(childs);
-      return node.asThetaNode().orElseThrow(() -> new IllegalStateException(
-              String.format("Unexpected value cached for sym=\"theta\", children=[%d, %d];" +
-                      " expected a PegNode.ThetaNode but found %s",
-                      init, next, symbolLookup.get(sym).get(childs).toDerefString())));
+    public static ThetaNode theta(Integer init) {
+        return new ThetaNode(intLit(ThetaNode._thetaId++).id, init);
     }
 
     public static PegNode var(String name) {
@@ -843,47 +788,49 @@ public abstract class PegNode {
     }
 
     /**
-     * @param blank id of an unassigned Blank node
-     * @param value id of the peg that blank should be assigned to
+     * @param theta id of an unassigned Theta node
+     * @param value id of the peg that theta should be assigned to
      */
-    public static void assignBlank(Integer blank, Integer value) {
-        PegNode blankNode = idLookup(blank).orElseThrow(IllegalStateException::new);
-        if (!blankNode.isBlankNode() || blankLookup.containsKey(blank)) {
+    public static void assignTheta(Integer theta, Integer value) {
+        PegNode thetaNode = idLookup(theta).orElseThrow(IllegalStateException::new);
+        if (!thetaNode.isThetaNode() || thetaLookup.containsKey(theta)) {
             throw new IllegalStateException();
         }
-        blankLookup.put(blank, value);
+        thetaLookup.put(theta, value);
     }
 
     // checks that the pegs form a strucutal bijection
-    public static boolean isStructuralBijection(Integer id1, Integer id2) {
-        if (!idLookup.containsKey(id1) || !idLookup.containsKey(id2)) {
+    public static boolean isStructuralBijection(Integer node1, Integer node2) {
+        if (!idLookup.containsKey(node1) || !idLookup.containsKey(node2)) {
             throw new IllegalArgumentException();
         }
         Map<Integer, Integer> bijection1 = new HashMap<>();
         Map<Integer, Integer> bijection2 = new HashMap<>();
         Stack<Integer> s1 = new Stack<>();
         Stack<Integer> s2 = new Stack<>();
-        s1.add(id1);
-        s2.add(id2);
+        s1.add(node1);
+        s2.add(node2);
         while (!s1.isEmpty() && !s2.isEmpty()) {
-            Integer node1 = s1.pop();
-            Integer node2 = s2.pop(); 
-            PegNode peg1 = idLookup.get(node1);
-            PegNode peg2 = idLookup.get(node2);
-            if (peg1.isBlankNode() && peg2.isBlankNode()) {
-                if (bijection1.containsKey(node1) && bijection2.containsKey(node2)) {
-                    if (bijection1.get(node1) != node2 || bijection2.get(node2) != node1) {
+            Integer id1 = s1.pop();
+            Integer id2 = s2.pop(); 
+            PegNode peg1 = idLookup.get(id1);
+            PegNode peg2 = idLookup.get(id2);
+            if (peg1.isThetaNode() && peg2.isThetaNode()) {
+                if (bijection1.containsKey(id1) && bijection2.containsKey(id2)) {
+                    if (bijection1.get(id1) != id2 || bijection2.get(id2) != id1) {
                         return false;
                     }
-                } else if (bijection1.containsKey(node1) || bijection2.containsKey(node2)) {
+                } else if (bijection1.containsKey(id1) || bijection2.containsKey(id2)) {
                     return false;
                 } else {
-                    bijection1.put(node1, node2);
-                    bijection2.put(node2, node1);
-                    if (blankLookup.containsKey(node1) && blankLookup.containsKey(node2)) {
-                        s1.push(blankLookup.get(node1));
-                        s2.push(blankLookup.get(node2));
+                    if (!thetaLookup.containsKey(id1) || !thetaLookup.containsKey(id2)) {
+                        return false;
+                        
                     }
+                    s1.push(thetaLookup.get(id1));
+                    s2.push(thetaLookup.get(id2));
+                    bijection1.put(id1, id2);
+                    bijection2.put(id2, id1);
                 }
             } else if (peg1.isOpNode() && peg2.isOpNode()) {
                 OpNode opnode1 = peg1.asOpNode().get();
@@ -893,7 +840,7 @@ public abstract class PegNode {
                 }
                 s1.addAll(opnode1.children);
                 s2.addAll(opnode2.children);
-            } else if (!node1.equals(node2)) {
+            } else if (!peg1.equals(peg2)) {
                 return false;
             }
         }

@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
  *     all copies of {@code a} in the program.
  *    </li>
  *    <li>
- *      <strong>Cycles:</strong> {@code PegNode.BlankNode}s allow for cycles through their
- *      identified node (obtainable from {@code blankNode.getIdentifiedNode()}.
+ *      <strong>Cycles:</strong> {@code PegNode.ThetaNode}s allow for cycles through their
+ *      identified node (obtainable from {@code thetaNode.getIdentifiedNode()}.
  *    </li>
  * </ol>
  *
@@ -28,10 +28,10 @@ import java.util.stream.Collectors;
  * handles this by memoizing results in the protected {@link #table} field.</p>
  *
  * <p>The second problem is a little subtler. On the one hand we don't want infinite loops, which would
- * suggest not traversing the edge from a {@code blank} node to it's identified node (this is where a cycle
- * will form). On the other hand, sometimes a {@code blank} node will be reachable from the root of
+ * suggest not traversing the edge from a {@code theta} node to it's identified node (this is where a cycle
+ * will form). On the other hand, sometimes a {@code theta} node will be reachable from the root of
  * the {@code PegNode} DAG but the identified node will <emph>not</emph> be reachable from the root
- * unless we traverse the blank's edge to an identified node. I'll cover how to solve this below.
+ * unless we traverse the theta's edge to an identified node. I'll cover how to solve this below.
  * </p>
  *
  * This implementation provides two basic ways to customize the visit:
@@ -54,8 +54,8 @@ import java.util.stream.Collectors;
  *
  * </ol>
  *
- * There is a special case visiting {@code PegNode.BlankNodes}. After {@code combine} has been called on
- * the blank node, we try to visit
+ * There is a special case visiting {@code PegNode.ThetaNodes}. After {@code combine} has been called on
+ * the theta node, we try to visit
  * @param <R> return type returned from each visit method
  * @param <A> argument type that is passed in to each visit method
  */
@@ -77,17 +77,6 @@ public class PegVisitor<R, A> {
     final List<R> children = node.getChildrenNodes().stream().map(table::get).collect(Collectors.toList());
 
     table.put(node, combine(node, arg, children));
-    return table.get(node);
-  }
-
-  public R visit(final PegNode.ThetaNode node, final A arg) {
-    if (table.containsKey(node)) {
-      return table.get(node);
-    }
-    preVisit(node, arg);
-    final R init = node.getInitializer().accept(this, arg);
-    final R cont = node.getContinuation().accept(this, arg);
-    table.put(node, combine(node, arg, init, cont));
     return table.get(node);
   }
 
@@ -133,14 +122,15 @@ public class PegVisitor<R, A> {
     return table.get(node);
   }
 
-  public R visit(final PegNode.BlankNode node, final A arg) {
+  public R visit(final PegNode.ThetaNode node, final A arg) {
     if (table.containsKey(node)) {
       return table.get(node);
     }
     preVisit(node, arg);
+    final R init = node.getInitializer().accept(this, arg);
     final Optional<PegNode> identNode = node.getIdentifiedNode();
     identNode.ifPresent(pegNode -> pegNode.accept(this, arg));
-    final R combined = identNode.isPresent() ? combine(node, arg, identNode.get()) : combine(node, arg);
+    final R combined = identNode.isPresent() ? combine(node, arg, init, identNode.get()) : combine(node, arg, init);
     table.put(node, combined);
     return combined;
   }
@@ -148,7 +138,6 @@ public class PegVisitor<R, A> {
   protected void preVisit(final PegNode.OpNode node, final A arg) {}
   protected void preVisit(final PegNode.ThetaNode node, final A arg) {}
   protected void preVisit(final PegNode.PhiNode node, final A arg) {}
-  protected void preVisit(final PegNode.BlankNode node, final A arg) {}
   protected void preVisit(final PegNode.IntLit node, final A arg) {}
   protected void preVisit(final PegNode.BoolLit node, final A arg) {}
   protected void preVisit(final PegNode.StringLit node, final A arg) {}
@@ -157,19 +146,15 @@ public class PegVisitor<R, A> {
     return null;
   }
 
-  protected R combine(final PegNode.ThetaNode node, final A arg, final R init, final R continuation) {
-    return null;
-  }
-
   protected R combine(final PegNode.PhiNode node, final A arg, final R guard, final R thn, final R els) {
     return null;
   }
 
-  protected R combine(final PegNode.BlankNode node, final A arg) {
+  protected R combine(final PegNode.ThetaNode node, final A arg, final R init) {
     return null;
   }
 
-  protected R combine(final PegNode.BlankNode node, final A arg, final PegNode identified) {
+  protected R combine(final PegNode.ThetaNode node, final A arg, final R init, final PegNode identified) {
     return null;
   }
 

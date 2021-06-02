@@ -60,15 +60,10 @@
   [cond then else]
   (PegNode/phi (object->id cond) (object->id then) (object->id else)))
 
-(defn blank-node
-  "Create a blank PEG"
-  []
-  (PegNode/blank))
-
 (defn theta-node
   "Create a theta node (sequence expression)."
-  [init next]
-  (PegNode/theta (object->id init) (object->id next)))
+  [init]
+  (PegNode/theta (object->id init)))
 
 (defn pass-node
   "Create a pass node (index for sequence termination)"
@@ -80,10 +75,10 @@
   [expr pass]
   (opnode "eval" expr pass))
 
-(defn assign-blank
-  "Assign a blank node to the peg it should point to"
-  [blank value]
-  (PegNode/assignBlank (object->id blank) (object->id value)))                  
+(defn assign-theta
+  "Assign a theta node to the peg it should point to"
+  [theta value]
+  (PegNode/assignTheta (object->id theta) (object->id value)))                  
 
 (defn param
   "Create a parameter node"

@@ -21,17 +21,17 @@ public class PegPrinter {
    */
   static class ToStringVisitor extends PegVisitor<String, Void> {
 
-    private int blankId = 0;
+    private int thetaId = 0;
     /**
-     * Map tracking id assigned to each blank.
+     * Map tracking id assigned to each theta.
      */
-    final private Map<PegNode.BlankNode, Integer> blankToId = new HashMap<>();
+    final private Map<PegNode.ThetaNode, Integer> thetaToId = new HashMap<>();
 
     /**
-     * An in-order list of visited blank nodes. The index of a blank node is equal to its blankId
-     * stored in {@code blankToId}
+     * An in-order list of visited theta nodes. The index of a theta node is equal to its thetaId
+     * stored in {@code thetaToId}
      */
-    final private List<PegNode.BlankNode> visitedBlanks = new ArrayList<>();
+    final private List<PegNode.ThetaNode> visitedThetas = new ArrayList<>();
 
     @Override
     protected String combine(PegNode.IntLit node, Void arg) {
@@ -44,23 +44,24 @@ public class PegPrinter {
     }
 
     @Override
-    protected void preVisit(PegNode.BlankNode node, Void arg) {
-      blankToId.put(node, blankId++);
-      visitedBlanks.add(node);
-      table.put(node, String.format("blank[%d]", blankId));
+    protected void preVisit(PegNode.ThetaNode node, Void arg) {
+      thetaToId.put(node, thetaId++);
+      visitedThetas.add(node);
+      table.put(node, String.format("theta[%d]", thetaId));
     }
 
     @Override
-    protected String combine(PegNode.BlankNode node, Void arg) {
+    protected String combine(PegNode.ThetaNode node, Void arg, String init) {
       // Precondition: `this.preVisit(node)` has been called, populating `this.table`
-      return table.get(node);
+      
+      return String.format("(%s %s)", table.get(node), init);
     }
 
     @Override
-    protected String combine(PegNode.BlankNode node, Void arg, PegNode identified) {
+    protected String combine(PegNode.ThetaNode node, Void arg, String init, PegNode identified) {
       // Precondition: `this.preVisit(node)` has been called, populating `this.table`
 
-      return table.get(node);
+      return String.format("(%s %s)", table.get(node), init);
     }
 
     @Override
@@ -80,21 +81,16 @@ public class PegPrinter {
     }
 
     @Override
-    protected String combine(PegNode.ThetaNode node, Void arg, String init, String continuation) {
-      return String.format("(theta %s %s)", init, continuation);
-    }
-
-    @Override
     protected String combine(PegNode.PhiNode node, Void arg, String guard, String thn, String els) {
       return String.format("(phi %s %s %s)", guard, thn, els);
     }
 
     public String identificationTable() {
       StringBuilder sb = new StringBuilder("(");
-      for (int blankId = 0; blankId < visitedBlanks.size(); ++blankId) {
-        final PegNode.BlankNode blank = visitedBlanks.get(blankId);
-        blank.getIdentifiedNode().ifPresent(n -> sb.append(
-                String.format("\n  (<=> %s %s)", table.get(blank), table.get(n))));
+      for (int thetaId = 0; thetaId < visitedThetas.size(); ++thetaId) {
+        final PegNode.ThetaNode theta = visitedThetas.get(thetaId);
+        theta.getIdentifiedNode().ifPresent(n -> sb.append(
+                String.format("\n  (<=> %s %s)", table.get(theta), table.get(n))));
       }
       return sb.append(')').toString();
     }

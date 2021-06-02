@@ -3,17 +3,14 @@ public class Loops {
     int program01() {
         /**
          * <cond>
-         *  [blank1     (blank-node)
-         *   blank2     (blank-node)
-         *   state      (theta-node (heap->state heap) blank1)
-         *   status     (theta-node (heap->status heap) blank2)
+         *  [state      (theta-node (heap->state heap))
+         *   status     (theta-node (heap->status heap))
          *   heap       (make-heap state status)
-         *   condition  (bool-lit false)
-         *   (snapshot {:peg condition :ctx ctx :heap heap})]
+         *   condition  (bool-lit false)]
          * </cond>
          * <body>
-         *  [update     (assign-blank blank1 state)
-         *   update     (assign-blank blank2 status)
+         *  [update     (assign-theta state state)
+         *   update     (assign-theta status status)
          *   (snapshot {:ctx ctx :heap heap})]
          * </body> 
          * <expected>
@@ -45,24 +42,20 @@ public class Loops {
 
         /**
          * <cond>
-         *  [blank1         (blank-node)
-         *   blank2         (blank-node)
-         *   blank3         (blank-node)
-         *   theta-x        (theta-node (ctx-lookup ctx "x") blank1)
+         *  [theta-x        (theta-node (ctx-lookup ctx "x"))
          *   ctx            (ctx-update ctx "x" theta-x)
-         *   theta-state    (theta-node (heap->state heap) blank2)
-         *   theta-status   (theta-node (heap->status heap) blank3)
+         *   theta-state    (theta-node (heap->state heap))
+         *   theta-status   (theta-node (heap->status heap))
          *   heap           (make-heap theta-state theta-status)
-         *   condition      (bool-lit false)
-         *   (snapshot {:peg condition :ctx ctx :heap heap})]
+         *   condition      (bool-lit false)]
          * </cond>
          * <body>
          *  [x              (ctx-lookup ctx "x")
          *   state          (heap->state heap)
          *   status         (heap->status heap)
-         *   update         (assign-blank blank1 x)
-         *   update         (assign-blank blank2 state)
-         *   update         (assign-blank blank3 status)
+         *   update         (assign-theta theta-x x)
+         *   update         (assign-theta theta-state state)
+         *   update         (assign-theta theta-status status)
          *   (snapshot {:ctx ctx :heap heap})]
          * </body> 
          * <expected>
@@ -110,24 +103,20 @@ public class Loops {
         
         /**
          * <cond>
-         *  [blank1         (blank-node)
-         *   blank2         (blank-node)
-         *   blank3         (blank-node)
-         *   theta-x        (theta-node (ctx-lookup ctx "x") blank1)
+         *  [theta-x        (theta-node (ctx-lookup ctx "x"))
          *   ctx            (ctx-update ctx "x" theta-x)
-         *   theta-state    (theta-node (heap->state heap) blank2)
-         *   theta-status   (theta-node (heap->status heap) blank3)
+         *   theta-state    (theta-node (heap->state heap))
+         *   theta-status   (theta-node (heap->status heap))
          *   heap           (make-heap theta-state theta-status)
-         *   condition      (opnode "<" theta-x (int-lit 3))
-         *   (snapshot {:peg condition :ctx ctx :heap heap})]
+         *   condition      (opnode "<" theta-x (int-lit 3))]
          * </cond> 
          * <body>
          *  [x              (ctx-lookup ctx "x")
          *   state          (heap->state heap)
          *   status         (heap->status heap)
-         *   update         (assign-blank blank1 x)
-         *   update         (assign-blank blank2 state)
-         *   update         (assign-blank blank3 status)
+         *   update         (assign-theta theta-x x)
+         *   update         (assign-theta theta-state state)
+         *   update         (assign-theta theta-status status)
          *   (snapshot {:ctx ctx :heap heap})]
          * </body> 
          * <expected>     
@@ -167,25 +156,21 @@ public class Loops {
 
         /**
          * <cond>
-         *  [blank1         (blank-node)
-         *   blank2         (blank-node)
-         *   blank3         (blank-node)
-         *   theta-x        (theta-node (ctx-lookup ctx "x") blank1)
-         *   theta-state    (theta-node (heap->state heap) blank2)
-         *   theta-status   (theta-node (heap->status heap) blank3)
+         *  [theta-x        (theta-node (ctx-lookup ctx "x"))
+         *   theta-state    (theta-node (heap->state heap))
+         *   theta-status   (theta-node (heap->status heap))
          *   heap           (make-heap theta-state theta-status)
          *   cond-x         (opnode "+" theta-x (int-lit 1))
          *   ctx            (ctx-update ctx "x" cond-x)
-         *   condition      (opnode "<" cond-x (int-lit 3))
-         *   (snapshot {:peg condition :ctx ctx :heap heap})]
+         *   condition      (opnode "<" cond-x (int-lit 3))]
          * </cond>
          * <body>
          *  [x              (ctx-lookup ctx "x")
          *   state          (heap->state heap)
          *   status         (heap->status heap)
-         *   update         (assign-blank blank1 x)
-         *   update         (assign-blank blank2 state)
-         *   update         (assign-blank blank3 status)
+         *   update         (assign-theta theta-x x)
+         *   update         (assign-theta theta-state state)
+         *   update         (assign-theta theta-status status)
          *   (snapshot {:ctx ctx :heap heap})]
          * </body> 
          * <expected>      
