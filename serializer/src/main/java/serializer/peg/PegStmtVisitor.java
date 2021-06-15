@@ -173,7 +173,6 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
 
         // visit body and apply side effects
         ExpressionResult body = n.getBody().accept(this, ctx);
-        testPairs.scrape(n, body, "body");
         ctx = body.context;
 
         // theta assignment
@@ -183,6 +182,8 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         }
         PegNode.assignTheta(initState.id, ctx.heap.state);
         PegNode.assignTheta(initStatus.id, ctx.heap.status);
+
+        testPairs.scrape(n, ctx.exprResult(), "body");
 
         // act as if we visit the condition a final time
         ctx = cond.context;
@@ -226,7 +227,6 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
 
         // visit body and apply side effects
         ExpressionResult body = n.getBody().accept(this, ctx);
-        testPairs.scrape(n, body, "loopbody");
         ctx = body.context;
 
         // theta assignment
@@ -236,6 +236,8 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         }
         PegNode.assignTheta(initState.id, ctx.heap.state);
         PegNode.assignTheta(initStatus.id, ctx.heap.status);
+
+        testPairs.scrape(n, ctx.exprResult(), "loopbody");
 
         // act as if we visit the condition a final time
         ctx = cond.context;
@@ -281,14 +283,12 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
 
         // visit body and apply side effects
         ExpressionResult body = n.getBody().accept(this, ctx);
-        testPairs.scrape(n, body, "body");
         ctx = body.context;
 
         // apply update expressions
         for (Expression expr: n.getUpdate()) {
             ctx = expr.accept(pev, ctx).context;
         }
-        testPairs.scrape(n, ctx.exprResult(), "update");
 
         // theta assignment
         for (String var: sortedVars) {
@@ -297,6 +297,8 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         }
         PegNode.assignTheta(initState.id, ctx.heap.state);
         PegNode.assignTheta(initStatus.id, ctx.heap.status);
+
+        testPairs.scrape(n, ctx.exprResult(), "body");
 
         // act as if we visit the condition a final time
         ctx = cond.context;

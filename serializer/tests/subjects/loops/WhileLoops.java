@@ -1,4 +1,4 @@
-public class Loops {
+public class WhileLoops {
 
     int isEven(int x) {
         return x % 2 == 0;
