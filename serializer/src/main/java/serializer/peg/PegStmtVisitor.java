@@ -176,7 +176,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         testPairs.scrape(n, body, "body");
         ctx = body.context;
 
-        // blank assignment
+        // theta assignment
         for (String var: sortedVars) {
             PegNode theta = initCtx.getLocalVar(var);
             PegNode.assignTheta(theta.id, ctx.getLocalVar(var).id); 
@@ -212,11 +212,11 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         ImmutableSet<String> vars = ctx.localVariableLookup.keySet();
         List<String> sortedVars = vars.stream().filter(s -> !s.equals("this")).sorted().collect(Collectors.toList());
         for (String var: sortedVars) {
-            PegNode.ThetaNode theta = PegNode.theta(ctx.getLocalVar(var).id, PegNode.blank().id);
+            PegNode.ThetaNode theta = PegNode.theta(ctx.getLocalVar(var).id);
             ctx = ctx.setLocalVar(var, theta);
         }
-        PegNode initState = PegNode.theta(ctx.heap.state, PegNode.blank().id);
-        PegNode initStatus = PegNode.theta(ctx.heap.status, PegNode.blank().id);
+        PegNode initState = PegNode.theta(ctx.heap.state);
+        PegNode initStatus = PegNode.theta(ctx.heap.status);
         PegContext initCtx = ctx.withHeap(PegNode.heap(initState.id, initStatus.id));
 
         // visit cond and apply side effects
@@ -229,13 +229,13 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         testPairs.scrape(n, body, "loopbody");
         ctx = body.context;
 
-        // blank assignment
+        // theta assignment
         for (String var: sortedVars) {
-            PegNode.ThetaNode theta = initCtx.getLocalVar(var).asThetaNode().orElseThrow(IllegalStateException::new);
-            PegNode.assignBlank(theta.next, ctx.getLocalVar(var).id); 
+            PegNode theta = initCtx.getLocalVar(var);
+            PegNode.assignTheta(theta.id, ctx.getLocalVar(var).id); 
         }
-        PegNode.assignBlank(initState.asThetaNode().orElseThrow(IllegalStateException::new).next, ctx.heap.state);
-        PegNode.assignBlank(initStatus.asThetaNode().orElseThrow(IllegalStateException::new).next, ctx.heap.status);
+        PegNode.assignTheta(initState.id, ctx.heap.state);
+        PegNode.assignTheta(initStatus.id, ctx.heap.status);
 
         // act as if we visit the condition a final time
         ctx = cond.context;
@@ -266,11 +266,11 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         ImmutableSet<String> vars = ctx.localVariableLookup.keySet();
         List<String> sortedVars = vars.stream().filter(s -> !s.equals("this")).sorted().collect(Collectors.toList());
         for (String var: sortedVars) {
-            PegNode.ThetaNode theta = PegNode.theta(ctx.getLocalVar(var).id, PegNode.blank().id);
+            PegNode.ThetaNode theta = PegNode.theta(ctx.getLocalVar(var).id);
             ctx = ctx.setLocalVar(var, theta);
         }
-        PegNode initState = PegNode.theta(ctx.heap.state, PegNode.blank().id);
-        PegNode initStatus = PegNode.theta(ctx.heap.status, PegNode.blank().id);
+        PegNode initState = PegNode.theta(ctx.heap.state);
+        PegNode initStatus = PegNode.theta(ctx.heap.status);
         PegContext initCtx = ctx.withHeap(PegNode.heap(initState.id, initStatus.id));
 
         // visit cond and apply side effects
@@ -281,7 +281,8 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
 
         // visit body and apply side effects
         ExpressionResult body = n.getBody().accept(this, ctx);
-        testPairs.scrape(n, ctx.exprResult(), "body");
+        testPairs.scrape(n, body, "body");
+        ctx = body.context;
 
         // apply update expressions
         for (Expression expr: n.getUpdate()) {
@@ -289,13 +290,13 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         }
         testPairs.scrape(n, ctx.exprResult(), "update");
 
-        // blank assignment
+        // theta assignment
         for (String var: sortedVars) {
-            PegNode.ThetaNode theta = initCtx.getLocalVar(var).asThetaNode().orElseThrow(IllegalStateException::new);
-            PegNode.assignBlank(theta.next, ctx.getLocalVar(var).id); 
+            PegNode theta = initCtx.getLocalVar(var);
+            PegNode.assignTheta(theta.id, ctx.getLocalVar(var).id); 
         }
-        PegNode.assignBlank(initState.asThetaNode().orElseThrow(IllegalStateException::new).next, ctx.heap.state);
-        PegNode.assignBlank(initStatus.asThetaNode().orElseThrow(IllegalStateException::new).next, ctx.heap.status);
+        PegNode.assignTheta(initState.id, ctx.heap.state);
+        PegNode.assignTheta(initStatus.id, ctx.heap.status);
 
         // act as if we visit the condition a final time
         ctx = cond.context;
