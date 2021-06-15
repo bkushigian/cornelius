@@ -675,8 +675,8 @@ public abstract class PegNode {
         return opNode("pass", condition);
     }
 
-    public static PegNode eval(Integer theta, Integer pass) {
-        return opNode("eval", theta, pass);
+    public static PegNode eval(Integer seq, Integer pass) {
+        return opNode("eval", seq, pass);
     }
 
     /**
@@ -802,6 +802,7 @@ public abstract class PegNode {
     // checks that the pegs form a strucutal bijection
     public static boolean isStructuralBijection(Integer node1, Integer node2) {
         if (!idLookup.containsKey(node1) || !idLookup.containsKey(node2)) {
+            System.out.println("6");
             throw new IllegalArgumentException();
         }
         Map<Integer, Integer> bijection1 = new HashMap<>();
@@ -818,12 +819,19 @@ public abstract class PegNode {
             if (peg1.isThetaNode() && peg2.isThetaNode()) {
                 if (bijection1.containsKey(id1) && bijection2.containsKey(id2)) {
                     if (!bijection1.get(id1).equals(id2) || !bijection2.get(id2).equals(id1)) {
+                        System.out.println("1");
                         return false;
                     }
                 } else if (bijection1.containsKey(id1) || bijection2.containsKey(id2)) {
+                    System.out.println("2");
                     return false;
                 } else {
                     if (!thetaLookup.containsKey(id1) || !thetaLookup.containsKey(id2)) {
+                        System.out.println("3");
+                        System.out.println(id1);
+                        System.out.println(id2);
+                        System.out.println(bijection1);
+                        System.out.println(bijection2);
                         return false;
                     }
                     s1.push(peg1.asThetaNode().get().init);
@@ -837,15 +845,18 @@ public abstract class PegNode {
                 OpNode opnode1 = peg1.asOpNode().get();
                 OpNode opnode2 = peg2.asOpNode().get();
                 if (!opnode1.op.equals(opnode2.op)) {
+                    System.out.println("4");
                     return false;
                 }
                 s1.addAll(opnode1.children);
                 s2.addAll(opnode2.children);
             } else if (!peg1.equals(peg2)) {
+                System.out.println("5");
                 return false;
             }
         }
         if (!s1.isEmpty() || !s2.isEmpty()) {
+            System.out.println("7");
             throw new IllegalStateException();
         }
         return true;
