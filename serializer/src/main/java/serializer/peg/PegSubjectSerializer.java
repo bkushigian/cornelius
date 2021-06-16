@@ -8,6 +8,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import serializer.XMLGenerator;
 
+import javax.xml.transform.TransformerException;
+
 /**
  * This class provides a CLI to serialize a program and its mutants into an XML file.
  */
@@ -125,13 +127,13 @@ public class PegSubjectSerializer {
             }
 
             // TODO: this involves giving public access to the idLookup which is sketchy.
-            xmlGen.addDeduplicationTable(PegNode.getIdLookup());
+            xmlGen.addIdTable(PegNode.getIdLookup());
 
             xmlGen.writeToFile("subjects.xml");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            System.err.println("Couldn't write subjects.xml");
+        } catch (TransformerException e) {
+            e.printStackTrace();
         }
     }
 
