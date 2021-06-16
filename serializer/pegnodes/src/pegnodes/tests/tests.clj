@@ -98,7 +98,7 @@
       idx)))
 
 (defn ensure-strings-are-same
-  "ensure, using the `testing/is` form, that the two strings are the same. If
+  "emits a test that ensures, using the `testing/is` form, that the two strings are the same. If
   not, report the index of the first difference as well as printing the
   location"
 
@@ -119,7 +119,8 @@
                 "\033[0m\n")))))
 
 (defn ensure-ids-are-equiv
-  "ensure, the ids point to pegs that form a structual bijection"
+  "emits a test that ensures that the ids point to pegs that form a structual bijection. on failure,
+   calls ensure-strings-are-equiv to generate debug output"
 
   ([expected-id actual-id expected-string actual-string] (ensure-ids-are-equiv expected-id actual-id nil))
   ([expected-id actual-id expected-string actual-string msg]

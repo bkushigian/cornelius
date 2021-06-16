@@ -9,7 +9,7 @@ public class WhileLoops {
          * <cond>
          *  [state      (theta-node (heap->state heap))
          *   status     (theta-node (heap->status heap))
-         *   heap       (make-heap state status)
+         *   heap       (heap-node state status)
          *   condition  (bool-lit false)]
          * </cond>
          * <body>
@@ -21,7 +21,7 @@ public class WhileLoops {
          *  [pass       (pass-node condition)   
          *   state      (eval-node state pass)
          *   status     (eval-node status pass)
-         *   heap       (make-heap state status)
+         *   heap       (heap-node state status)
          *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */
@@ -50,7 +50,7 @@ public class WhileLoops {
          *   ctx            (ctx-update ctx "x" theta-x)
          *   theta-state    (theta-node (heap->state heap))
          *   theta-status   (theta-node (heap->status heap))
-         *   heap           (make-heap theta-state theta-status)
+         *   heap           (heap-node theta-state theta-status)
          *   condition      (bool-lit false)]
          * </cond>
          * <body>
@@ -65,7 +65,7 @@ public class WhileLoops {
          * <expected>
          *  [pass       (pass-node condition)     
          *   ctx        (ctx-update ctx "x" (eval-node theta-x pass))
-         *   heap       (make-heap (eval-node theta-state pass) (eval-node theta-status pass))     
+         *   heap       (heap-node (eval-node theta-state pass) (eval-node theta-status pass))     
          *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */
@@ -111,7 +111,7 @@ public class WhileLoops {
          *   ctx            (ctx-update ctx "x" theta-x)
          *   theta-state    (theta-node (heap->state heap))
          *   theta-status   (theta-node (heap->status heap))
-         *   heap           (make-heap theta-state theta-status)
+         *   heap           (heap-node theta-state theta-status)
          *   condition      (opnode "<" theta-x (int-lit 3))]
          * </cond> 
          * <body>
@@ -126,7 +126,7 @@ public class WhileLoops {
          * <expected>     
          *  [pass       (pass-node condition)
          *   ctx        (ctx-update ctx "x" (eval-node theta-x pass))
-         *   heap       (make-heap (eval-node theta-state pass) (eval-node theta-status pass))
+         *   heap       (heap-node (eval-node theta-state pass) (eval-node theta-status pass))
          *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */
@@ -163,7 +163,7 @@ public class WhileLoops {
          *  [theta-x        (theta-node (ctx-lookup ctx "x"))
          *   theta-state    (theta-node (heap->state heap))
          *   theta-status   (theta-node (heap->status heap))
-         *   heap           (make-heap theta-state theta-status)
+         *   heap           (heap-node theta-state theta-status)
          *   cond-x         (opnode "+" theta-x (int-lit 1))
          *   ctx            (ctx-update ctx "x" cond-x)
          *   condition      (opnode "<" cond-x (int-lit 3))]
@@ -180,7 +180,7 @@ public class WhileLoops {
          * <expected>      
          *  [pass       (pass-node condition)
          *   ctx        (ctx-update ctx "x" (eval-node cond-x pass))
-         *   heap       (make-heap (eval-node theta-state pass) (eval-node theta-status pass))
+         *   heap       (heap-node (eval-node theta-state pass) (eval-node theta-status pass))
          *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */
@@ -220,7 +220,7 @@ public class WhileLoops {
          *   theta-j        (theta-node (ctx-lookup ctx "j"))
          *   theta-state    (theta-node (heap->state heap))
          *   theta-status   (theta-node (heap->status heap))
-         *   heap           (make-heap theta-state theta-status)
+         *   heap           (heap-node theta-state theta-status)
          *   ctx            (ctx-update ctx "i" theta-i)
          *   ctx            (ctx-update ctx "j" theta-j)
          *   condition      (opnode "<" theta-i (int-lit 10))]
@@ -240,7 +240,7 @@ public class WhileLoops {
          *  [pass       (pass-node condition)
          *   ctx        (ctx-update ctx "i" (eval-node theta-i pass))
          *   ctx        (ctx-update ctx "j" (eval-node theta-j pass))
-         *   heap       (make-heap (eval-node theta-state pass) (eval-node theta-status pass))
+         *   heap       (heap-node (eval-node theta-state pass) (eval-node theta-status pass))
          *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */
@@ -294,7 +294,7 @@ public class WhileLoops {
          *   theta-x        (theta-node (param "x"))
          *   theta-state    (theta-node (heap->state heap))
          *   theta-status   (theta-node (heap->status heap))
-         *   theta-heap     (make-heap theta-state theta-status)
+         *   theta-heap     (heap-node theta-state theta-status)
          *   ctx            (ctx-update ctx "i" theta-i)
          *   ctx            (ctx-update ctx "x" theta-x)
          *   plus           (opnode "+" theta-i theta-x)
@@ -318,7 +318,7 @@ public class WhileLoops {
          *  [pass           (pass-node condition)
          *   ctx            (ctx-update ctx "i" (eval-node theta-i pass))
          *   ctx            (ctx-update ctx "x" (eval-node theta-x pass))
-         *   heap           (make-heap (eval-node cond-state pass) (eval-node cond-status pass))
+         *   heap           (heap-node (eval-node cond-state pass) (eval-node cond-status pass))
          *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */
@@ -356,7 +356,7 @@ public class WhileLoops {
          *   ctx            (ctx-update ctx "i" theta-i1)
          *   theta-state1   (theta-node (heap->state heap))
          *   theta-status1  (theta-node (heap->status heap))
-         *   heap           (make-heap theta-state1 theta-status1)
+         *   heap           (heap-node theta-state1 theta-status1)
          *   condition1     (opnode "<" theta-i1 (int-lit 5))]
          * </cond> 
          * <body>
@@ -371,7 +371,7 @@ public class WhileLoops {
          * <expected>     
          *  [pass       (pass-node condition1)
          *   ctx        (ctx-update ctx "i" (eval-node theta-i1 pass))
-         *   heap       (make-heap (eval-node theta-state1 pass) (eval-node theta-status1 pass))
+         *   heap       (heap-node (eval-node theta-state1 pass) (eval-node theta-status1 pass))
          *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */
@@ -390,7 +390,7 @@ public class WhileLoops {
              *   theta-j        (theta-node (ctx-lookup ctx "j"))
              *   theta-state2   (theta-node (heap->state heap))
              *   theta-status2  (theta-node (heap->status heap))
-             *   heap           (make-heap theta-state2 theta-status2)
+             *   heap           (heap-node theta-state2 theta-status2)
              *   ctx            (ctx-update ctx "i" theta-i2)
              *   ctx            (ctx-update ctx "j" theta-j)
              *   plus           (opnode "+" theta-i2 theta-j)
@@ -410,7 +410,7 @@ public class WhileLoops {
              *  [pass       (pass-node condition2)
              *   ctx        (ctx-update ctx "i" (eval-node theta-i2 pass))
              *   ctx        (ctx-update ctx "j" (eval-node theta-j pass))
-             *   heap       (make-heap (eval-node theta-state2 pass) (eval-node theta-status2 pass))]
+             *   heap       (heap-node (eval-node theta-state2 pass) (eval-node theta-status2 pass))]
              * </expected>
              */
             while (i + j < 5) {

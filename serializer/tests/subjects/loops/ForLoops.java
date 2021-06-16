@@ -6,7 +6,7 @@ public class ForLoops {
          * <cond>
          *  [theta-state    (theta-node (heap->state heap))
          *   theta-status   (theta-node (heap->status heap))
-         *   heap           (make-heap theta-state theta-status)
+         *   heap           (heap-node theta-state theta-status)
          *   condition      (bool-lit true)]
          * </cond>
          * <body>
@@ -18,7 +18,7 @@ public class ForLoops {
          * </body> 
          * <expected>
          *  [pass       (pass-node condition)     
-         *   heap       (make-heap (eval-node theta-state pass) (eval-node theta-status pass))     
+         *   heap       (heap-node (eval-node theta-state pass) (eval-node theta-status pass))     
          *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */
@@ -53,7 +53,7 @@ public class ForLoops {
          *   ctx            (ctx-update ctx "x" theta-x)
          *   theta-state    (theta-node (heap->state heap))
          *   theta-status   (theta-node (heap->status heap))
-         *   heap           (make-heap theta-state theta-status)
+         *   heap           (heap-node theta-state theta-status)
          *   condition      (opnode "<" theta-i (int-lit 5))]
          * </cond> 
          * <body>
@@ -73,7 +73,7 @@ public class ForLoops {
          *  [pass       (pass-node condition)
          *   ctx        (ctx-update ctx "i" (eval-node theta-i pass))
          *   ctx        (ctx-update ctx "x" (eval-node theta-x pass))
-         *   heap       (make-heap (eval-node theta-state pass) (eval-node theta-status pass))
+         *   heap       (heap-node (eval-node theta-state pass) (eval-node theta-status pass))
          *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */
@@ -120,7 +120,7 @@ public class ForLoops {
          *   ctx            (ctx-update ctx "e" theta-e)
          *   theta-state    (theta-node (heap->state heap))
          *   theta-status   (theta-node (heap->status heap))
-         *   heap           (make-heap theta-state theta-status)
+         *   heap           (heap-node theta-state theta-status)
          *   ca-b           (opnode "-" (opnode "*" theta-c theta-a) theta-b)
          *   condition      (opnode "<" theta-d ca-b)]
          * </cond> 
@@ -154,7 +154,7 @@ public class ForLoops {
          *   ctx        (ctx-update ctx "c" (eval-node theta-c pass))
          *   ctx        (ctx-update ctx "d" (eval-node theta-d pass))
          *   ctx        (ctx-update ctx "e" (eval-node theta-e pass))
-         *   heap       (make-heap (eval-node theta-state pass) (eval-node theta-status pass))
+         *   heap       (heap-node (eval-node theta-state pass) (eval-node theta-status pass))
          *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */

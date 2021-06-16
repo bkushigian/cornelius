@@ -136,7 +136,7 @@
 (defn invoke->heap [invocation]
   (PegNode/projectHeap (object->id invocation)))
 
-(defn make-heap [state status]
+(defn heap-node [state status]
   (PegNode/heap (object->id state) (object->id status)))
 
 (defn heap->state [heap]
@@ -211,7 +211,7 @@ EXCEPTION: the exception to be thrown"
   (let [node (cond (int? old-status-or-heap) (id-lookup (int old-status-or-heap))
                    (instance? PegNode old-status-or-heap) old-status-or-heap
                    :else (throw  (IllegalArgumentException. "old-status-or-heap must be a PegNode or an Id (i.e., integer type)")))]
-    (cond (. node isHeap)    (make-heap (. node state) (update-exception-status (. node status) condition exception))
+    (cond (. node isHeap)    (heap-node (. node state) (update-exception-status (. node status) condition exception))
           (. node isOpNode) (if (= node (unit))
                               (phi condition
                                    exception
@@ -297,7 +297,7 @@ EXCEPTION: the exception to be thrown"
 (defn heap-join [guard thn-heap els-heap]
   (let [state  (phi guard (heap->state  thn-heap) (heap->state  els-heap))
         status (phi guard (heap->status thn-heap) (heap->status els-heap))]
-    (make-heap state status)))
+    (heap-node state status)))
 
 ;; Handle Exceptions
 (defn update-status-npe

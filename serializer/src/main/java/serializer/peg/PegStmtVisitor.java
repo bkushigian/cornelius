@@ -159,8 +159,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         ImmutableSet<String> vars = ctx.localVariableLookup.keySet();
         List<String> sortedVars = vars.stream().filter(s -> !s.equals("this")).sorted().collect(Collectors.toList());
         for (String var: sortedVars) {
-            PegNode.ThetaNode theta = PegNode.theta(ctx.getLocalVar(var).id);
-            ctx = ctx.setLocalVar(var, theta);
+            ctx = ctx.setLocalVar(var, PegNode.theta(ctx.getLocalVar(var).id));
         }
         PegNode initState = PegNode.theta(ctx.heap.state);
         PegNode initStatus = PegNode.theta(ctx.heap.status);
@@ -177,8 +176,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
 
         // theta assignment
         for (String var: sortedVars) {
-            PegNode theta = initCtx.getLocalVar(var);
-            PegNode.assignTheta(theta.id, ctx.getLocalVar(var).id); 
+            PegNode.assignTheta(initCtx.getLocalVar(var).id, ctx.getLocalVar(var).id); 
         }
         PegNode.assignTheta(initState.id, ctx.heap.state);
         PegNode.assignTheta(initStatus.id, ctx.heap.status);
@@ -191,8 +189,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         // construct eval nodes
         PegNode pass = PegNode.pass(cond.peg.id);
         for (String var: sortedVars) {
-            PegNode val = ctx.getLocalVar(var);
-            ctx = ctx.setLocalVar(var, PegNode.eval(val.id, pass.id));
+            ctx = ctx.setLocalVar(var, PegNode.eval(ctx.getLocalVar(var).id, pass.id));
         }
         PegNode state = PegNode.eval(ctx.heap.state, pass.id);
         PegNode status = PegNode.eval(ctx.heap.status, pass.id);
@@ -213,8 +210,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         ImmutableSet<String> vars = ctx.localVariableLookup.keySet();
         List<String> sortedVars = vars.stream().filter(s -> !s.equals("this")).sorted().collect(Collectors.toList());
         for (String var: sortedVars) {
-            PegNode.ThetaNode theta = PegNode.theta(ctx.getLocalVar(var).id);
-            ctx = ctx.setLocalVar(var, theta);
+            ctx = ctx.setLocalVar(var, PegNode.theta(ctx.getLocalVar(var).id));
         }
         PegNode initState = PegNode.theta(ctx.heap.state);
         PegNode initStatus = PegNode.theta(ctx.heap.status);
@@ -231,8 +227,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
 
         // theta assignment
         for (String var: sortedVars) {
-            PegNode theta = initCtx.getLocalVar(var);
-            PegNode.assignTheta(theta.id, ctx.getLocalVar(var).id); 
+            PegNode.assignTheta(initCtx.getLocalVar(var).id, ctx.getLocalVar(var).id); 
         }
         PegNode.assignTheta(initState.id, ctx.heap.state);
         PegNode.assignTheta(initStatus.id, ctx.heap.status);
@@ -245,8 +240,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         // construct eval nodes
         PegNode pass = PegNode.pass(cond.peg.id);
         for (String var: sortedVars) {
-            PegNode val = ctx.getLocalVar(var);
-            ctx = ctx.setLocalVar(var, PegNode.eval(val.id, pass.id));
+            ctx = ctx.setLocalVar(var, PegNode.eval(ctx.getLocalVar(var).id, pass.id));
         }
         PegNode state = PegNode.eval(ctx.heap.state, pass.id);
         PegNode status = PegNode.eval(ctx.heap.status, pass.id);
@@ -268,8 +262,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         ImmutableSet<String> vars = ctx.localVariableLookup.keySet();
         List<String> sortedVars = vars.stream().filter(s -> !s.equals("this")).sorted().collect(Collectors.toList());
         for (String var: sortedVars) {
-            PegNode.ThetaNode theta = PegNode.theta(ctx.getLocalVar(var).id);
-            ctx = ctx.setLocalVar(var, theta);
+            ctx = ctx.setLocalVar(var, PegNode.theta(ctx.getLocalVar(var).id));
         }
         PegNode initState = PegNode.theta(ctx.heap.state);
         PegNode initStatus = PegNode.theta(ctx.heap.status);
@@ -292,8 +285,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
 
         // theta assignment
         for (String var: sortedVars) {
-            PegNode theta = initCtx.getLocalVar(var);
-            PegNode.assignTheta(theta.id, ctx.getLocalVar(var).id); 
+            PegNode.assignTheta(initCtx.getLocalVar(var).id, ctx.getLocalVar(var).id); 
         }
         PegNode.assignTheta(initState.id, ctx.heap.state);
         PegNode.assignTheta(initStatus.id, ctx.heap.status);
@@ -306,8 +298,7 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         // construct eval nodes
         PegNode pass = PegNode.pass(cond.peg.id);
         for (String var: sortedVars) {
-            PegNode val = ctx.getLocalVar(var);
-            ctx = ctx.setLocalVar(var, PegNode.eval(val.id, pass.id));
+            ctx = ctx.setLocalVar(var, PegNode.eval(ctx.getLocalVar(var).id, pass.id));
         }
         PegNode state = PegNode.eval(ctx.heap.state, pass.id);
         PegNode status = PegNode.eval(ctx.heap.status, pass.id);

@@ -455,12 +455,10 @@ public abstract class PegNode {
         @Override
         public String toDerefString() {
             if (!expand) {
-                //return op + this.id;
                 return op;
             }
             expand = false;
             final StringBuilder sb = new StringBuilder("(");
-            //sb.append(op + this.id);
             sb.append(op);
             sb.append(' ');
             boolean added = false;
@@ -547,6 +545,9 @@ public abstract class PegNode {
 
     private static Map<Object, PegNode> litLookup = new HashMap<>();
 
+    /**
+     * lookup the id of a ThetaNode's identified node from the ThetaNode's id
+     */
     private static Map<Integer, Integer> thetaLookup = new HashMap<>();
 
     /**
@@ -799,7 +800,13 @@ public abstract class PegNode {
         thetaLookup.put(theta, value);
     }
 
-    // checks that the pegs form a strucutal bijection
+    /**
+     * @param node1 the id of the first PEG to compute a bijection over
+     * @param node2 the id of the second PEG to compute a bijection over
+     * @return returns true when a bijection exists between the ThetaNode ids
+     * such that node1 and node2 are structurally equivalent, otherwise returns false
+     * @throws IllegalArgumentException if the node1 or node2 are invalid ids
+     */
     public static boolean isStructuralBijection(Integer node1, Integer node2) {
         if (!idLookup.containsKey(node1) || !idLookup.containsKey(node2)) {
             throw new IllegalArgumentException();
