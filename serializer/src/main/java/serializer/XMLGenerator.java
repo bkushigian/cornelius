@@ -14,6 +14,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import serializer.peg.MutantsLog;
+import serializer.peg.Pair;
 import serializer.peg.PegNode;
 
 public class XMLGenerator {
@@ -121,17 +122,36 @@ public class XMLGenerator {
         return subjects.getElementsByTagName("subject").getLength();
     }
 
-    public void addIdTable(Map<Integer, PegNode> dedupTable) {
+    /**
+     * Add the {@code <id_table>} element to the xml doc
+     * @param idTable map from id to pegnode
+     */
+    public void addIdTable(Map<Integer, PegNode> idTable) {
         Element table = document.createElement("id_table");
         subjects.appendChild(table);
-        final List<Integer> keys = new ArrayList<>(dedupTable.keySet());
+        final List<Integer> keys = new ArrayList<>(idTable.keySet());
         keys.sort(null);
         for (Integer id : keys) {
-            final PegNode p = dedupTable.get(id);
+            final PegNode p = idTable.get(id);
             Element dedupEntry = document.createElement("dedup_entry");
             table.appendChild(dedupEntry);
             dedupEntry.setAttribute("id", id.toString());
             dedupEntry.setAttribute("peg", p.toString());
+        }
+    }
+
+    /**
+     * Add a list of equivalences to the xml doc
+     * @param equivs a list of ids to be marked as equivalent
+     */
+    public void addEquivalences(List<Pair<Integer, Integer>> equivs) {
+        Element table = document.createElement("node_equivalences");
+        subjects.appendChild(table);
+        for (Pair<Integer, Integer> equiv : equivs) {
+            Element equivElement = document.createElement("node_equivalence");
+            table.appendChild(equivElement);
+            equivElement.setAttribute("first", equiv.fst.toString());
+            equivElement.setAttribute("second", equiv.snd.toString());
         }
     }
 
