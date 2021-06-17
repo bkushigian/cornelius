@@ -553,6 +553,11 @@ public abstract class PegNode {
     private static Map<Integer, PegNode> idLookup = new HashMap<>();
 
     /**
+     * Keep track of node equivalences
+     */
+    private static Equivalences equivalences = new Equivalences();
+
+    /**
      * lookup the PEG node from a symbol and a list of children id.
      *
      * WARNING: This is sketchy since I'm using a {@code List<Integer>} as a key,
