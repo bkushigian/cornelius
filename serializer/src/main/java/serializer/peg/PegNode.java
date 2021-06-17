@@ -492,6 +492,7 @@ public abstract class PegNode {
                 throw new IllegalStateException();
             }
             blank.identifiedNode = value;
+            equivalences.addEquivalence(blank.id, value);
         }
 
         private static class BlankNode extends OpNode {
@@ -810,15 +811,15 @@ public abstract class PegNode {
 
     /**
      * @param theta id of an unassigned Theta node
-     * @param value id of the peg that theta should be assigned to
+     * @param value id of the continuation that theta should be assigned
      */
     public static void assignTheta(Integer theta, Integer value) {
         PegNode peg = idLookup(theta).orElseThrow(IllegalStateException::new);
         if (!peg.isThetaNode()) {
             throw new IllegalStateException();
         }
+        // sets the continuation and updates equivalences
         peg.asThetaNode().get().setContinuation(value);
-        // TODO: add equivalence pair
     }
 
     /**
