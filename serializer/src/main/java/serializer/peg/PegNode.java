@@ -804,19 +804,6 @@ public abstract class PegNode {
     }
 
     /**
-     * @param theta id of an unassigned Theta node
-     * @param value id of the continuation that theta should be assigned
-     */
-    public static void assignTheta(Integer theta, Integer value) {
-        PegNode peg = idLookup(theta).orElseThrow(IllegalStateException::new);
-        if (!peg.isThetaNode()) {
-            throw new IllegalStateException();
-        }
-        // sets the continuation and updates equivalences
-        peg.asThetaNode().get().setContinuation(value);
-    }
-
-    /**
      * @param node1 the id of the first PEG to compute a bijection over
      * @param node2 the id of the second PEG to compute a bijection over
      * @return returns true when a bijection exists between the ThetaNode ids

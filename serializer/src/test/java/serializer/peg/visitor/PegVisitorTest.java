@@ -46,7 +46,7 @@ public class PegVisitorTest {
   public void testSelfReference() {
     // (theta 0 theta))
     final PegNode.ThetaNode theta = PegNode.theta(zero.id);
-    PegNode.assignTheta(theta.id, theta.id);
+    theta.setContinuation(theta.id);
 
     final Map<PegNode, Integer> map = new HashMap<>();
     theta.accept(v, map);
@@ -58,7 +58,7 @@ public class PegVisitorTest {
     // (theta 0 (+ theta 1))
     final PegNode.ThetaNode theta = PegNode.theta(zero.id);
     final PegNode plus = PegNode.opNode("+", theta.id, one.id);
-    PegNode.assignTheta(theta.id, plus.id);
+    theta.setContinuation(plus.id);
 
     final Map<PegNode, Integer> map = new HashMap<>();
     theta.accept(v, map);

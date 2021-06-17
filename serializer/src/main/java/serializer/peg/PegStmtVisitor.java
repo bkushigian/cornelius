@@ -161,8 +161,8 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         for (String var: sortedVars) {
             ctx = ctx.setLocalVar(var, PegNode.theta(ctx.getLocalVar(var).id));
         }
-        PegNode initState = PegNode.theta(ctx.heap.state);
-        PegNode initStatus = PegNode.theta(ctx.heap.status);
+        PegNode.ThetaNode initState = PegNode.theta(ctx.heap.state);
+        PegNode.ThetaNode initStatus = PegNode.theta(ctx.heap.status);
         PegContext initCtx = ctx.withHeap(PegNode.heap(initState.id, initStatus.id));
 
         // visit cond and apply side effects
@@ -176,10 +176,13 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
 
         // theta assignment
         for (String var: sortedVars) {
-            PegNode.assignTheta(initCtx.getLocalVar(var).id, ctx.getLocalVar(var).id); 
+            initCtx.getLocalVar(var)
+                    .asThetaNode()
+                    .orElseThrow(IllegalStateException::new)
+                    .setContinuation(ctx.getLocalVar(var).id);
         }
-        PegNode.assignTheta(initState.id, ctx.heap.state);
-        PegNode.assignTheta(initStatus.id, ctx.heap.status);
+        initState.setContinuation(ctx.heap.state);
+        initStatus.setContinuation(ctx.heap.status);
 
         testPairs.scrape(n, ctx.exprResult(), "body");
 
@@ -212,8 +215,8 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         for (String var: sortedVars) {
             ctx = ctx.setLocalVar(var, PegNode.theta(ctx.getLocalVar(var).id));
         }
-        PegNode initState = PegNode.theta(ctx.heap.state);
-        PegNode initStatus = PegNode.theta(ctx.heap.status);
+        PegNode.ThetaNode initState = PegNode.theta(ctx.heap.state);
+        PegNode.ThetaNode initStatus = PegNode.theta(ctx.heap.status);
         PegContext initCtx = ctx.withHeap(PegNode.heap(initState.id, initStatus.id));
 
         // visit cond and apply side effects
@@ -227,10 +230,13 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
 
         // theta assignment
         for (String var: sortedVars) {
-            PegNode.assignTheta(initCtx.getLocalVar(var).id, ctx.getLocalVar(var).id); 
+            initCtx.getLocalVar(var)
+                    .asThetaNode()
+                    .orElseThrow(IllegalStateException::new)
+                    .setContinuation(ctx.getLocalVar(var).id);
         }
-        PegNode.assignTheta(initState.id, ctx.heap.state);
-        PegNode.assignTheta(initStatus.id, ctx.heap.status);
+        initState.setContinuation(ctx.heap.state);
+        initStatus.setContinuation(ctx.heap.status);
 
         testPairs.scrape(n, ctx.exprResult(), "loopbody");
 
@@ -264,8 +270,8 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
         for (String var: sortedVars) {
             ctx = ctx.setLocalVar(var, PegNode.theta(ctx.getLocalVar(var).id));
         }
-        PegNode initState = PegNode.theta(ctx.heap.state);
-        PegNode initStatus = PegNode.theta(ctx.heap.status);
+        PegNode.ThetaNode initState = PegNode.theta(ctx.heap.state);
+        PegNode.ThetaNode initStatus = PegNode.theta(ctx.heap.status);
         PegContext initCtx = ctx.withHeap(PegNode.heap(initState.id, initStatus.id));
 
         // visit cond and apply side effects
@@ -285,10 +291,13 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
 
         // theta assignment
         for (String var: sortedVars) {
-            PegNode.assignTheta(initCtx.getLocalVar(var).id, ctx.getLocalVar(var).id); 
+            initCtx.getLocalVar(var)
+                    .asThetaNode()
+                    .orElseThrow(IllegalStateException::new)
+                    .setContinuation(ctx.getLocalVar(var).id);
         }
-        PegNode.assignTheta(initState.id, ctx.heap.state);
-        PegNode.assignTheta(initStatus.id, ctx.heap.status);
+        initState.setContinuation(ctx.heap.state);
+        initStatus.setContinuation(ctx.heap.status);
 
         testPairs.scrape(n, ctx.exprResult(), "body");
 
