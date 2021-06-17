@@ -2,28 +2,28 @@
 
 cd serializer
 
-printf "\033[1;36mInstalling Library...\033[0m"
+printf "\033[1mInstalling Library...\033[0m"
 if mvn install > /dev/null
 then
-    printf "\033[1;36mSUCCESS\033[0m\n"
+    printf "\033[1;32mSUCCESS\033[0m\n"
 else
     printf "\033[1;31mFAILURE\033[0m\n"
 fi
 
-printf "\033[1;36mRunning Unit Tests...\033[0m"
+printf "\033[1mRunning Unit Tests...\033[0m"
 if mvn test > /dev/null
 then
-    printf "\033[1;36mSUCCESS\033[0m\n"
+    printf "\033[1;32mSUCCESS\033[0m\n"
 else
     printf "\033[1;31mFAILURE\033[0m\n"
 fi
 
 cd pegnodes
 
-printf "\033[1;36mRunning Clojure Tests...\033[0m"
+printf "\033[1mRunning Clojure Tests...\033[0m"
 if lein run > /dev/null
 then
-    printf "\033[1;36mSUCCESS\033[0m\n"
+    printf "\033[1;32mSUCCESS\033[0m\n"
 else
     printf "\033[1;31mFAILURE\033[0m\n"
 fi
