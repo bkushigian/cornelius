@@ -814,8 +814,10 @@ public abstract class PegNode {
         if (!idLookup.containsKey(node1) || !idLookup.containsKey(node2)) {
             throw new IllegalArgumentException();
         }
+        // potential bijection between theta-nodes
         Map<Integer, Integer> bijection1 = new HashMap<>();
         Map<Integer, Integer> bijection2 = new HashMap<>();
+        // queue of pegnodes to compare
         Stack<Integer> s1 = new Stack<>();
         Stack<Integer> s2 = new Stack<>();
         s1.add(node1);
@@ -825,38 +827,55 @@ public abstract class PegNode {
             Integer id2 = s2.pop(); 
             PegNode peg1 = idLookup.get(id1);
             PegNode peg2 = idLookup.get(id2);
+            // theta nodes
             if (peg1.isThetaNode() && peg2.isThetaNode()) {
                 ThetaNode thetaNode1 = peg1.asThetaNode().get();
                 ThetaNode thetaNode2 = peg2.asThetaNode().get();
+                // make sure thetas are assigned
+                if (!thetaNode1.getContinuation().isPresent() || !thetaNode2.getContinuation().isPresent()) {
+                        return false;
+                }
+                // ids are part of a bijection
                 if (bijection1.containsKey(id1) && bijection2.containsKey(id2)) {
+                    // make sure its with each other
                     if (!bijection1.get(id1).equals(id2) || !bijection2.get(id2).equals(id1)) {
                         return false;
+                    } else {
+                        continue;
                     }
+                // one id is part of a bijection, but not with the other
                 } else if (bijection1.containsKey(id1) || bijection2.containsKey(id2)) {
                     return false;
+                // neither id is part of a bijection, so we can form one
                 } else {
-                    if (!thetaNode1.getContinuation().isPresent() || !thetaNode2.getContinuation().isPresent()) {
-                        return false;
-                    }
                     s1.push(thetaNode1.init);
                     s2.push(thetaNode2.init);
                     s1.push(thetaNode1.getContinuation().get().id);
                     s2.push(thetaNode2.getContinuation().get().id);
                     bijection1.put(id1, id2);
                     bijection2.put(id2, id1);
+                    continue;
                 }
+            // opnodes
             } else if (peg1.isOpNode() && peg2.isOpNode()) {
                 OpNode opNode1 = peg1.asOpNode().get();
                 OpNode opNode2 = peg2.asOpNode().get();
+                // make sure operation is the same
                 if (!opNode1.op.equals(opNode2.op)) {
                     return false;
                 }
+                // compare all children
                 s1.addAll(opNode1.children);
                 s2.addAll(opNode2.children);
-            } else if (!peg1.equals(peg2)) {
-                return false;
+            // either different types or both literals
+            } else {
+                // fail if different types or non-equal literals
+                if (!peg1.equals(peg2)) {
+                    return false;
+                }
             }
         }
+        // make sure number of children was consistent
         if (!s1.isEmpty() || !s2.isEmpty()) {
             throw new IllegalStateException();
         }
