@@ -128,6 +128,7 @@ public class PegSubjectSerializer {
 
             // TODO: this involves giving public access to the idLookup which is sketchy.
             xmlGen.addIdTable(PegNode.getIdLookup());
+            xmlGen.addEquivalences(PegNode.getNodeEquivalences());
 
             xmlGen.writeToFile("subjects.xml");
         } catch (FileNotFoundException e) {
