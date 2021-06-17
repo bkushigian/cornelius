@@ -13,6 +13,10 @@
   (:require [clojure.set :refer [union intersection]])
   (:gen-class))
 
+(defn id-lookup [id]
+  (cond (int? id) (. (PegNode/idLookup (int id)) orElse nil)
+        :else nil))
+
 (defn  is-valid-id?
   "Check to ensure we are not creating a potential circular dependency. A valid
   id is an id already stored in the lookup table. Since ids are stored
@@ -34,6 +38,15 @@
     (if (is-valid-id? id)
       id
       (throw (IllegalStateException. "Invalid ID detected")))))
+
+(defn id-or-peg->peg
+  "Given an Id or a PegNode, get back the corresponding PegNode. When id-or-peg
+  is a PegNode this function acts as the identity function. When id-or-peg is an
+  Integer, this function calls into id-lookup."
+  [id-or-peg]
+  (cond (int? id-or-peg) (id-lookup id-or-peg)
+        (instance? PegNode id-or-peg) id-or-peg
+        :else (throw (IllegalArgumentException. (str "Expected an Integer or a PegNode: " id-or-peg)))))
 
 (defn opnode
   "Create an arbitrary opnode PEG."
@@ -78,7 +91,8 @@
 (defn assign-theta
   "Assign a theta node to the peg it should point to"
   [theta value]
-  (PegNode/assignTheta (object->id theta) (object->id value)))                  
+  (let [theta (id-or-peg->peg theta)]
+    (. theta setContinuation (object->id value))))
 
 (defn param
   "Create a parameter node"
@@ -178,10 +192,6 @@
   "Return a '!-' node for `a != b`"
   [a b]
   (opnode "!=" a b))
-
-(defn id-lookup [id]
-  (cond (int? id) (. (PegNode/idLookup (int id)) orElse nil)
-        :else nil))
 
 (defn print-id-table []
   (let  [table (PegNode/getIdLookup)
