@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  *    </li>
  *    <li>
  *      <strong>Cycles:</strong> {@code PegNode.ThetaNode}s allow for cycles through their
- *      identified node (obtainable from {@code thetaNode.getIdentifiedNode()}.
+ *      identified node (obtainable from {@code thetaNode.getContinuation()}.
  *    </li>
  * </ol>
  *
@@ -128,10 +128,10 @@ public class PegVisitor<R, A> {
     }
     preVisit(node, arg);
     final R init = node.getInitializer().accept(this, arg);
-    final Optional<PegNode> identNode = node.getIdentifiedNode();
-    final R combined = identNode.isPresent() ? combine(node, arg, init, identNode.get()) : combine(node, arg, init);
+    final Optional<PegNode> cont = node.getContinuation();
+    final R combined = cont.isPresent() ? combine(node, arg, init, cont.get()) : combine(node, arg, init);
     table.put(node, combined);
-    identNode.ifPresent(pegNode -> pegNode.accept(this, arg));
+    cont.ifPresent(pegNode -> pegNode.accept(this, arg));
     return combined;
   }
 

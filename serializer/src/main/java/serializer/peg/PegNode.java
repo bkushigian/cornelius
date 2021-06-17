@@ -29,9 +29,8 @@ public abstract class PegNode {
         idLookup.clear();
         litLookup.clear();
         symbolLookup.clear();
-        thetaLookup.clear();
         _id = 0;
-        ThetaNode._thetaId = 0;
+        ThetaNode.BlankNode._blankId = 0;
     }
 
     public String toDerefString() {
@@ -411,35 +410,24 @@ public abstract class PegNode {
     }
 
     public static class ThetaNode extends OpNode {
-        static int _thetaId = 0;
-        private final int thetaId;
         public final Integer init;
+        private final BlankNode blank;
         private boolean expand;   // indicates whether to expand during printing
 
-        private ThetaNode(final Integer idLit, final Integer init) {
-            super("theta", idLit, init);
-            thetaId = idLookup(idLit).orElseThrow(IllegalStateException::new)
-                      .asInteger().orElseThrow(IllegalStateException::new);
+        private ThetaNode(final Integer init, final BlankNode blank) {
+            super("theta", init, blank.id);
             this.init = init;
+            this.blank = blank;
             this.expand = true;
+        }
+
+        private static ThetaNode thetaNode(final Integer init) {
+            return new ThetaNode(init, new BlankNode(BlankNode._blankId++));
         }
 
         @Override
         public Optional<ThetaNode> asThetaNode() {
             return Optional.of(this);
-        }
-
-        /**
-         * A {@code ThetaNode} may be identified with another {@code PegNode}. This method checks
-         * to see if it is and, if so, returns an {@code Optional.of(PegNode)} wrapping the identified
-         * node. Otherwise, returns empty.
-         *
-         * @return {@code Optional.of(node)} if this ThetaNode is identified with {@code node}; if {@code this}
-         * isn't identified with any nodes, return {@code Optional.empty()}
-         */
-        public Optional<PegNode> getIdentifiedNode() {
-            return Optional.ofNullable(thetaLookup.get(this.id))
-                    .flatMap(i -> Optional.ofNullable(idLookup.get(i)));
         }
 
         @Override
@@ -484,6 +472,38 @@ public abstract class PegNode {
          */
         public PegNode getInitializer() {
             return PegNode.idLookup(init).orElseThrow(IllegalStateException::new);
+        }
+
+        /**
+         * A {@code ThetaNode} may be assigned another {@code PegNode} that represents its continuation. This 
+         * method checks to see if it is and, if so, returns an {@code Optional.of(PegNode)} wrapping the
+         * continuation node. Otherwise, returns empty.
+         *
+         * @return {@code Optional.of(cont)} if this ThetaNode has been assigned with {@code cont}; if {@code this}
+         * isn't identified with any nodes, return {@code Optional.empty()}
+         */
+        public Optional<PegNode> getContinuation() {
+            return Optional.ofNullable(blank.identifiedNode)
+                    .flatMap(i -> Optional.ofNullable(idLookup.get(i)));
+        }
+
+        public void setContinuation(Integer value) {
+            if (blank.identifiedNode != null) {
+                throw new IllegalStateException();
+            }
+            blank.identifiedNode = value;
+        }
+
+        private static class BlankNode extends OpNode {
+            static int _blankId = 0;
+            private final int blankId;
+            public Integer identifiedNode;
+
+            private BlankNode(int id) {
+                super("blank", intLit(id).id);
+                this.blankId = id;
+                this.identifiedNode = null;
+            }
         }
     }
 
@@ -546,11 +566,6 @@ public abstract class PegNode {
     private static Map<Object, PegNode> litLookup = new HashMap<>();
 
     /**
-     * lookup the id of a ThetaNode's identified node from the ThetaNode's id
-     */
-    private static Map<Integer, Integer> thetaLookup = new HashMap<>();
-
-    /**
      * Get an OpNode for sym being applied to children. This creates a new
      * OpNode if needed (i.e., if one with the same sym and children doesn't
      * already exist) and adds it's id to the idLookup table and adds its
@@ -597,7 +612,7 @@ public abstract class PegNode {
     }
 
     public static PhiNode phi(Integer guard, Integer then, Integer els) {
-        final String sym = "theta";
+        final String sym = "phi";
         final List<Integer> childs = new ArrayList<>(3);
         childs.add(guard);
         childs.add(then);
@@ -607,13 +622,13 @@ public abstract class PegNode {
         }
         final PegNode node = symbolLookup.get(sym).get(childs);
         return node.asPhiNode().orElseThrow(() -> new IllegalStateException(
-                String.format("Unexpected value cached for sym=\"theta\", children=[%d, %d, %d];" +
+                String.format("Unexpected value cached for sym=\"phi\", children=[%d, %d, %d];" +
                               " expected a PegNode.PhiNode but found %s",
                         guard, then, els, symbolLookup.get(sym).get(childs).toDerefString())));
     }
-
+    
     public static ThetaNode theta(Integer init) {
-        return new ThetaNode(intLit(ThetaNode._thetaId++).id, init);
+        return ThetaNode.thetaNode(init);
     }
 
     public static PegNode var(String name) {
@@ -793,11 +808,12 @@ public abstract class PegNode {
      * @param value id of the peg that theta should be assigned to
      */
     public static void assignTheta(Integer theta, Integer value) {
-        PegNode thetaNode = idLookup(theta).orElseThrow(IllegalStateException::new);
-        if (!thetaNode.isThetaNode() || thetaLookup.containsKey(theta)) {
+        PegNode peg = idLookup(theta).orElseThrow(IllegalStateException::new);
+        if (!peg.isThetaNode()) {
             throw new IllegalStateException();
         }
-        thetaLookup.put(theta, value);
+        peg.asThetaNode().get().setContinuation(value);
+        // TODO: add equivalence pair
     }
 
     /**
@@ -823,6 +839,8 @@ public abstract class PegNode {
             PegNode peg1 = idLookup.get(id1);
             PegNode peg2 = idLookup.get(id2);
             if (peg1.isThetaNode() && peg2.isThetaNode()) {
+                ThetaNode thetaNode1 = peg1.asThetaNode().get();
+                ThetaNode thetaNode2 = peg2.asThetaNode().get();
                 if (bijection1.containsKey(id1) && bijection2.containsKey(id2)) {
                     if (!bijection1.get(id1).equals(id2) || !bijection2.get(id2).equals(id1)) {
                         return false;
@@ -830,24 +848,24 @@ public abstract class PegNode {
                 } else if (bijection1.containsKey(id1) || bijection2.containsKey(id2)) {
                     return false;
                 } else {
-                    if (!thetaLookup.containsKey(id1) || !thetaLookup.containsKey(id2)) {
+                    if (!thetaNode1.getContinuation().isPresent() || !thetaNode2.getContinuation().isPresent()) {
                         return false;
                     }
-                    s1.push(peg1.asThetaNode().get().init);
-                    s2.push(peg2.asThetaNode().get().init);
-                    s1.push(thetaLookup.get(id1));
-                    s2.push(thetaLookup.get(id2));
+                    s1.push(thetaNode1.init);
+                    s2.push(thetaNode2.init);
+                    s1.push(thetaNode1.getContinuation().get().id);
+                    s2.push(thetaNode2.getContinuation().get().id);
                     bijection1.put(id1, id2);
                     bijection2.put(id2, id1);
                 }
             } else if (peg1.isOpNode() && peg2.isOpNode()) {
-                OpNode opnode1 = peg1.asOpNode().get();
-                OpNode opnode2 = peg2.asOpNode().get();
-                if (!opnode1.op.equals(opnode2.op)) {
+                OpNode opNode1 = peg1.asOpNode().get();
+                OpNode opNode2 = peg2.asOpNode().get();
+                if (!opNode1.op.equals(opNode2.op)) {
                     return false;
                 }
-                s1.addAll(opnode1.children);
-                s2.addAll(opnode2.children);
+                s1.addAll(opNode1.children);
+                s2.addAll(opNode2.children);
             } else if (!peg1.equals(peg2)) {
                 return false;
             }

@@ -89,7 +89,7 @@ public class PegPrinter {
       StringBuilder sb = new StringBuilder("(");
       for (int thetaId = 0; thetaId < visitedThetas.size(); ++thetaId) {
         final PegNode.ThetaNode theta = visitedThetas.get(thetaId);
-        theta.getIdentifiedNode().ifPresent(n -> sb.append(
+        theta.getContinuation().ifPresent(n -> sb.append(
                 String.format("\n  (<=> %s %s)", table.get(theta), table.get(n))));
       }
       return sb.append(')').toString();
