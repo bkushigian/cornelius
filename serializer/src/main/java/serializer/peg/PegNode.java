@@ -446,24 +446,18 @@ public abstract class PegNode {
                 return op;
             }
             expand = false;
-            final StringBuilder sb = new StringBuilder("(");
-            sb.append(op);
-            sb.append(' ');
-            boolean added = false;
+            final StringJoiner joiner = new StringJoiner(" ", "(", ")");
+            joiner.add(op);
             for (Integer child : children) {
-                if (added) {
-                    sb.append(' ');
-                }
-                added = true;
                 final PegNode p = idLookup.get(child);
                 if (p == null) {
                     throw new IllegalStateException("OpNode " + op + " child index " + child + " not present");
                 }
-                sb.append(p.toDerefString());
+                joiner.add(p.toDerefString());
             }
             expand = true;
 
-            return sb.append(")").toString();
+            return joiner.toString();
         }
 
         /**
