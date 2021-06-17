@@ -9,9 +9,21 @@ public abstract class PegNode {
 
     public abstract <R, A> R accept(PegVisitor<R, A> visitor, A arg);
 
-    // TODO: make not static
+    /**
+     * @return a copy of the map mapping peg ids to their corresponding {@code PegNode}s
+     *
+     * TODO: make not static
+     */
     public static Map<Integer, PegNode> getIdLookup() {
         return new HashMap<>(idLookup);
+    }
+
+    /**
+     * Get a list of all node equivalences
+     * @return list of node equivalences
+     */
+    public static List<Pair<Integer, Integer>> getNodeEquivalences() {
+        return equivalences.getEquivalences();
     }
 
     public static Optional<PegNode> idLookup(final Integer id) {
