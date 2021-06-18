@@ -533,6 +533,22 @@ public abstract class PegNode {
             return Optional.of(this);
         }
 
+        /**
+         * @return the state node for this {@code Heap} if it exists
+         * @throws IllegalStateException when the state id isn't associated with a {@code PegNode}
+         */
+        public PegNode getState() {
+            return PegNode.idLookup(state).orElseThrow(IllegalStateException::new);
+        }
+
+        /**
+         * @return the status node for this {@code Heap} if it exists
+         * @throws IllegalStateException when the status id isn't associated with a {@code PegNode}
+         */
+        public PegNode getStatus() {
+            return PegNode.idLookup(status).orElseThrow(IllegalStateException::new);
+        }
+
         public Heap withState(final Integer state) {
             return heap(state, status);
         }

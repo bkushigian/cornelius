@@ -79,33 +79,45 @@ public class PegVisitorTest {
     protected int idx = 0;
 
     @Override
-    protected void preVisit(PegNode.IntLit node, Map<PegNode, Integer> arg) {
+    protected Void preVisit(PegNode.IntLit node, Map<PegNode, Integer> arg) {
       arg.put(node, idx++);
+      return null;
     }
 
     @Override
-    protected void preVisit(PegNode.OpNode node, Map<PegNode, Integer> arg) {
+    protected Void preVisit(PegNode.OpNode node, Map<PegNode, Integer> arg) {
       arg.put(node, idx++);
+      return null;
     }
 
     @Override
-    protected void preVisit(PegNode.BoolLit node, Map<PegNode, Integer> arg) {
+    protected Void preVisit(PegNode.BoolLit node, Map<PegNode, Integer> arg) {
       arg.put(node, idx++);
+      return null;
     }
 
     @Override
-    protected void preVisit(PegNode.PhiNode node, Map<PegNode, Integer> arg) {
+    protected Void preVisit(PegNode.PhiNode node, Map<PegNode, Integer> arg) {
       arg.put(node, idx++);
+      return null;
     }
 
     @Override
-    protected void preVisit(PegNode.ThetaNode node, Map<PegNode, Integer> arg) {
+    protected Void preVisit(PegNode.ThetaNode node, Map<PegNode, Integer> arg) {
       arg.put(node, idx++);
+      return null;
     }
 
     @Override
-    protected void preVisit(PegNode.StringLit node, Map<PegNode, Integer> arg) {
+    protected Void preVisit(PegNode.StringLit node, Map<PegNode, Integer> arg) {
       arg.put(node, idx++);
+      return null;
+    }
+
+    @Override
+    protected Void preVisit(PegNode.Heap node, Map<PegNode, Integer> arg) {
+      arg.put(node, idx++);
+      return null;
     }
   }
 }

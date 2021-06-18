@@ -44,10 +44,11 @@ public class PegPrinter {
     }
 
     @Override
-    protected void preVisit(PegNode.ThetaNode node, Void arg) {
+    protected String preVisit(PegNode.ThetaNode node, Void arg) {
       thetaToId.put(node, thetaId++);
       visitedThetas.add(node);
       table.put(node, String.format("theta[%d]", thetaId));
+      return null;
     }
 
     @Override
@@ -83,6 +84,11 @@ public class PegPrinter {
     @Override
     protected String combine(PegNode.PhiNode node, Void arg, String guard, String thn, String els) {
       return String.format("(phi %s %s %s)", guard, thn, els);
+    }
+
+    @Override
+    protected String combine(PegNode.Heap node, Void arg, String state, String status) {
+      return String.format("(heap %s %s)", state, status);
     }
 
     public String identificationTable() {

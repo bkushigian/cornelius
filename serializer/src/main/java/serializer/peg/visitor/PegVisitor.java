@@ -65,11 +65,53 @@ public class PegVisitor<R, A> {
    */
   protected Map<PegNode, R> table = new HashMap<>();
 
+  public R visit(final PegNode.IntLit node, final A arg) {
+    if (table.containsKey(node)) {
+      return table.get(node);
+    }
+    R preResult = preVisit(node, arg);
+    if (preResult != null) {
+      return preResult;
+    }
+
+    table.put(node, combine(node, arg));
+    return table.get(node);
+  }
+
+  public R visit(final PegNode.BoolLit node, final A arg) {
+    if (table.containsKey(node)) {
+      return table.get(node);
+    }
+    R preResult = preVisit(node, arg);
+    if (preResult != null) {
+      return preResult;
+    }
+
+    table.put(node, combine(node, arg));
+    return table.get(node);
+  }
+
+  public R visit(final PegNode.StringLit node, final A arg) {
+    if (table.containsKey(node)) {
+      return table.get(node);
+    }
+    R preResult = preVisit(node, arg);
+    if (preResult != null) {
+      return preResult;
+    }
+
+    table.put(node, combine(node, arg));
+    return table.get(node);
+  }
+  
   public R visit(final PegNode.OpNode node, final A arg) {
     if (table.containsKey(node)) {
       return table.get(node);
     }
-    preVisit(node, arg);
+    R preResult = preVisit(node, arg);
+    if (preResult != null) {
+      return preResult;
+    }
     for (final PegNode child : node.getChildrenNodes()) {
       child.accept(this, arg);
     }
@@ -84,7 +126,10 @@ public class PegVisitor<R, A> {
     if (table.containsKey(node)) {
       return table.get(node);
     }
-    preVisit(node, arg);
+    R preResult = preVisit(node, arg);
+    if (preResult != null) {
+      return preResult;
+    }
     final R guard = node.getGuard().accept(this, arg);
     final R thn = node.getThen().accept(this, arg);
     final R els = node.getElse().accept(this, arg);
@@ -92,41 +137,14 @@ public class PegVisitor<R, A> {
     return table.get(node);
   }
 
-  public R visit(final PegNode.IntLit node, final A arg) {
-    if (table.containsKey(node)) {
-      return table.get(node);
-    }
-    preVisit(node, arg);
-
-    table.put(node, combine(node, arg));
-    return table.get(node);
-  }
-
-  public R visit(final PegNode.BoolLit node, final A arg) {
-    if (table.containsKey(node)) {
-      return table.get(node);
-    }
-    preVisit(node, arg);
-
-    table.put(node, combine(node, arg));
-    return table.get(node);
-  }
-
-  public R visit(final PegNode.StringLit node, final A arg) {
-    if (table.containsKey(node)) {
-      return table.get(node);
-    }
-    preVisit(node, arg);
-
-    table.put(node, combine(node, arg));
-    return table.get(node);
-  }
-
   public R visit(final PegNode.ThetaNode node, final A arg) {
     if (table.containsKey(node)) {
       return table.get(node);
     }
-    preVisit(node, arg);
+    R preResult = preVisit(node, arg);
+    if (preResult != null) {
+      return preResult;
+    }
     final R init = node.getInitializer().accept(this, arg);
     final Optional<PegNode> cont = node.getContinuation();
     final R combined = cont.isPresent() ? combine(node, arg, init, cont.get()) : combine(node, arg, init);
@@ -135,13 +153,40 @@ public class PegVisitor<R, A> {
     return combined;
   }
 
-  protected void preVisit(final PegNode.OpNode node, final A arg) {}
-  protected void preVisit(final PegNode.ThetaNode node, final A arg) {}
-  protected void preVisit(final PegNode.PhiNode node, final A arg) {}
-  protected void preVisit(final PegNode.IntLit node, final A arg) {}
-  protected void preVisit(final PegNode.BoolLit node, final A arg) {}
-  protected void preVisit(final PegNode.StringLit node, final A arg) {}
+  public R visit(final PegNode.Heap node, final A arg) {
+    if (table.containsKey(node)) {
+      return table.get(node);
+    }
+    R preResult = preVisit(node, arg);
+    if (preResult != null) {
+      return preResult;
+    }
+    final R state = node.getState().accept(this, arg);
+    final R status = node.getStatus().accept(this, arg);
+    table.put(node, combine(node, arg, state, status));
+    return table.get(node);
+  }
 
+  protected R preVisit(final PegNode.IntLit node, final A arg) {return null;}
+  protected R preVisit(final PegNode.BoolLit node, final A arg) {return null;}
+  protected R preVisit(final PegNode.StringLit node, final A arg) {return null;}
+  protected R preVisit(final PegNode.OpNode node, final A arg) {return null;}
+  protected R preVisit(final PegNode.PhiNode node, final A arg) {return null;}
+  protected R preVisit(final PegNode.ThetaNode node, final A arg) {return null;}
+  protected R preVisit(final PegNode.Heap node, final A arg) {return null;}
+
+  protected R combine(final PegNode.IntLit node, final A arg) {
+    return null;
+  }
+
+  protected R combine(final PegNode.BoolLit node, final A arg) {
+    return null;
+  }
+
+  protected R combine(final PegNode.StringLit node, final A arg) {
+    return null;
+  }
+  
   protected R combine(final PegNode.OpNode node, final A arg, final List<R> children) {
     return null;
   }
@@ -158,15 +203,8 @@ public class PegVisitor<R, A> {
     return null;
   }
 
-  protected R combine(final PegNode.IntLit node, final A arg) {
+  protected R combine(final PegNode.Heap node, final A arg, final R state, final R status) {
     return null;
   }
 
-  protected R combine(final PegNode.BoolLit node, final A arg) {
-    return null;
-  }
-
-  protected R combine(final PegNode.StringLit node, final A arg) {
-    return null;
-  }
 }
