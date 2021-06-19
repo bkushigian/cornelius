@@ -14,4 +14,5 @@
      (str subjects-directory "/nullity/Nullity.java")
      (str subjects-directory "/loops/WhileLoops.java")
      (str subjects-directory "/loops/ForLoops.java")
+     (str subjects-directory "/debug-output/Failures.java")
      ])))

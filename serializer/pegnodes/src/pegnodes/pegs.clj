@@ -199,17 +199,8 @@
     (doseq [id keys]
       (printf "%4d: %s\n" id (. table get id)))))
 
-(defn to-deref-string [node]
-  (cond (:context? node)
-        (let [exit-conds     (map to-deref-string (:exit-conds node))
-              exit-conds-str (format "  exit-conds: %s\n"
-                                     (clojure.string/join "\n              " exit-conds))
-              pegs           (for [[k v] node
-                                   :when (string? k)]
-                               (format "%-5s %s" k (to-deref-string v)))
-              pegs-str       (format "  pegs: %s" (clojure.string/join "\n        " pegs))]
-          (str "{\n" pegs-str "\n" exit-conds-str "}\n"))
-        :else (. node toDerefString)))
+(defn to-deref-string [id]
+  (. (id-lookup id) toDerefString))
 
 ;;; Updates to state
 

@@ -3,7 +3,7 @@
   (:require  [clojure.pprint])
   (:require  [clojure.string])
   (:require  [pegnodes.pegs :refer :all])
-  (:import   (serializer.peg PegContext PegNode PegSerializer PegCommentScraperVisitor PegTranslator))
+  (:import   (serializer.peg PegContext PegNode PegSerializer PegCommentScraperVisitor PegTranslator StructuralEquivalence))
   (:import   (com.github.javaparser StaticJavaParser))
   (:import   (com.github.javaparser.ast CompilationUnit))
   (:import   (com.github.javaparser.ast.body MethodDeclaration))
@@ -118,16 +118,22 @@
                 (subs actual-str idx (min (count actual-str) (+ idx 80)))
                 "\033[0m\n")))))
 
-(defn ensure-ids-are-equiv
-  "emits a test that ensures that the ids point to pegs that form a structual bijection. on failure,
-   calls ensure-strings-are-equiv to generate debug output"
+(defn gen-msg
+  [c msg witness expected-id actual-id]
+  (cond c ""
+    :else (str expected-id " " actual-id "\nExpected: " (to-deref-string expected-id)
+               "\nActual: " (to-deref-string actual-id)
+               "\n" msg (. (. witness get) toString))))
 
-  ([expected-id actual-id expected-string actual-string] (ensure-ids-are-equiv expected-id actual-id nil))
-  ([expected-id actual-id expected-string actual-string msg]
-   (let [bijection (PegNode/isStructuralBijection expected-id actual-id)]
-      (if bijection
-          (clojure.test/is bijection "fail")
-          (ensure-strings-are-same expected-string actual-string msg)))))
+(defn ensure-ids-are-equiv
+  "emits a test that ensures that the ids point to pegs that are structurally equivalent"
+
+  ([expected-id actual-id] (ensure-ids-are-equiv expected-id actual-id nil))
+  ([expected-id actual-id msg]
+   (let [witness (StructuralEquivalence/checkEquivalence expected-id actual-id)
+         equiv ( not(. witness isPresent))
+         msg (if (nil? msg) "" (str msg ": "))]
+      (clojure.test/is equiv (gen-msg equiv msg witness expected-id actual-id)))))
 
 (defn contexts-are-same
   "Create a test ensuring contexts are the 'same'. By 'same' I mean that each
@@ -140,8 +146,6 @@
                (conj (for [k (filter string? the-keys)]
                        `(ensure-ids-are-equiv (.-id (~ctx-expected ~k))
                                               ~(.-id (ctx-actual   k))
-                                              (to-deref-string   (~ctx-expected ~k))
-                                              ~(to-deref-string  (ctx-actual   k))
                                               ~(str "\033[1;32mContexts Differ @\033[0m " k)))
                      'do)))))
 
@@ -152,8 +156,6 @@
              `(ensure-ids-are-equiv
                (.-id ~peg-e)
                ~(.-id peg-a)
-               (to-deref-string ~peg-e)
-               ~(to-deref-string peg-a)
                "\033[1;32mPegs Differ\033[0m"))))
 
 (defn returns-are-same
@@ -163,8 +165,6 @@
              `(ensure-ids-are-equiv
                (.-id ~ret-e)
                ~(.-id ret-a)
-               (to-deref-string ~ret-e)
-               ~(to-deref-string ret-a)
                "\033[1;32mReturn Values Differ\033[0m"))))
 
 (defn heaps-are-same
@@ -174,8 +174,6 @@
              `(ensure-ids-are-equiv
                (.-id ~heap-e)
                ~(.-id heap-a) 
-               (to-deref-string ~heap-e)
-               ~(to-deref-string heap-a)
                "\033[1;32mHeap Values Differ\033[0m"))))
 
 (defn snapshot->assertion
