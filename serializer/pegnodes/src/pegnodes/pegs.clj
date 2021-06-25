@@ -13,6 +13,10 @@
   (:require [clojure.set :refer [union intersection]])
   (:gen-class))
 
+(defn id-lookup [id]
+  (cond (int? id) (. (PegNode/idLookup (int id)) orElse nil)
+        :else nil))
+
 (defn  is-valid-id?
   "Check to ensure we are not creating a potential circular dependency. A valid
   id is an id already stored in the lookup table. Since ids are stored
@@ -34,6 +38,15 @@
     (if (is-valid-id? id)
       id
       (throw (IllegalStateException. "Invalid ID detected")))))
+
+(defn id-or-peg->peg
+  "Given an Id or a PegNode, get back the corresponding PegNode. When id-or-peg
+  is a PegNode this function acts as the identity function. When id-or-peg is an
+  Integer, this function calls into id-lookup."
+  [id-or-peg]
+  (cond (int? id-or-peg) (id-lookup id-or-peg)
+        (instance? PegNode id-or-peg) id-or-peg
+        :else (throw (IllegalArgumentException. (str "Expected an Integer or a PegNode: " id-or-peg)))))
 
 (defn opnode
   "Create an arbitrary opnode PEG."
@@ -59,6 +72,27 @@
   "Create a phi node (if/then/else expression)."
   [cond then else]
   (PegNode/phi (object->id cond) (object->id then) (object->id else)))
+
+(defn theta-node
+  "Create a theta node (sequence expression)."
+  [init]
+  (PegNode/theta (object->id init)))
+
+(defn pass-node
+  "Create a pass node (index for sequence termination)"
+  [cond]
+  (opnode "pass" cond))
+
+(defn eval-node
+  "Create an eval node (value of sequence after termination)"
+  [expr pass]
+  (opnode "eval" expr pass))
+
+(defn assign-theta
+  "Assign a theta node to the peg it should point to"
+  [theta value]
+  (let [theta (id-or-peg->peg theta)]
+    (. theta setContinuation (object->id value))))
 
 (defn param
   "Create a parameter node"
@@ -116,7 +150,7 @@
 (defn invoke->heap [invocation]
   (PegNode/projectHeap (object->id invocation)))
 
-(defn heap [state status]
+(defn heap-node [state status]
   (PegNode/heap (object->id state) (object->id status)))
 
 (defn heap->state [heap]
@@ -159,10 +193,6 @@
   [a b]
   (opnode "!=" a b))
 
-(defn id-lookup [id]
-  (cond (int? id) (. (PegNode/idLookup (int id)) orElse nil)
-        :else nil))
-
 (defn print-id-table []
   (let  [table (PegNode/getIdLookup)
          keys  (. table keySet)]
@@ -191,7 +221,7 @@ EXCEPTION: the exception to be thrown"
   (let [node (cond (int? old-status-or-heap) (id-lookup (int old-status-or-heap))
                    (instance? PegNode old-status-or-heap) old-status-or-heap
                    :else (throw  (IllegalArgumentException. "old-status-or-heap must be a PegNode or an Id (i.e., integer type)")))]
-    (cond (. node isHeap)    (heap (. node state) (update-exception-status (. node status) condition exception))
+    (cond (. node isHeap)    (heap-node (. node state) (update-exception-status (. node status) condition exception))
           (. node isOpNode) (if (= node (unit))
                               (phi condition
                                    exception
@@ -277,9 +307,10 @@ EXCEPTION: the exception to be thrown"
 (defn heap-join [guard thn-heap els-heap]
   (let [state  (phi guard (heap->state  thn-heap) (heap->state  els-heap))
         status (phi guard (heap->status thn-heap) (heap->status els-heap))]
-    (heap state status)))
+    (heap-node state status)))
 
 ;; Handle Exceptions
 (defn update-status-npe
   [heap-or-status possibly-null-peg]
   (update-exception-status heap-or-status (is-null? possibly-null-peg) (exception "java.lang.NullPointerException")))
+

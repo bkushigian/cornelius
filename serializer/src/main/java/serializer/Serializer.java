@@ -7,6 +7,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.PackageDeclaration;
 import serializer.peg.*;
 
+import javax.xml.transform.TransformerException;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -148,7 +149,7 @@ public class Serializer {
 
         if (! xmlGen.hasSubject()) continue;
         // Prepare to write to file
-        xmlGen.addDeduplicationTable(PegNode.getIdLookup());
+        xmlGen.addIdTable(PegNode.getIdLookup());
 
         Optional<PackageDeclaration> packageDeclaration = cu.getPackageDeclaration();
         String pkgString = "";
@@ -163,7 +164,7 @@ public class Serializer {
         xmlGen.writeToFile(filename);
       } catch (FileNotFoundException e) {
         e.printStackTrace();
-      } catch (IOException e) {
+      } catch (TransformerException e) {
         e.printStackTrace();
       }
     }
