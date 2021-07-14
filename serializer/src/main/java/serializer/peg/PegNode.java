@@ -137,6 +137,21 @@ public abstract class PegNode {
         return new ExpressionResult(this, context);
     }
 
+    public final static class NameNode extends PegNode {
+        public final String value;
+        private NameNode(String value) {
+            this.value = value;
+            idLookup.put(this.id, this);
+            nameLookup.put(value, this);
+        }
+
+        @Override
+        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
+            // return visitor.visit(this, arg);
+            // todo
+        }
+    }
+
     public final static class IntLit extends PegNode {
         public final int value;
         private IntLit(int value) {
@@ -307,26 +322,17 @@ public abstract class PegNode {
 
         @Override
         public String toDerefString() {
-            if (children.isEmpty()) {
-                return op;
-            }
-            final StringBuilder sb = new StringBuilder("(");
-            sb.append(op);
-            sb.append(' ');
-            boolean added = false;
+            final StringJoiner joiner = new StringJoiner(" ", "(", ")");
+            joiner.add(op);
             for (Integer child : children) {
-                if (added) {
-                    sb.append(' ');
-                }
-                added = true;
                 final PegNode p = idLookup.get(child);
                 if (p == null) {
                     throw new IllegalStateException("OpNode " + op + " child index " + child + " not present");
                 }
-                sb.append(p.toDerefString());
+                joiner.add(p.toDerefString());
             }
 
-            return sb.append(")").toString();
+            return joiner.toString();
         }
 
         @Override
@@ -336,18 +342,12 @@ public abstract class PegNode {
 
         @Override
         public String toString() {
-            if (children.isEmpty())  {
-                return op;
-            }
-            final StringBuilder sb = new StringBuilder();
-            sb.append('(');
-            sb.append(op);
+            StringJoiner joiner = new StringJoiner(" ", "(", ")");
+            joiner.add(op);
             for (Integer cid : children) {
-                sb.append(' ');
-                sb.append(cid);
+                joiner.add(cid.toString());
             }
-            sb.append(')');
-            return sb.toString();
+            return joiner.toString();
         }
 
         @Override
@@ -576,6 +576,8 @@ public abstract class PegNode {
     private static Map<String, Map<List<Integer>, PegNode>> symbolLookup = new HashMap<>();
 
     private static Map<Object, PegNode> litLookup = new HashMap<>();
+
+    private static Map<String, PegNode> nameLookup = new HashMap<>();
 
     /**
      * Get an OpNode for sym being applied to children. This creates a new
