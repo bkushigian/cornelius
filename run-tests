@@ -1,15 +1,29 @@
 #!/bin/sh
 
 cd serializer
-mvn install > /dev/null
+
+printf "\033[1mInstalling Library...\033[0m"
+if mvn install > /dev/null
+then
+    printf "\033[1;32mSUCCESS\033[0m\n"
+else
+    printf "\033[1;31mFAILURE\033[0m\n"
+fi
+
+printf "\033[1mRunning Unit Tests...\033[0m"
+if mvn test > /dev/null
+then
+    printf "\033[1;32mSUCCESS\033[0m\n"
+else
+    printf "\033[1;31mFAILURE\033[0m\n"
+fi
+
 cd pegnodes
-lein run > /dev/null
-RESULT=$?
+
+printf "\033[1mRunning Clojure Tests...\033[0m"
 if lein run > /dev/null
 then
-    echo "PASS"
-    exit 0
+    printf "\033[1;32mSUCCESS\033[0m\n"
 else
-    echo "FAIL"
-    exit 1
+    printf "\033[1;31mFAILURE\033[0m\n"
 fi

@@ -8,8 +8,10 @@ import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
 import serializer.peg.testing.TestPairs;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegContext> {
     final PegExprVisitor pev = new PegExprVisitor();
@@ -152,18 +154,167 @@ public class PegStmtVisitor extends GenericVisitorAdapter<ExpressionResult, PegC
 
 
     @Override
-    public ExpressionResult visit(WhileStmt n, PegContext arg) {
-        throw new RuntimeException("WhileStmt");
+    public ExpressionResult visit(WhileStmt n, PegContext ctx) {
+        // init theta nodes
+        ImmutableSet<String> vars = ctx.localVariableLookup.keySet();
+        List<String> sortedVars = vars.stream().filter(s -> !s.equals("this")).sorted().collect(Collectors.toList());
+        for (String var: sortedVars) {
+            ctx = ctx.setLocalVar(var, PegNode.theta(ctx.getLocalVar(var).id));
+        }
+        PegNode.ThetaNode initState = PegNode.theta(ctx.heap.state);
+        PegNode.ThetaNode initStatus = PegNode.theta(ctx.heap.status);
+        PegContext initCtx = ctx.withHeap(PegNode.heap(initState.id, initStatus.id));
+
+        // visit cond and apply side effects
+        ExpressionResult cond = n.getCondition().accept(pev, initCtx);
+        testPairs.scrape(n, cond, "cond");
+        ctx = cond.context;
+
+        // visit body and apply side effects
+        ExpressionResult body = n.getBody().accept(this, ctx);
+        ctx = body.context;
+
+        // theta assignment
+        for (String var: sortedVars) {
+            initCtx.getLocalVar(var)
+                    .asThetaNode()
+                    .orElseThrow(IllegalStateException::new)
+                    .setContinuation(ctx.getLocalVar(var).id);
+        }
+        initState.setContinuation(ctx.heap.state);
+        initStatus.setContinuation(ctx.heap.status);
+
+        testPairs.scrape(n, ctx.exprResult(), "body");
+
+        // act as if we visit the condition a final time
+        ctx = cond.context;
+
+        // construct eval nodes
+        PegNode pass = PegNode.pass(cond.peg.id);
+        for (String var: sortedVars) {
+            ctx = ctx.setLocalVar(var, PegNode.eval(ctx.getLocalVar(var).id, pass.id));
+        }
+        PegNode state = PegNode.eval(ctx.heap.state, pass.id);
+        PegNode status = PegNode.eval(ctx.heap.status, pass.id);
+        ctx = ctx.withHeap(PegNode.heap(state.id, status.id));
+       
+        testPairs.scrape(n, ctx.exprResult());
+        return ctx.exprResult();
     }
 
     @Override
-    public ExpressionResult visit(DoStmt n, PegContext arg) {
-        throw new RuntimeException("DoStmt");
+    public ExpressionResult visit(DoStmt n, PegContext ctx) {
+        // visit body once
+        ExpressionResult er = n.getBody().accept(this, ctx);
+        testPairs.scrape(n, er, "initbody");
+        ctx = er.context;
+
+        // init theta nodes
+        ImmutableSet<String> vars = ctx.localVariableLookup.keySet();
+        List<String> sortedVars = vars.stream().filter(s -> !s.equals("this")).sorted().collect(Collectors.toList());
+        for (String var: sortedVars) {
+            ctx = ctx.setLocalVar(var, PegNode.theta(ctx.getLocalVar(var).id));
+        }
+        PegNode.ThetaNode initState = PegNode.theta(ctx.heap.state);
+        PegNode.ThetaNode initStatus = PegNode.theta(ctx.heap.status);
+        PegContext initCtx = ctx.withHeap(PegNode.heap(initState.id, initStatus.id));
+
+        // visit cond and apply side effects
+        ExpressionResult cond = n.getCondition().accept(pev, initCtx);
+        testPairs.scrape(n, cond, "cond");
+        ctx = cond.context;
+
+        // visit body and apply side effects
+        ExpressionResult body = n.getBody().accept(this, ctx);
+        ctx = body.context;
+
+        // theta assignment
+        for (String var: sortedVars) {
+            initCtx.getLocalVar(var)
+                    .asThetaNode()
+                    .orElseThrow(IllegalStateException::new)
+                    .setContinuation(ctx.getLocalVar(var).id);
+        }
+        initState.setContinuation(ctx.heap.state);
+        initStatus.setContinuation(ctx.heap.status);
+
+        testPairs.scrape(n, ctx.exprResult(), "loopbody");
+
+        // act as if we visit the condition a final time
+        ctx = cond.context;
+
+        // construct eval nodes
+        PegNode pass = PegNode.pass(cond.peg.id);
+        for (String var: sortedVars) {
+            ctx = ctx.setLocalVar(var, PegNode.eval(ctx.getLocalVar(var).id, pass.id));
+        }
+        PegNode state = PegNode.eval(ctx.heap.state, pass.id);
+        PegNode status = PegNode.eval(ctx.heap.status, pass.id);
+        ctx = ctx.withHeap(PegNode.heap(state.id, status.id));
+       
+        testPairs.scrape(n, ctx.exprResult());
+        return ctx.exprResult();
     }
 
     @Override
-    public ExpressionResult visit(ForStmt n, PegContext arg) {
-        throw new RuntimeException("ForStmt");
+    public ExpressionResult visit(ForStmt n, PegContext ctx) {
+        // apply init expressions
+        for (Expression expr: n.getInitialization()) {
+            ctx = expr.accept(pev, ctx).context;
+        }
+        testPairs.scrape(n, ctx.exprResult(), "init");
+
+        // init theta nodes
+        ImmutableSet<String> vars = ctx.localVariableLookup.keySet();
+        List<String> sortedVars = vars.stream().filter(s -> !s.equals("this")).sorted().collect(Collectors.toList());
+        for (String var: sortedVars) {
+            ctx = ctx.setLocalVar(var, PegNode.theta(ctx.getLocalVar(var).id));
+        }
+        PegNode.ThetaNode initState = PegNode.theta(ctx.heap.state);
+        PegNode.ThetaNode initStatus = PegNode.theta(ctx.heap.status);
+        PegContext initCtx = ctx.withHeap(PegNode.heap(initState.id, initStatus.id));
+
+        // visit cond and apply side effects
+        Expression condExpr = n.getCompare().orElseGet(() -> new BooleanLiteralExpr(true));
+        ExpressionResult cond = condExpr.accept(pev, initCtx);
+        testPairs.scrape(n, cond, "cond");
+        ctx = cond.context;
+
+        // visit body and apply side effects
+        ExpressionResult body = n.getBody().accept(this, ctx);
+        ctx = body.context;
+
+        // apply update expressions
+        for (Expression expr: n.getUpdate()) {
+            ctx = expr.accept(pev, ctx).context;
+        }
+
+        // theta assignment
+        for (String var: sortedVars) {
+            initCtx.getLocalVar(var)
+                    .asThetaNode()
+                    .orElseThrow(IllegalStateException::new)
+                    .setContinuation(ctx.getLocalVar(var).id);
+        }
+        initState.setContinuation(ctx.heap.state);
+        initStatus.setContinuation(ctx.heap.status);
+
+        testPairs.scrape(n, ctx.exprResult(), "body");
+
+        // act as if we visit the condition a final time
+        ctx = cond.context;
+
+        // construct eval nodes
+        PegNode pass = PegNode.pass(cond.peg.id);
+        for (String var: sortedVars) {
+            ctx = ctx.setLocalVar(var, PegNode.eval(ctx.getLocalVar(var).id, pass.id));
+        }
+        PegNode state = PegNode.eval(ctx.heap.state, pass.id);
+        PegNode status = PegNode.eval(ctx.heap.status, pass.id);
+        ctx = ctx.withHeap(PegNode.heap(state.id, status.id));
+       
+        testPairs.scrape(n, ctx.exprResult());
+        return ctx.exprResult();
     }
 
     @Override
