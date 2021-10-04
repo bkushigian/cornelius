@@ -1,4 +1,4 @@
-package serializer;//Based on example code from: https://examples.javacodegeeks.com/core-java/xml/parsers/documentbuilderfactory/create-xml-file-in-java-using-dom-parser-example/
+package serializer.xml;//Based on example code from: https://examples.javacodegeeks.com/core-java/xml/parsers/documentbuilderfactory/create-xml-file-in-java-using-dom-parser-example/
 
 import java.io.File;
 import java.util.ArrayList;
@@ -68,9 +68,9 @@ public class XMLGenerator {
         subject.setAttribute("method", methodString);
         subjects.appendChild(subject);
 
-        final Element egg = document.createElement("egg");
-        egg.appendChild(document.createTextNode(Integer.valueOf(pegId).toString()));
-        subject.appendChild(egg);
+        final Element origPid = document.createElement("pid");
+        origPid.appendChild(document.createTextNode(Integer.valueOf(pegId).toString()));
+        subject.appendChild(origPid);
 
         methodToSubject.put(methodString, subject);
     }
@@ -102,12 +102,9 @@ public class XMLGenerator {
             Element subject = methodToSubject.get(methodString); // does this actually get and modifiy the element in the map?
 
             Element mutant = document.createElement("mutant");
-            mutant.setAttribute("id", mutantId);
+            mutant.setAttribute("mid", mutantId);
+            mutant.setAttribute("pid", String.valueOf(pegId));
             subject.appendChild(mutant);
-
-            Element egg = document.createElement("egg");
-            egg.appendChild(document.createTextNode(Integer.valueOf(pegId).toString()));
-            mutant.appendChild(egg);
         }
         else {
             throw new IllegalArgumentException("Map does not contain associated subject for mutant");
