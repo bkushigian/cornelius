@@ -1,7 +1,9 @@
 public class WhileLoops {
 
-    int isEven(int x) {
-        return x % 2 == 0;
+    int y;
+
+    boolean isEven(int x) {
+        return (x % 2) == 0;
     }
 
     int doNothingFalse() {
@@ -299,7 +301,7 @@ public class WhileLoops {
          *   ctx            (ctx-update ctx "x" theta-x)
          *   plus           (opnode "+" theta-i theta-x)
          *   ths            (ctx-lookup ctx "this")
-         *   inv            (invoke theta-heap ths "isTrue" (actuals plus))
+         *   inv            (invoke theta-heap ths "isEven" (actuals plus))
          *   cond-heap      (invoke->heap inv)
          *   condition      (invoke->peg inv)]
          * </cond>
@@ -322,7 +324,7 @@ public class WhileLoops {
          *   (snapshot {:ctx ctx :heap heap})]
          * </expected>
          */
-        while(isTrue(i + x)) {
+        while(isEven(i + x)) {
             /**
               * <expected>
               *   [i       (ctx-lookup ctx "i")

@@ -1,38 +1,5 @@
 public class ForLoops {
 
-    int emptyFor() {
-
-        /**
-         * <cond>
-         *  [theta-state    (theta-node (heap->state heap))
-         *   theta-status   (theta-node (heap->status heap))
-         *   heap           (heap-node theta-state theta-status)
-         *   condition      (bool-lit true)]
-         * </cond>
-         * <body>
-         *  [state          (heap->state heap)
-         *   status         (heap->status heap)
-         *   update         (assign-theta theta-state state)
-         *   update         (assign-theta theta-status status)
-         *   (snapshot {:ctx ctx :heap heap})]
-         * </body> 
-         * <expected>
-         *  [pass       (pass-node condition)     
-         *   heap       (heap-node (eval-node theta-state pass) (eval-node theta-status pass))     
-         *   (snapshot {:ctx ctx :heap heap})]
-         * </expected>
-         */
-        for (;;);
-
-        /**
-         * <expected>
-         *  [zero       (int-lit 0) 
-         *   (snapshot {:return zero})]
-         * </expected>
-         */
-        return 0;
-    }
-
     int simpleFor() {
         /**
          * <expected>
