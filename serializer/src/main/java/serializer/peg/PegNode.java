@@ -307,26 +307,17 @@ public abstract class PegNode {
 
         @Override
         public String toDerefString() {
-            if (children.isEmpty()) {
-                return op;
-            }
-            final StringBuilder sb = new StringBuilder("(");
-            sb.append(op);
-            sb.append(' ');
-            boolean added = false;
+            final StringJoiner joiner = new StringJoiner(" ", "(", ")");
+            joiner.add(op);
             for (Integer child : children) {
-                if (added) {
-                    sb.append(' ');
-                }
-                added = true;
                 final PegNode p = idLookup.get(child);
                 if (p == null) {
                     throw new IllegalStateException("OpNode " + op + " child index " + child + " not present");
                 }
-                sb.append(p.toDerefString());
+                joiner.add(p.toDerefString());
             }
 
-            return sb.append(")").toString();
+            return joiner.toString();
         }
 
         @Override
@@ -336,18 +327,12 @@ public abstract class PegNode {
 
         @Override
         public String toString() {
-            if (children.isEmpty())  {
-                return op;
-            }
-            final StringBuilder sb = new StringBuilder();
-            sb.append('(');
-            sb.append(op);
+            StringJoiner joiner = new StringJoiner(" ", "(", ")");
+            joiner.add(op);
             for (Integer cid : children) {
-                sb.append(' ');
-                sb.append(cid);
+                joiner.add(cid.toString());
             }
-            sb.append(')');
-            return sb.toString();
+            return joiner.toString();
         }
 
         @Override
