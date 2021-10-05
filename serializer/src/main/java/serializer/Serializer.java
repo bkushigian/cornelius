@@ -6,6 +6,7 @@ import com.github.javaparser.TokenRange;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.PackageDeclaration;
 import serializer.peg.*;
+import serializer.xml.XMLGenerator;
 
 import javax.xml.transform.TransformerException;
 import java.io.*;
