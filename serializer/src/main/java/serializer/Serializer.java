@@ -113,7 +113,8 @@ public class Serializer {
 
           // Get all rows from MutantsLog corresponding to this method
           final List<MutantsLog.Row> rowsForMethod = new ArrayList<>(mutantsLog.methodNameMap.get(sig));
-          if (rowsForMethod.isEmpty()) continue;
+          if (rowsForMethod.isEmpty())
+            continue;
 
           for (MutantsLog.Row row : rowsForMethod) {
             attemptedToSerialize.add(row.id);
@@ -152,8 +153,10 @@ public class Serializer {
           }
         }
 
+        // If we haven't added at least one subject, continue (don't write to file/console)
         if (! xmlGen.hasSubject()) continue;
-        // Prepare to write to file
+
+        // Otherwise, let's add the ID table and the node equivalences table
         xmlGen.addIdTable(PegNode.getIdLookup());
         xmlGen.addEquivalences(PegNode.getNodeEquivalences());
 
@@ -238,29 +241,33 @@ public class Serializer {
   /**
    * Recursively delete `path` and then create a new dir named `path`. Then create subdirs for each
    * subdir provided.
-   * @param path
-   * @param subdirs
-   * @return
+   * @param path String path of output directory we are setting up
+   * @param subdirs Subdirectories to be added to {@code path}
+   * @return an array of length {@code subdir.size + 1} whose first element is the {@code File} representing the
+   * output directory pointed to by {@code path}, and whose last {@code subdir.size} elements are the {@code File}s
+   * representing the
    */
   private File[] setUpOutputDirectory(final String path, final String...subdirs) {
-    final File outputdir= new File(path);
+    final File outputDir = new File(path);
     try {
-      Util.recursivelyDelete(outputdir);
-      outputdir.mkdirs();
+      Util.recursivelyDelete(outputDir);
+      if (!outputDir.mkdirs()) {
+        throw new RuntimeException(String.format("Couldn't create output directory %s", outputDir));
+      }
     } catch (IOException e) {
-      System.err.println("Failed to delete output directory " + outputdir);
+      System.err.println("Failed to delete output directory " + outputDir);
       System.err.println("Exiting with status 1");
       System.exit(1);
     }
     File[] result = new File[subdirs.length + 1];
-    result[0] = outputdir;
+    result[0] = outputDir;
     int i = 0;
     for (String subdir : subdirs) {
       ++i;
-      final Path subdir_p = Paths.get(path, subdir);
-      final File subdir_f = subdir_p.toFile();
-      subdir_f.mkdirs();
-      result[i] = subdir_f;
+      result[i] = Paths.get(path, subdir).toFile();
+      if (!result[i].mkdirs()) {
+        throw new RuntimeException(String.format("Couldn't create subdirectory %s", subdir));
+      }
     }
     return result;
   }
