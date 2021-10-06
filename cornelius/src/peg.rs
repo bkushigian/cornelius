@@ -116,6 +116,16 @@ define_language! {
     // id1 id2 ...) node (represented by Peg::Actuals), and heap is the heap in
     // which object creation takes place.
     "new" = New([Id; 3]),
+
+    /***                         Loops                          ***/
+    // Theta nodes
+    "theta" = Theta([Id; 2]),
+
+    "blank" = Blank(Id),
+
+    "pass" = Pass(Id),
+
+    "eval" = Eval([Id; 2]),
   }
 }
 

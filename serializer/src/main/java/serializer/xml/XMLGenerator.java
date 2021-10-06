@@ -146,9 +146,15 @@ public class XMLGenerator {
         subjects.appendChild(table);
         for (Pair<Integer, Integer> equiv : equivs) {
             Element equivElement = document.createElement("node_equivalence");
+
+            Element first = document.createElement("first");
+            Element second = document.createElement("second");
+            first.setTextContent(equiv.fst.toString());
+            second.setTextContent(equiv.snd.toString());
+            equivElement.appendChild(first);
+            equivElement.appendChild(second);
+
             table.appendChild(equivElement);
-            equivElement.setAttribute("first", equiv.fst.toString());
-            equivElement.setAttribute("second", equiv.snd.toString());
         }
     }
 
