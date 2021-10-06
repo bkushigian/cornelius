@@ -19,6 +19,7 @@ public class Serializer {
 
   boolean printPegs = false;
   boolean logUnserializable = false;
+  boolean writeToConsole = false;
 
   public static void main(String[] args) {
     if (args.length < 2) {
@@ -57,7 +58,10 @@ public class Serializer {
         printPegs = true;
       } else if ("--log-unserializable".equals(arg)) {
         logUnserializable = true;
-      } else {
+      } else if ("--stdout".equals(arg)) {
+        writeToConsole = true;
+      }
+      else {
         files.add(new File(arg));
       }
     }
@@ -151,21 +155,26 @@ public class Serializer {
         if (! xmlGen.hasSubject()) continue;
         // Prepare to write to file
         xmlGen.addIdTable(PegNode.getIdLookup());
+        xmlGen.addEquivalences(PegNode.getNodeEquivalences());
 
-        Optional<PackageDeclaration> packageDeclaration = cu.getPackageDeclaration();
-        String pkgString = "";
-        if (packageDeclaration.isPresent()) {
-          pkgString = packageDeclaration.get().getName().toString() + "::";
+        if (writeToConsole) {
+          xmlGen.writeToConsole();
         }
-        final String serializedFilename = pkgString + origFile.getName().replace(".java", ".cor");
-        final Path filepath = Paths.get(subjectsDir.toString(), serializedFilename);
-        final String filename = filepath.toString();
-        bar.clearLastBar();
-        System.out.printf("Serialized %d subjects: %s\n", xmlGen.numSubjects(), filename);
-        xmlGen.writeToFile(filename);
-      } catch (FileNotFoundException e) {
-        e.printStackTrace();
-      } catch (TransformerException e) {
+        else {
+
+          Optional<PackageDeclaration> packageDeclaration = cu.getPackageDeclaration();
+          String pkgString = "";
+          if (packageDeclaration.isPresent()) {
+            pkgString = packageDeclaration.get().getName().toString() + "::";
+          }
+          final String serializedFilename = pkgString + origFile.getName().replace(".java", ".cor");
+          final Path filepath = Paths.get(subjectsDir.toString(), serializedFilename);
+          final String filename = filepath.toString();
+          bar.clearLastBar();
+          System.out.printf("Serialized %d subjects: %s\n", xmlGen.numSubjects(), filename);
+          xmlGen.writeToFile(filename);
+        }
+      } catch (FileNotFoundException | TransformerException e) {
         e.printStackTrace();
       }
     }
@@ -220,8 +229,8 @@ public class Serializer {
         }
         attemptedToSerializeLog.close();
       } catch (IOException e) {
-        System.err.println("Failed to log unserializable mutants");
-        System.err.println(e);
+        System.err.print("Failed to log unserializable mutants: ");
+        System.err.println(e.getMessage());
       }
     }
   }
