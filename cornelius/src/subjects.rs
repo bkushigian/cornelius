@@ -58,7 +58,7 @@ impl Subjects {
 #[derive(Debug, Deserialize, Default)]
 #[serde(rename = "node_equivalences")]
 pub struct NodeEquivalences {
-  #[serde(rename = "node_equivalence")]
+  #[serde(rename = "node_equivalence", default)]
   pub node_equivalences: Vec<NodeEquivalence>
 }
 
