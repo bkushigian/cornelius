@@ -254,6 +254,8 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
       id_offset_map.insert(Id::from(idx), id);
     }
 
+    /*  -*-*- Add specified node equivalences to egraph -*-*- */
+
     for equivalence in &subjects.node_equivalences.node_equivalences {
         let fst_id: Id = Id::from(equivalence.first.parse::<u32>().unwrap_or_else(|_| panic!("Couldn't parse u32 {}", equivalence.first)) as usize);
         let snd_id: Id = Id::from(equivalence.second.parse::<u32>().unwrap_or_else(|_| panic!("Couldn't parse u32 {}", equivalence.second)) as usize);
