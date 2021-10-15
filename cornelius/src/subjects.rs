@@ -96,7 +96,7 @@ fn parse_peg_from_string(peg_str: String) -> Result<Peg, String> {
     .iter()
     .map(|s|
         Id::from(s.parse::<u32>()
-                  .unwrap_or_else(|_| panic!(format!("Couldn't parse u32 {} from {}", s, peg_str)))
+                  .unwrap_or_else(|_| panic!("Couldn't parse u32 {} from {}", s, peg_str))
                   as usize))
     .collect();
   Peg::from_op_str(op, children)

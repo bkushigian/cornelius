@@ -696,10 +696,10 @@ fn ensure_serialized_subject_meets_specs(
             .unwrap();
 
         assert!(eq_rel.is_refinement_of(&gt_rel),
-                format!("{:?} does not refine {:?}", eq_rel, gt_rel));
+                "{:?} does not refine {:?}", eq_rel, gt_rel);
         score += subject.analysis_result.score;
     }
-    assert!(score >= min_score, format!("score = {} < min_score = {}", score, min_score));
+    assert!(score >= min_score, "score = {} < min_score = {}", score, min_score);
 }
 
 /// Read in a serialized file, parse it into a subjects, and add it to an
@@ -720,14 +720,14 @@ fn ensure_no_duplicates_in_serialized(
         let egg_size = egraph.total_size();
         let v = rec_expr_ref[0..(i+1)].to_vec();
         let re = RecExpr::from(v);
-        assert!((i + 1) == egg_size, format!("rec_expr_size: {} != egraph size: {}\nre: `{}`", i + 1, egg_size, re.pretty(80)));
-        assert!(usize::from(new_id) == i, format!("id: {}, i: {}", usize::from(new_id), i));
+        assert!((i + 1) == egg_size, "rec_expr_size: {} != egraph size: {}\nre: `{}`", i + 1, egg_size, re.pretty(80));
+        assert!(usize::from(new_id) == i, "id: {}, i: {}", usize::from(new_id), i);
     }
 
     let mut egraph = EGraph::<Peg,()>::default();
     egraph.add_expr(&rec_expr);
     let egg_size = egraph.total_size();
     let ser_size = rec_expr.as_ref().len();
-    assert!(ser_size == egg_size, format!("serialized size: {} != egraph size: {}", ser_size, egg_size));
+    assert!(ser_size == egg_size, "serialized size: {} != egraph size: {}", ser_size, egg_size);
 
 }
