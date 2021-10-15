@@ -23,8 +23,8 @@ pub struct Subjects {
   /// A table of node equivalences detected in the front end.  These usually
   /// come from Theta nodes, which are cyclic but need to be de-cyclified before
   /// being loaded into the egraph
-  #[serde(rename = "NodeEquivalences", default)]
-  pub node_equivalences: Vec<NodeEquivalence>,
+  #[serde(default)]
+  pub node_equivalences: NodeEquivalences,
 }
 
 impl Subjects {
@@ -53,7 +53,15 @@ impl Subjects {
   }
 }
 
+#[derive(Debug, Deserialize, Default)]
+#[serde(rename = "node_equivalences")]
+pub struct NodeEquivalences {
+  #[serde(rename = "node_equivalence")]
+  pub node_equivalences: Vec<NodeEquivalence>
+}
+
 #[derive(Debug, Deserialize)]
+#[serde(rename = "node_equivalence")]
 pub struct NodeEquivalence {
   pub first: String,
   pub second: String,
