@@ -246,6 +246,20 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
       let id = egraph.find(id);
       id_offset_map.insert(Id::from(idx), id);
     }
+
+    for equivalence in &subjects.node_equivalences.node_equivalences {
+        let fst_id: Id = Id::from(equivalence.first.parse::<u32>().unwrap_or_else(|_| panic!("Couldn't parse u32 {}", equivalence.first)) as usize);
+        let snd_id: Id = Id::from(equivalence.second.parse::<u32>().unwrap_or_else(|_| panic!("Couldn't parse u32 {}", equivalence.second)) as usize);
+        match (id_offset_map.get(&fst_id), id_offset_map.get(&snd_id)) {
+          (Some(id1), Some(id2)) => {
+            egraph.union(*id1, *id2);
+          }
+          (_, _) => {
+            println!("Error! Couldn't look up equivalences: {} {}", fst_id, snd_id);
+          }
+        };
+    }
+
     debug!("egraph total_size after deserializing: {}", egraph.total_number_of_nodes());
 
     let runner = Runner::default().with_egraph(egraph);
