@@ -95,4 +95,11 @@ public class Loops {
         }
         return i;
     }
+
+    int sumUpToNumber(int n) {
+        int i = n;
+        int total = 0;
+        while (i > 0) total += i;
+        return i;
+    }
 }
