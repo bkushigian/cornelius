@@ -561,6 +561,11 @@ mod serialization {
     fn method_invocation_deduplication() {
         ensure_no_duplicates_in_serialized("../tests/method-invocation.xml");
     }
+
+    #[test]
+    fn loop_deduplication() {
+        ensure_no_duplicates_in_serialized("../tests/loops.xml");
+    }
 }
 
 #[allow(dead_code)]
