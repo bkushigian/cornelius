@@ -6,7 +6,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import java.io.*;
 import java.nio.file.Paths;
 import java.util.*;
-import serializer.XMLGenerator;
+import serializer.xml.XMLGenerator;
 
 import javax.xml.transform.TransformerException;
 
@@ -128,6 +128,7 @@ public class PegSubjectSerializer {
 
             // TODO: this involves giving public access to the idLookup which is sketchy.
             xmlGen.addIdTable(PegNode.getIdLookup());
+            xmlGen.addEquivalences(PegNode.getNodeEquivalences());
 
             xmlGen.writeToFile("subjects.xml");
         } catch (FileNotFoundException e) {

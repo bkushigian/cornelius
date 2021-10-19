@@ -1,4 +1,4 @@
-package serializer;//Based on example code from: https://examples.javacodegeeks.com/core-java/xml/parsers/documentbuilderfactory/create-xml-file-in-java-using-dom-parser-example/
+package serializer.xml;//Based on example code from: https://examples.javacodegeeks.com/core-java/xml/parsers/documentbuilderfactory/create-xml-file-in-java-using-dom-parser-example/
 
 import java.io.File;
 import java.util.ArrayList;
@@ -14,6 +14,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import serializer.peg.MutantsLog;
+import serializer.peg.Pair;
 import serializer.peg.PegNode;
 
 public class XMLGenerator {
@@ -67,9 +68,9 @@ public class XMLGenerator {
         subject.setAttribute("method", methodString);
         subjects.appendChild(subject);
 
-        final Element egg = document.createElement("egg");
-        egg.appendChild(document.createTextNode(Integer.valueOf(pegId).toString()));
-        subject.appendChild(egg);
+        final Element origPid = document.createElement("pid");
+        origPid.appendChild(document.createTextNode(Integer.valueOf(pegId).toString()));
+        subject.appendChild(origPid);
 
         methodToSubject.put(methodString, subject);
     }
@@ -101,12 +102,9 @@ public class XMLGenerator {
             Element subject = methodToSubject.get(methodString); // does this actually get and modifiy the element in the map?
 
             Element mutant = document.createElement("mutant");
-            mutant.setAttribute("id", mutantId);
+            mutant.setAttribute("mid", mutantId);
+            mutant.setAttribute("pid", String.valueOf(pegId));
             subject.appendChild(mutant);
-
-            Element egg = document.createElement("egg");
-            egg.appendChild(document.createTextNode(Integer.valueOf(pegId).toString()));
-            mutant.appendChild(egg);
         }
         else {
             throw new IllegalArgumentException("Map does not contain associated subject for mutant");
@@ -121,17 +119,42 @@ public class XMLGenerator {
         return subjects.getElementsByTagName("subject").getLength();
     }
 
-    public void addIdTable(Map<Integer, PegNode> dedupTable) {
+    /**
+     * Add the {@code <id_table>} element to the xml doc
+     * @param idTable map from id to pegnode
+     */
+    public void addIdTable(Map<Integer, PegNode> idTable) {
         Element table = document.createElement("id_table");
         subjects.appendChild(table);
-        final List<Integer> keys = new ArrayList<>(dedupTable.keySet());
+        final List<Integer> keys = new ArrayList<>(idTable.keySet());
         keys.sort(null);
         for (Integer id : keys) {
-            final PegNode p = dedupTable.get(id);
+            final PegNode p = idTable.get(id);
             Element dedupEntry = document.createElement("dedup_entry");
             table.appendChild(dedupEntry);
             dedupEntry.setAttribute("id", id.toString());
             dedupEntry.setAttribute("peg", p.toString());
+        }
+    }
+
+    /**
+     * Add a list of equivalences to the xml doc
+     * @param equivs a list of ids to be marked as equivalent
+     */
+    public void addEquivalences(List<Pair<Integer, Integer>> equivs) {
+        Element table = document.createElement("node_equivalences");
+        subjects.appendChild(table);
+        for (Pair<Integer, Integer> equiv : equivs) {
+            Element equivElement = document.createElement("node_equivalence");
+
+            Element first = document.createElement("first");
+            Element second = document.createElement("second");
+            first.setTextContent(equiv.fst.toString());
+            second.setTextContent(equiv.snd.toString());
+            equivElement.appendChild(first);
+            equivElement.appendChild(second);
+
+            table.appendChild(equivElement);
         }
     }
 

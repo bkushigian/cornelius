@@ -9,9 +9,21 @@ public abstract class PegNode {
 
     public abstract <R, A> R accept(PegVisitor<R, A> visitor, A arg);
 
-    // TODO: make not static
+    /**
+     * @return a copy of the map mapping peg ids to their corresponding {@code PegNode}s
+     *
+     * TODO: make not static
+     */
     public static Map<Integer, PegNode> getIdLookup() {
         return new HashMap<>(idLookup);
+    }
+
+    /**
+     * Get a list of all node equivalences
+     * @return list of node equivalences
+     */
+    public static List<Pair<Integer, Integer>> getNodeEquivalences() {
+        return equivalences.getEquivalences();
     }
 
     public static Optional<PegNode> idLookup(final Integer id) {
@@ -29,6 +41,7 @@ public abstract class PegNode {
         idLookup.clear();
         litLookup.clear();
         symbolLookup.clear();
+        equivalences = new Equivalences();
         _id = 0;
         ThetaNode.BlankNode._blankId = 0;
     }
@@ -295,26 +308,17 @@ public abstract class PegNode {
 
         @Override
         public String toDerefString() {
-            if (children.isEmpty()) {
-                return op;
-            }
-            final StringBuilder sb = new StringBuilder("(");
-            sb.append(op);
-            sb.append(' ');
-            boolean added = false;
+            final StringJoiner joiner = new StringJoiner(" ", "(", ")");
+            joiner.add(op);
             for (Integer child : children) {
-                if (added) {
-                    sb.append(' ');
-                }
-                added = true;
                 final PegNode p = idLookup.get(child);
                 if (p == null) {
                     throw new IllegalStateException("OpNode " + op + " child index " + child + " not present");
                 }
-                sb.append(p.toDerefString());
+                joiner.add(p.toDerefString());
             }
 
-            return sb.append(")").toString();
+            return joiner.toString();
         }
 
         @Override
@@ -324,18 +328,12 @@ public abstract class PegNode {
 
         @Override
         public String toString() {
-            if (children.isEmpty())  {
-                return op;
-            }
-            final StringBuilder sb = new StringBuilder();
-            sb.append('(');
-            sb.append(op);
+            StringJoiner joiner = new StringJoiner(" ", "(", ")");
+            joiner.add(op);
             for (Integer cid : children) {
-                sb.append(' ');
-                sb.append(cid);
+                joiner.add(cid.toString());
             }
-            sb.append(')');
-            return sb.toString();
+            return joiner.toString();
         }
 
         @Override
