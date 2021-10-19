@@ -41,6 +41,7 @@ public abstract class PegNode {
         idLookup.clear();
         litLookup.clear();
         symbolLookup.clear();
+        equivalences = new Equivalences();
         _id = 0;
         ThetaNode.BlankNode._blankId = 0;
     }
