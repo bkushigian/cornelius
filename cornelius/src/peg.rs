@@ -118,13 +118,18 @@ define_language! {
     "new" = New([Id; 3]),
 
     /***                         Loops                          ***/
-    // Theta nodes
+
+    // Theta nodes, represents a sequence of values
     "theta" = Theta([Id; 2]),
 
+    // A blank node, this is a place holder.
     "blank" = Blank(Id),
 
+    // A pass node returns the index of the first false value in a sequence
     "pass" = Pass(Id),
 
+    // Evaluate a theta node: (eval THETA N) produces the Nth value of the
+    // sequence THETA
     "eval" = Eval([Id; 2]),
   }
 }
