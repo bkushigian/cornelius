@@ -412,3 +412,17 @@ fn analyze_subject(subj: &mut Subject,
       equiv_classes,
     };
 }
+
+pub fn stop_reason_as_string(stop_reason: Option<egg::StopReason>) -> String {
+  match stop_reason {
+
+    Some(stop_reason) => match stop_reason {
+      StopReason::Saturated => String::from("Saturated"),
+      StopReason::IterationLimit(_) => String::from("IterLimit"),
+      StopReason::NodeLimit(_) => String::from("NodeLimit"),
+      StopReason::TimeLimit(_) => String::from("TimeLimit"),
+      StopReason::Other(_) => String::from("Other")
+    },
+    None => String::from("None")
+  }
+}
