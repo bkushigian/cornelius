@@ -36,3 +36,4 @@ env_logger = "0.7.1"
 
 # CLI Parsing
 structopt = "0.3"
+instant = "^0.1"

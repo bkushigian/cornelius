@@ -5,6 +5,7 @@ use serde_aux::prelude::*;
 use serde_xml_rs::from_reader;
 use crate::peg::{Peg, PegAnalysis};
 use std::collections::{HashMap, HashSet};
+use instant::Duration;
 
 use log::Level;
 
@@ -199,7 +200,12 @@ pub struct Mutant {
 
 /// Read in serialized info as a `Subjects` instance and run equality saturation
 /// on each `Subject` in the deserialized `Subjects`
-pub fn run_on_subjects_file(subj_file: &str) -> Result<Subjects, String> {
+pub fn run_on_subjects_file(subj_file: &str,
+                            iter_limit: usize,
+                            node_limit: usize,
+                            time_limit: Duration,
+                            verbose: bool
+) -> Result<Subjects, String> {
     let subj_file = subj_file.trim();
     let rules = crate::rewrites::rw_rules();
     info!("Running on subject file {}", subj_file);
@@ -208,10 +214,16 @@ pub fn run_on_subjects_file(subj_file: &str) -> Result<Subjects, String> {
         .expect("Error reading subjects");
     info!("Read in subjects");
 
-    run_on_subjects(subjects, &rules)
+    run_on_subjects(subjects, &rules, iter_limit, node_limit, time_limit, verbose)
 }
 
-pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<Subjects, String> {
+pub fn run_on_subjects(mut subjects: Subjects,
+                       rules: &RewriteSystem,
+                       iter_limit: usize,
+                       node_limit: usize,
+                       time_limit: Duration,
+                       verbose: bool
+) -> Result<Subjects, String> {
     // We compute a RecExpr<Peg> from the lookup table mapping ids to Peg
     // expressions. This RecExpr contains the original program and every mutant,
     // as well as every sub-expression used
@@ -271,7 +283,10 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
 
     debug!("egraph total_size after deserializing: {}", egraph.total_number_of_nodes());
 
-    let runner = Runner::default().with_egraph(egraph);
+    let runner = Runner::default().with_egraph(egraph)
+                                  .with_iter_limit(iter_limit)
+                                  .with_node_limit(node_limit)
+                                  .with_time_limit(time_limit) ;
     // let egraph_size = egraph.total_size();
     // if rec_expr_size != egraph_size {
     //     println!("rec_expr total_size: {}", rec_expr_size);
@@ -300,7 +315,12 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
     // }
 
     let runner = runner.run(rules);
+    let stop_reason = runner.stop_reason;
+    let stop_reason = stop_reason_as_string(stop_reason);
     let egraph = &runner.egraph;
+    if verbose {
+        println!("    Stop Reason: {}", stop_reason);
+    }
     debug!("egraph total_size after run: {}", egraph.total_number_of_nodes());
 
     let mut i: u32 = 1;
@@ -318,6 +338,7 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
           let v = rec_expr_ref[0..(id + 1 as usize)].to_vec();
           let re = RecExpr::from(v);
           info!("original id: {}:\n{}", id, re.pretty(80));
+          info!("stop reason: {:?}", stop_reason);
           for m in &subj.mutants {
             let mid = m.mid;
             let pid: usize = m.pid.parse().unwrap();

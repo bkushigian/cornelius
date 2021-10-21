@@ -3,6 +3,7 @@ use crate::rewrites::RewriteSystem;
 use crate::peg::{Peg, PegAnalysis};
 use crate::util::EqRel;
 use std::env;
+use instant::Duration;
 
 use crate::delta::dd;
 use std::time::Instant;
@@ -692,7 +693,7 @@ fn ensure_serialized_subject_meets_specs(
     min_score: u32
 ) {
 
-    let subjects = crate::subjects::run_on_subjects_file(subjects_file).unwrap();
+    let subjects = crate::subjects::run_on_subjects_file(subjects_file, 30, 10000, Duration::from_secs(5), false).unwrap();
     let mut score = 0;
     for subject in subjects.subjects {
         let eq_rel = EqRel::from(&subject.analysis_result);
