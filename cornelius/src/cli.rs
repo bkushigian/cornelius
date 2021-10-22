@@ -24,5 +24,23 @@ pub struct CliArgs {
 
     #[structopt(long = "no-equiv-files")]
     /// Don't output equiv files
-    pub suppress_equiv_file_output: bool
+    pub suppress_equiv_file_output: bool,
+
+    #[structopt(long)]
+    /// Write a run-details file
+    pub run_details: bool
+}
+
+impl Clone for CliArgs {
+    fn clone(&self) -> Self {
+        CliArgs {
+            java_files: self.java_files.clone(),
+            iter_limit: self.iter_limit,
+            node_limit: self.node_limit,
+            time_limit: self.time_limit,
+            verbose: self.verbose,
+            suppress_equiv_file_output: self.suppress_equiv_file_output,
+            run_details: self.run_details
+        }
+    }
 }

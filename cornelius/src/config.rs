@@ -1,10 +1,12 @@
 use instant::Duration;
+use crate::cli::CliArgs;
 
 pub struct RunConfig {
     pub iter_limit: usize,
     pub node_limit: usize,
     pub time_limit: Duration,
-    pub verbose: bool
+    pub verbose: bool,
+    pub run_details: bool
 }
 
 impl Default for RunConfig {
@@ -13,7 +15,8 @@ impl Default for RunConfig {
             iter_limit: 30,
             node_limit: 10_000,
             time_limit: Duration::from_secs(5),
-            verbose: false
+            verbose: false,
+            run_details: false
         }
     }
 }
@@ -38,6 +41,11 @@ impl RunConfig {
         self.verbose = verbosity;
         self
     }
+
+    pub fn with_run_details(mut self, run_details: bool) -> RunConfig {
+        self.run_details = run_details;
+        self
+    }
 }
 
 impl ToString for RunConfig {
@@ -47,5 +55,16 @@ impl ToString for RunConfig {
 - Time Limit: {}
 - Verbose:    {}
 ", self.iter_limit, self.node_limit, self.time_limit.as_secs(), self.verbose)
+    }
+}
+
+impl From<CliArgs> for RunConfig {
+    fn from(args: CliArgs) -> Self {
+      RunConfig::default()
+        .with_iter_limit(args.iter_limit)
+        .with_node_limit(args.node_limit)
+        .with_time_limit(Duration::from_secs(args.time_limit))
+        .with_verbosity(args.verbose)
+        .with_run_details(args.run_details)
     }
 }

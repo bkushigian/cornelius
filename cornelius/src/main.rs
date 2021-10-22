@@ -1,6 +1,5 @@
 use cornelius::subjects::{run_on_subjects_file};
 use cornelius::util::io::{write_subjects_to_separate_files, write_run_details_to_file};
-use instant::Duration;
 use cornelius::cli::CliArgs;
 use cornelius::config::RunConfig;
 use cornelius::global_data::GlobalData;
@@ -12,11 +11,7 @@ fn main() -> Result<(), String> {
 
     let mut total_equivs_found = 0;
     let mut total_mutants_found = 0;
-    let config = RunConfig::default()
-        .with_iter_limit(args.iter_limit)
-        .with_node_limit(args.node_limit)
-        .with_time_limit(Duration::from_secs(args.time_limit))
-        .with_verbosity(args.verbose);
+    let config = RunConfig::from(args.clone());
     let mut global_data = GlobalData::default();
 
     for subj_file in &args.java_files {
