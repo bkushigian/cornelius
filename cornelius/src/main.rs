@@ -77,6 +77,5 @@ fn main() -> Result<(), String> {
         println!("Mutants found: {}", total_mutants_found);
         println!("Equivs found: {}", total_equivs_found);
     }
-    write_run_details_to_file(&config, &global_data, "run.details");
-    Ok(())
+    write_run_details_to_file(&config, &global_data, "run.details").map_err(|e| e.to_string())
 }
