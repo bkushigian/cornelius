@@ -162,6 +162,8 @@ pub mod io {
     use std::io::Error;
     use itertools::Itertools;
     use crate::subjects::{Subject, Subjects};
+    use crate::global_data::GlobalData;
+    use crate::config::RunConfig;
 
     /// Write the results to a single file
     #[allow(dead_code)]
@@ -209,6 +211,19 @@ pub mod io {
             equiv_classes_as_strings.push(equiv_class_as_string);
         }
         format!("{}\n", equiv_classes_as_strings.join("\n"))
+    }
+
+    /// Write details of the run to disk
+    pub fn write_run_details_to_file(
+        run_config: &RunConfig,
+        global_data: &GlobalData,
+        file_name: &str) -> Result<(), Error> {
+        let mut file = File::create(file_name)?;
+        info!("Writing configuration and global data to file {}", file_name);
+        let contents = format!("Config:\n{}\nRuntime Data:\n{}\n",
+                               run_config.to_string(),
+                               global_data.to_string());
+        file.write_all(contents.as_bytes())
     }
 }
 

@@ -1,11 +1,12 @@
 use egg::*;
 use serde::Deserialize;
-use crate::rewrites::RewriteSystem;
 use serde_aux::prelude::*;
 use serde_xml_rs::from_reader;
-use crate::peg::{Peg, PegAnalysis};
 use std::collections::{HashMap, HashSet};
-use instant::Duration;
+use crate::config::RunConfig;
+use crate::global_data::GlobalData;
+use crate::peg::{Peg, PegAnalysis};
+use crate::rewrites::RewriteSystem;
 
 use log::Level;
 
@@ -201,29 +202,28 @@ pub struct Mutant {
 /// Read in serialized info as a `Subjects` instance and run equality saturation
 /// on each `Subject` in the deserialized `Subjects`
 pub fn run_on_subjects_file(subj_file: &str,
-                            iter_limit: usize,
-                            node_limit: usize,
-                            time_limit: Duration,
-                            verbose: bool
+                            run_config: &RunConfig,
+                            global_data: &mut GlobalData
 ) -> Result<Subjects, String> {
     let subj_file = subj_file.trim();
     let rules = crate::rewrites::rw_rules();
     info!("Running on subject file {}", subj_file);
+    global_data.inc_subjects_files();
 
     let subjects: Subjects = Subject::from_file(subj_file.to_string())
         .expect("Error reading subjects");
     info!("Read in subjects");
 
-    run_on_subjects(subjects, &rules, iter_limit, node_limit, time_limit, verbose)
+    run_on_subjects(subjects, &rules, run_config, global_data)
 }
 
 pub fn run_on_subjects(mut subjects: Subjects,
                        rules: &RewriteSystem,
-                       iter_limit: usize,
-                       node_limit: usize,
-                       time_limit: Duration,
-                       verbose: bool
+                       run_config: &RunConfig,
+                       global_data: &mut GlobalData
 ) -> Result<Subjects, String> {
+    global_data.add_subjects(subjects.subjects.len() as u32);
+    global_data.add_mutants(subjects.num_mutants() as u32);
     // We compute a RecExpr<Peg> from the lookup table mapping ids to Peg
     // expressions. This RecExpr contains the original program and every mutant,
     // as well as every sub-expression used
@@ -284,9 +284,9 @@ pub fn run_on_subjects(mut subjects: Subjects,
     debug!("egraph total_size after deserializing: {}", egraph.total_number_of_nodes());
 
     let runner = Runner::default().with_egraph(egraph)
-                                  .with_iter_limit(iter_limit)
-                                  .with_node_limit(node_limit)
-                                  .with_time_limit(time_limit) ;
+                                  .with_iter_limit(run_config.iter_limit)
+                                  .with_node_limit(run_config.node_limit)
+                                  .with_time_limit(run_config.time_limit);
     // let egraph_size = egraph.total_size();
     // if rec_expr_size != egraph_size {
     //     println!("rec_expr total_size: {}", rec_expr_size);
@@ -316,9 +316,10 @@ pub fn run_on_subjects(mut subjects: Subjects,
 
     let runner = runner.run(rules);
     let stop_reason = runner.stop_reason;
+    global_data.handle_stop_reason(&stop_reason);
     let stop_reason = stop_reason_as_string(stop_reason);
     let egraph = &runner.egraph;
-    if verbose {
+    if run_config.verbose {
         println!("    Stop Reason: {}", stop_reason);
     }
     debug!("egraph total_size after run: {}", egraph.total_number_of_nodes());
@@ -348,6 +349,7 @@ pub fn run_on_subjects(mut subjects: Subjects,
           }
         }
         analyze_subject(&mut subj, egraph, &rec_expr, &id_offset_map);
+        global_data.add_discovered_equivalences(subj.analysis_result.score);
         i += 1;
     }
     Ok(subjects)
@@ -424,5 +426,30 @@ pub fn stop_reason_as_string(stop_reason: Option<egg::StopReason>) -> String {
       StopReason::Other(_) => String::from("Other")
     },
     None => String::from("None")
+  }
+}
+
+/// `StopReasonCount` keeps track of how many times a given stop reason has been
+/// found.
+pub struct StopReasonCount {
+  pub iter_limit: u32,
+  pub time_limit: u32,
+  pub node_limit: u32,
+  pub saturated: u32,
+  pub other: u32
+}
+
+impl StopReasonCount {
+  pub fn handle_stop_reason(&mut self, stop_reason: Option<StopReason>) {
+    match stop_reason {
+      Some(stop_reason) => match stop_reason {
+        StopReason::Saturated => self.saturated += 1,
+        StopReason::IterationLimit(_) => self.iter_limit += 1,
+        StopReason::TimeLimit(_) => self.time_limit += 1,
+        StopReason::NodeLimit(_) => self.node_limit += 1,
+        StopReason::Other(_) => self.other += 1
+      },
+      None => ()
+    }
   }
 }
