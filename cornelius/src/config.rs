@@ -23,7 +23,11 @@ impl Default for RunConfig {
 
 impl RunConfig {
     pub fn with_iter_limit(mut self, iter_limit: usize) -> RunConfig {
-        self.iter_limit = iter_limit;
+        if iter_limit == 0 {
+            self.iter_limit = usize::MAX;
+        } else {
+            self.iter_limit = iter_limit;
+        }
         self
     }
 
@@ -33,7 +37,11 @@ impl RunConfig {
     }
 
     pub fn with_node_limit(mut self, node_limit: usize) -> RunConfig {
-        self.node_limit = node_limit;
+        if node_limit == 0 {
+            self.node_limit = usize::MAX;
+        } else {
+            self.node_limit = node_limit;
+        }
         self
     }
 

@@ -7,11 +7,11 @@ pub struct CliArgs {
     pub java_files: Vec<String>,
 
     #[structopt(long, default_value="30")]
-    /// Maximum number of iterations
+    /// Maximum number of iterations. Set to 0 for unlimited iterations
     pub iter_limit: usize,
 
     #[structopt(long, default_value="10000")]
-    /// Maximum number of nodes
+    /// Maximum number of nodes. Set to 0 for unlimited nodes
     pub node_limit: usize,
 
     #[structopt(long, default_value="5")]
