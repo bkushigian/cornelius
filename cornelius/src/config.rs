@@ -6,7 +6,8 @@ pub struct RunConfig {
     pub node_limit: usize,
     pub time_limit: Duration,
     pub verbose: bool,
-    pub run_details: bool
+    pub run_details: bool,
+    pub iter_details: bool,
 }
 
 impl Default for RunConfig {
@@ -16,7 +17,8 @@ impl Default for RunConfig {
             node_limit: 10_000,
             time_limit: Duration::from_secs(5),
             verbose: false,
-            run_details: false
+            run_details: false,
+            iter_details: false,
         }
     }
 }
@@ -52,6 +54,11 @@ impl RunConfig {
 
     pub fn with_run_details(mut self, run_details: bool) -> RunConfig {
         self.run_details = run_details;
+        self
+    }
+
+    pub fn with_iter_details(mut self, iter_details: bool) -> RunConfig {
+        self.iter_details = iter_details;
         self
     }
 }

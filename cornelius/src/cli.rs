@@ -27,8 +27,12 @@ pub struct CliArgs {
     pub suppress_equiv_file_output: bool,
 
     #[structopt(long)]
-    /// Write a run-details file
-    pub run_details: bool
+    /// Write run configurations and run details to file run.details
+    pub run_details: bool,
+
+    #[structopt(long)]
+    /// Write iteration details for each egraph to iteration.details
+    pub iter_details: bool
 }
 
 impl Clone for CliArgs {
@@ -40,7 +44,8 @@ impl Clone for CliArgs {
             time_limit: self.time_limit,
             verbose: self.verbose,
             suppress_equiv_file_output: self.suppress_equiv_file_output,
-            run_details: self.run_details
+            run_details: self.run_details,
+            iter_details: self.iter_details
         }
     }
 }
