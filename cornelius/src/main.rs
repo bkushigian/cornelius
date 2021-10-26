@@ -4,6 +4,9 @@ use cornelius::cli::CliArgs;
 use cornelius::config::RunConfig;
 use cornelius::global_data::GlobalData;
 use structopt::StructOpt;
+use std::path::Path;
+use std::fs::{create_dir, remove_dir_all};
+
 
 fn main() -> Result<(), String> {
     let _ = env_logger::builder().try_init();
@@ -13,6 +16,21 @@ fn main() -> Result<(), String> {
     let mut total_mutants_found = 0;
     let config = RunConfig::from(args.clone());
     let mut global_data = GlobalData::default();
+
+    // Check if `./equiv_files/` exists. If so, delete it. Then, create
+    // directory `./equiv_files/`
+    if Path::new("./equiv-files").exists() {
+        remove_dir_all("./equiv-files").map_err(|e| e.to_string())?;
+    }
+    create_dir("./equiv-files").map_err(|e| e.to_string())?;
+
+    if config.iter_details {
+        // Check if iter-details/ exists
+        if Path::new("./iter-details").exists() {
+            remove_dir_all("./iter-details").map_err(|e| e.to_string())?;
+        }
+        create_dir("./iter-details").map_err(|e| e.to_string())?;
+    }
 
     for subj_file in &args.java_files {
         if args.verbose {
@@ -51,7 +69,7 @@ fn main() -> Result<(), String> {
                     let mut equiv_file = String::from(subj_file);
                     equiv_file.push_str(".equiv-class");
 
-                    match  write_subjects_to_separate_files(&subjects, ".") {
+                    match  write_subjects_to_separate_files(&subjects, "equiv-files") {
                         Err(e) => {
                             println!("Error writing results of subject file {} to equiv-class file {}.",
                                 subj_file, equiv_file);

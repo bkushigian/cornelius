@@ -68,7 +68,15 @@ impl ToString for RunConfig {
         format!("max-iter-limit: {}
 max-node-limit: {}
 max-time-limit: {}
-verbose: {}", self.iter_limit, self.node_limit, self.time_limit.as_secs(), self.verbose)
+verbose: {}
+run-details: {}
+iter-details: {}",
+                self.iter_limit,
+                self.node_limit,
+                self.time_limit.as_secs(),
+                self.verbose,
+                self.run_details,
+                self.iter_details)
     }
 }
 
@@ -80,5 +88,6 @@ impl From<CliArgs> for RunConfig {
         .with_time_limit(Duration::from_secs(args.time_limit))
         .with_verbosity(args.verbose)
         .with_run_details(args.run_details)
+        .with_iter_details(args.iter_details)
     }
 }

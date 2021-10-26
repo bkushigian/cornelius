@@ -7,6 +7,7 @@ use crate::config::RunConfig;
 use crate::global_data::GlobalData;
 use crate::peg::{Peg, PegAnalysis};
 use crate::rewrites::RewriteSystem;
+use crate::util::io::write_iter_file;
 
 use log::Level;
 
@@ -315,9 +316,9 @@ pub fn run_on_subjects(mut subjects: Subjects,
     // }
 
     let runner = runner.run(rules);
-    let stop_reason = runner.stop_reason;
+    let stop_reason = &runner.stop_reason;
     global_data.handle_stop_reason(&stop_reason);
-    let stop_reason = stop_reason_as_string(stop_reason);
+    let stop_reason = stop_reason_as_string(stop_reason.clone());
     let egraph = &runner.egraph;
     if run_config.verbose {
         println!("    Stop Reason: {}", stop_reason);
@@ -349,8 +350,19 @@ pub fn run_on_subjects(mut subjects: Subjects,
           }
         }
         analyze_subject(&mut subj, egraph, &rec_expr, &id_offset_map);
+
         global_data.add_discovered_equivalences(subj.analysis_result.score);
         i += 1;
+    }
+    if run_config.iter_details {
+      let subj_file = &subjects.subjects.get(0).unwrap().method;
+      let subj_file = subj_file.split("@");
+      let subj_file: Vec<String> = subj_file.map(|s| s.to_string()).collect();
+      let subj_file = subj_file.get(0).unwrap();
+
+      let path = format!("./iter-details/{}.iters", subj_file);
+      let methods: Vec<String> = subjects.subjects.iter().map(|s| s.method.clone()).collect();
+      write_iter_file(path, subj_file.to_string(), methods, &runner).map_err(|e| e.to_string())?;
     }
     Ok(subjects)
 }
