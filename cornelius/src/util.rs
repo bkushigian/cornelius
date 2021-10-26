@@ -220,7 +220,7 @@ pub mod io {
         file_name: &str) -> Result<(), Error> {
         let mut file = File::create(file_name)?;
         info!("Writing configuration and global data to file {}", file_name);
-        let contents = format!("Config:\n{}\nRuntime Data:\n{}\n",
+        let contents = format!("{}\n{}",
                                run_config.to_string(),
                                global_data.to_string());
         file.write_all(contents.as_bytes())

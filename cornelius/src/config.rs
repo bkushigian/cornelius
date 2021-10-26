@@ -50,11 +50,10 @@ impl RunConfig {
 
 impl ToString for RunConfig {
     fn to_string(&self) -> String {
-        format!("- Iteration Limit: {}
-- Node Limit: {}
-- Time Limit: {}
-- Verbose:    {}
-", self.iter_limit, self.node_limit, self.time_limit.as_secs(), self.verbose)
+        format!("max-iter-limit: {}
+max-node-limit: {}
+max-time-limit: {}
+verbose: {}", self.iter_limit, self.node_limit, self.time_limit.as_secs(), self.verbose)
     }
 }
 

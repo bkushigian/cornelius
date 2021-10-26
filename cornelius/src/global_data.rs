@@ -49,20 +49,15 @@ impl GlobalData {
 
 impl ToString for GlobalData {
     fn to_string(&self) -> String {
-        format!("Stop Reasons
--------------
-- iter limits reached: {}
-- time limits reached: {}
-- node limits reached: {}
-- saturations:         {}
-- other stop reasons:  {}
-
-Subject Data
--------------
-- num subject files:   {}
-- num subjects:        {}
-- num mutants:         {}
-- num equivalences:    {}
+        format!("stop-reason-iter-limit: {}
+stop-reason-time-limit: {}
+stop-reason-node-limit: {}
+stop-reason-saturation: {}
+stop-reason-other: {}
+num-subject-files: {}
+num-subjects: {}
+num-mutants: {}
+num-equivalences: {}
 ",
             self.iter_limits,
             self.time_limits,
