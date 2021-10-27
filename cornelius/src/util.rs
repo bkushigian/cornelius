@@ -275,7 +275,8 @@ total-time: {}
 #iters: {}
 #rebuilds: {}
 stop-reason: {:?}
-applications: {}",
+applications:
+{}",
             subject_file, methods,
             eg.total_number_of_nodes(), eg.number_of_classes(), eg.total_size(),
             search_time, apply_time, rebuild_time, total_time,
