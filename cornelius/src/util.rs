@@ -246,10 +246,14 @@ pub mod io {
         let stop_reason = runner.stop_reason.as_ref().unwrap();
         let methods = method_names.join("\n- ");
         let mut file = File::create(file_name.clone())?;
+        let eg = &runner.egraph;
         info!("Writing iter file {}", file_name);
         let contents = format!(
             "Run Report for Subject {}
 - {}
+#nodes: {}
+#eclasses: {}
+#egraph-total-size: {}
 search-time: {}
 apply-time: {}
 rebuild-time: {}
@@ -258,6 +262,7 @@ total-time: {}
 #rebuilds: {}
 stop-reason: {:?}",
             subject_file, methods,
+            eg.total_number_of_nodes(), eg.number_of_classes(), eg.total_size(),
             search_time, apply_time, rebuild_time, total_time,
             iters, rebuilds, stop_reason
         );
