@@ -2,6 +2,8 @@ use egg::*;
 use crate::rewrites::RewriteSystem;
 use crate::peg::{Peg, PegAnalysis};
 use crate::util::EqRel;
+use crate::config::RunConfig;
+use crate::global_data::GlobalData;
 use std::env;
 
 use crate::delta::dd;
@@ -692,7 +694,7 @@ fn ensure_serialized_subject_meets_specs(
     min_score: u32
 ) {
 
-    let subjects = crate::subjects::run_on_subjects_file(subjects_file).unwrap();
+    let subjects = crate::subjects::run_on_subjects_file(subjects_file, &RunConfig::default(), &mut GlobalData::default()).unwrap();
     let mut score = 0;
     for subject in subjects.subjects {
         let eq_rel = EqRel::from(&subject.analysis_result);

@@ -1,10 +1,13 @@
 use egg::*;
 use serde::Deserialize;
-use crate::rewrites::RewriteSystem;
 use serde_aux::prelude::*;
 use serde_xml_rs::from_reader;
-use crate::peg::{Peg, PegAnalysis};
 use std::collections::{HashMap, HashSet};
+use crate::config::RunConfig;
+use crate::global_data::GlobalData;
+use crate::peg::{Peg, PegAnalysis};
+use crate::rewrites::RewriteSystem;
+use crate::util::io::write_iter_file;
 
 use log::Level;
 
@@ -199,19 +202,29 @@ pub struct Mutant {
 
 /// Read in serialized info as a `Subjects` instance and run equality saturation
 /// on each `Subject` in the deserialized `Subjects`
-pub fn run_on_subjects_file(subj_file: &str) -> Result<Subjects, String> {
+pub fn run_on_subjects_file(subj_file: &str,
+                            run_config: &RunConfig,
+                            global_data: &mut GlobalData
+) -> Result<Subjects, String> {
     let subj_file = subj_file.trim();
     let rules = crate::rewrites::rw_rules();
     info!("Running on subject file {}", subj_file);
+    global_data.inc_subjects_files();
 
     let subjects: Subjects = Subject::from_file(subj_file.to_string())
         .expect("Error reading subjects");
     info!("Read in subjects");
 
-    run_on_subjects(subjects, &rules)
+    run_on_subjects(subjects, &rules, run_config, global_data)
 }
 
-pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<Subjects, String> {
+pub fn run_on_subjects(mut subjects: Subjects,
+                       rules: &RewriteSystem,
+                       run_config: &RunConfig,
+                       global_data: &mut GlobalData
+) -> Result<Subjects, String> {
+    global_data.add_subjects(subjects.subjects.len() as u32);
+    global_data.add_mutants(subjects.num_mutants() as u32);
     // We compute a RecExpr<Peg> from the lookup table mapping ids to Peg
     // expressions. This RecExpr contains the original program and every mutant,
     // as well as every sub-expression used
@@ -271,7 +284,10 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
 
     debug!("egraph total_size after deserializing: {}", egraph.total_number_of_nodes());
 
-    let runner = Runner::default().with_egraph(egraph);
+    let runner = Runner::default().with_egraph(egraph)
+                                  .with_iter_limit(run_config.iter_limit)
+                                  .with_node_limit(run_config.node_limit)
+                                  .with_time_limit(run_config.time_limit);
     // let egraph_size = egraph.total_size();
     // if rec_expr_size != egraph_size {
     //     println!("rec_expr total_size: {}", rec_expr_size);
@@ -300,7 +316,13 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
     // }
 
     let runner = runner.run(rules);
+    let stop_reason = &runner.stop_reason;
+    global_data.handle_stop_reason(&stop_reason);
+    let stop_reason = stop_reason_as_string(stop_reason.clone());
     let egraph = &runner.egraph;
+    if run_config.verbose {
+        println!("    Stop Reason: {}", stop_reason);
+    }
     debug!("egraph total_size after run: {}", egraph.total_number_of_nodes());
 
     let mut i: u32 = 1;
@@ -318,6 +340,7 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
           let v = rec_expr_ref[0..(id + 1 as usize)].to_vec();
           let re = RecExpr::from(v);
           info!("original id: {}:\n{}", id, re.pretty(80));
+          info!("stop reason: {:?}", stop_reason);
           for m in &subj.mutants {
             let mid = m.mid;
             let pid: usize = m.pid.parse().unwrap();
@@ -327,7 +350,19 @@ pub fn run_on_subjects(mut subjects: Subjects, rules: &RewriteSystem) -> Result<
           }
         }
         analyze_subject(&mut subj, egraph, &rec_expr, &id_offset_map);
+
+        global_data.add_discovered_equivalences(subj.analysis_result.score);
         i += 1;
+    }
+    if run_config.iter_details {
+      let subj_file = &subjects.subjects.get(0).unwrap().method;
+      let subj_file = subj_file.split("@");
+      let subj_file: Vec<String> = subj_file.map(|s| s.to_string()).collect();
+      let subj_file = subj_file.get(0).unwrap();
+
+      let path = format!("./iter-details/{}.iters", subj_file);
+      let methods: Vec<String> = subjects.subjects.iter().map(|s| s.method.clone()).collect();
+      write_iter_file(path, subj_file.to_string(), methods, &runner).map_err(|e| e.to_string())?;
     }
     Ok(subjects)
 }
@@ -390,4 +425,43 @@ fn analyze_subject(subj: &mut Subject,
       score: num_equivalences,
       equiv_classes,
     };
+}
+
+pub fn stop_reason_as_string(stop_reason: Option<egg::StopReason>) -> String {
+  match stop_reason {
+
+    Some(stop_reason) => match stop_reason {
+      StopReason::Saturated => String::from("Saturated"),
+      StopReason::IterationLimit(_) => String::from("IterLimit"),
+      StopReason::NodeLimit(_) => String::from("NodeLimit"),
+      StopReason::TimeLimit(_) => String::from("TimeLimit"),
+      StopReason::Other(_) => String::from("Other")
+    },
+    None => String::from("None")
+  }
+}
+
+/// `StopReasonCount` keeps track of how many times a given stop reason has been
+/// found.
+pub struct StopReasonCount {
+  pub iter_limit: u32,
+  pub time_limit: u32,
+  pub node_limit: u32,
+  pub saturated: u32,
+  pub other: u32
+}
+
+impl StopReasonCount {
+  pub fn handle_stop_reason(&mut self, stop_reason: Option<StopReason>) {
+    match stop_reason {
+      Some(stop_reason) => match stop_reason {
+        StopReason::Saturated => self.saturated += 1,
+        StopReason::IterationLimit(_) => self.iter_limit += 1,
+        StopReason::TimeLimit(_) => self.time_limit += 1,
+        StopReason::NodeLimit(_) => self.node_limit += 1,
+        StopReason::Other(_) => self.other += 1
+      },
+      None => ()
+    }
+  }
 }

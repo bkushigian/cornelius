@@ -157,11 +157,15 @@ impl From<&AnalysisResult> for EqRel<u32> {
 }
 
 pub mod io {
+    use egg::Runner;
     use std::fs::File;
     use std::io::prelude::*;
     use std::io::Error;
     use itertools::Itertools;
     use crate::subjects::{Subject, Subjects};
+    use crate::global_data::GlobalData;
+    use crate::config::RunConfig;
+    use crate::peg::{Peg, PegAnalysis};
 
     /// Write the results to a single file
     #[allow(dead_code)]
@@ -188,7 +192,10 @@ pub mod io {
     }
 
     pub fn write_subject_to_file(subject: &Subject, _dir: &str) -> Result<(), Error> {
-        let mut file_name = String::from(&subject.method);
+
+        let mut file_name = String::from(_dir);
+        file_name.push('/');
+        file_name.push_str(&subject.method);
         file_name.push_str(".equiv-class");
         let mut file = File::create(&file_name)?;
         info!("Writing subject to file {}", &file_name);
@@ -209,6 +216,52 @@ pub mod io {
             equiv_classes_as_strings.push(equiv_class_as_string);
         }
         format!("{}\n", equiv_classes_as_strings.join("\n"))
+    }
+
+    /// Write details of the run to disk
+    pub fn write_run_details_to_file(
+        run_config: &RunConfig,
+        global_data: &GlobalData,
+        file_name: &str) -> Result<(), Error> {
+        let mut file = File::create(file_name)?;
+        info!("Writing configuration and global data to file {}", file_name);
+        let contents = format!("{}\n{}",
+                               run_config.to_string(),
+                               global_data.to_string());
+        file.write_all(contents.as_bytes())
+    }
+
+    pub fn write_iter_file(
+        file_name: String,
+        subject_file: String,
+        method_names: Vec<String>,
+        runner: &Runner<Peg, PegAnalysis>
+    ) -> Result<(), Error> {
+        let search_time: f64 = runner.iterations.iter().map(|i| i.search_time).sum();
+        let apply_time: f64 = runner.iterations.iter().map(|i| i.apply_time).sum();
+        let rebuild_time: f64 = runner.iterations.iter().map(|i| i.rebuild_time).sum();
+        let total_time: f64 = runner.iterations.iter().map(|i| i.total_time).sum();
+        let iters = runner.iterations.len();
+        let rebuilds: usize = runner.iterations.iter().map(|i| i.n_rebuilds).sum();
+        let stop_reason = runner.stop_reason.as_ref().unwrap();
+        let methods = method_names.join("\n- ");
+        let mut file = File::create(file_name.clone())?;
+        info!("Writing iter file {}", file_name);
+        let contents = format!(
+            "Run Report for Subject {}
+- {}
+search-time: {}
+apply-time: {}
+rebuild-time: {}
+total-time: {}
+#iters: {}
+#rebuilds: {}
+stop-reason: {:?}",
+            subject_file, methods,
+            search_time, apply_time, rebuild_time, total_time,
+            iters, rebuilds, stop_reason
+        );
+        file.write_all(contents.as_bytes())
     }
 }
 
