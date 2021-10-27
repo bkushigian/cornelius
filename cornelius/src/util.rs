@@ -161,6 +161,7 @@ pub mod io {
     use std::fs::File;
     use std::io::prelude::*;
     use std::io::Error;
+    use indexmap::IndexMap;
     use itertools::Itertools;
     use crate::subjects::{Subject, Subjects};
     use crate::global_data::GlobalData;
@@ -245,21 +246,41 @@ pub mod io {
         let rebuilds: usize = runner.iterations.iter().map(|i| i.n_rebuilds).sum();
         let stop_reason = runner.stop_reason.as_ref().unwrap();
         let methods = method_names.join("\n- ");
-        let mut file = File::create(file_name.clone())?;
+        let eg = &runner.egraph;
+
+        let mut applied: IndexMap<String, usize> = IndexMap::new();
+        for i in &runner.iterations {
+            for (k,v) in i.applied.iter() {
+                applied.insert(k.clone(), v + applied.get(k).unwrap_or(&0));
+            }
+        };
+
+        let mut applications = String::from("");
+        for (k,v) in applied.iter() {
+            applications.push_str(format!("  - {}: {}\n", k, v).as_str())
+        }
+
         info!("Writing iter file {}", file_name);
+        let mut file = File::create(file_name.clone())?;
         let contents = format!(
             "Run Report for Subject {}
 - {}
+#nodes: {}
+#eclasses: {}
+#egraph-total-size: {}
 search-time: {}
 apply-time: {}
 rebuild-time: {}
 total-time: {}
 #iters: {}
 #rebuilds: {}
-stop-reason: {:?}",
+stop-reason: {:?}
+applications: {}",
             subject_file, methods,
+            eg.total_number_of_nodes(), eg.number_of_classes(), eg.total_size(),
             search_time, apply_time, rebuild_time, total_time,
-            iters, rebuilds, stop_reason
+            iters, rebuilds, stop_reason,
+            applications
         );
         file.write_all(contents.as_bytes())
     }
