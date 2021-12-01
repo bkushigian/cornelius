@@ -753,6 +753,14 @@ public abstract class PegNode {
         return opNode("return-node", pegId, heapId);
     }
 
+    public static PegNode nilContext() {
+        return opNode("ctx-tail");
+    }
+
+    public static PegNode consContext(final String key, final Integer valId, final Integer contextTailId) {
+        return opNode("ctx-cons", stringLit(key).id, valId, contextTailId);
+    }
+
     /**
      * @param objId the object to be cast
      * @param typeId the type to be cast to
