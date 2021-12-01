@@ -1,4 +1,4 @@
-package serializer.peg;
+package serializer;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
@@ -139,6 +139,40 @@ public class Util {
       }
       return String.format("%s(%s)", name, String.join(",", params));
     }
+  }
+
+  /**
+   * Recursively delete `path` and then create a new dir named `path`. Then create subdirs for each
+   * subdir provided.
+   * @param path String path of output directory we are setting up
+   * @param subdirs Subdirectories to be added to {@code path}
+   * @return an array of length {@code subdir.size + 1} whose first element is the {@code File} representing the
+   * output directory pointed to by {@code path}, and whose last {@code subdir.size} elements are the {@code File}s
+   * representing the
+   */
+  public static File[] setUpOutputDirectory(final String path, final String...subdirs) {
+    final File outputDir = new File(path);
+    try {
+      Util.recursivelyDelete(outputDir);
+      if (!outputDir.mkdirs()) {
+        throw new RuntimeException(String.format("Couldn't create output directory %s", outputDir));
+      }
+    } catch (IOException e) {
+      System.err.println("Failed to delete output directory " + outputDir);
+      System.err.println("Exiting with status 1");
+      System.exit(1);
+    }
+    File[] result = new File[subdirs.length + 1];
+    result[0] = outputDir;
+    int i = 0;
+    for (String subdir : subdirs) {
+      ++i;
+      result[i] = Paths.get(path, subdir).toFile();
+      if (!result[i].mkdirs()) {
+        throw new RuntimeException(String.format("Couldn't create subdirectory %s", subdir));
+      }
+    }
+    return result;
   }
 
   public static <T extends NodeWithParameters<?> & NodeWithStaticModifier<?>> List<String> getParameterList(T n) {

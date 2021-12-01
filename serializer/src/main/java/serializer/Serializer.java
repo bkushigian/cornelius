@@ -76,7 +76,7 @@ public class Serializer {
   public void run() {
     final MutantsLog mutantsLog = new MutantsLog(mutantLogPath);
     final Map<String, File> idToFiles = Util.collectMutantFiles(new File(mutantsDirectory));
-    File[] dirs = setUpOutputDirectory("cornelius", "serialize", "serialize/subjects", "serialize/logs");
+    File[] dirs = Util.setUpOutputDirectory("cornelius", "serialize", "serialize/subjects", "serialize/logs");
     final File subjectsDir = dirs[2];
     final File logsDir = dirs[3];
 
@@ -236,39 +236,5 @@ public class Serializer {
         System.err.println(e.getMessage());
       }
     }
-  }
-
-  /**
-   * Recursively delete `path` and then create a new dir named `path`. Then create subdirs for each
-   * subdir provided.
-   * @param path String path of output directory we are setting up
-   * @param subdirs Subdirectories to be added to {@code path}
-   * @return an array of length {@code subdir.size + 1} whose first element is the {@code File} representing the
-   * output directory pointed to by {@code path}, and whose last {@code subdir.size} elements are the {@code File}s
-   * representing the
-   */
-  private File[] setUpOutputDirectory(final String path, final String...subdirs) {
-    final File outputDir = new File(path);
-    try {
-      Util.recursivelyDelete(outputDir);
-      if (!outputDir.mkdirs()) {
-        throw new RuntimeException(String.format("Couldn't create output directory %s", outputDir));
-      }
-    } catch (IOException e) {
-      System.err.println("Failed to delete output directory " + outputDir);
-      System.err.println("Exiting with status 1");
-      System.exit(1);
-    }
-    File[] result = new File[subdirs.length + 1];
-    result[0] = outputDir;
-    int i = 0;
-    for (String subdir : subdirs) {
-      ++i;
-      result[i] = Paths.get(path, subdir).toFile();
-      if (!result[i].mkdirs()) {
-        throw new RuntimeException(String.format("Couldn't create subdirectory %s", subdir));
-      }
-    }
-    return result;
   }
 }
