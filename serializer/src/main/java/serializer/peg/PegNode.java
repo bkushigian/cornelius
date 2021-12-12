@@ -754,11 +754,15 @@ public abstract class PegNode {
     }
 
     public static PegNode nilContext() {
-        return opNode("ctx-tail");
+        return opNode("ctx-nil");
     }
 
     public static PegNode consContext(final String key, final Integer valId, final Integer contextTailId) {
         return opNode("ctx-cons", stringLit(key).id, valId, contextTailId);
+    }
+
+    public static PegNode maxExpr(final String startPos, final Integer pegId, final PegContext ctx) {
+        return opNode("max-expr", stringLit(startPos).id, pegId, ctx.asPegNode().id, ctx.heap.id);
     }
 
     /**

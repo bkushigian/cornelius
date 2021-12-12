@@ -41,8 +41,10 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
      * @return PegNode representing this binary expression
      */
     private ExpressionResult handleBinExpr(BinaryExpr n, ExpressionResult lhs, ExpressionResult rhs) {
-        final Optional<Integer> li = lhs.peg.asInteger(), ri = rhs.peg.asInteger();
-        final Optional<Boolean> lb = lhs.peg.asBoolean(), rb = rhs.peg.asBoolean();
+        Optional<Integer> li, ri;
+        Optional<Boolean> lb, rb;
+        li = lhs.peg.asInteger(); ri = rhs.peg.asInteger();
+        lb = lhs.peg.asBoolean(); rb = rhs.peg.asBoolean();
 
         switch (n.getOperator()) {
             case OR:
@@ -415,6 +417,16 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     @Override
     public ExpressionResult visit(LongLiteralExpr n, PegContext arg) {
         throw new RuntimeException("LongLiteralExpr");
+    }
+
+    @Override
+    public ExpressionResult visit(CharLiteralExpr n, PegContext arg) {
+        throw new RuntimeException("CharLiteralExpr");
+    }
+
+    @Override
+    public ExpressionResult visit(DoubleLiteralExpr n, PegContext arg) {
+        throw new RuntimeException("DoubleLiteralExpr");
     }
 
     @Override
