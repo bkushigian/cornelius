@@ -1,20 +1,23 @@
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name="cornelius", about="Run equality saturation on Java mutants to detect mutant equivalence and redundancy")]
+#[structopt(
+    name = "cornelius",
+    about = "Run equality saturation on Java mutants to detect mutant equivalence and redundancy"
+)]
 pub struct CliArgs {
-    #[structopt(name="JAVA-FILES")]
+    #[structopt(name = "JAVA-FILES")]
     pub java_files: Vec<String>,
 
-    #[structopt(long, default_value="30")]
+    #[structopt(long, default_value = "30")]
     /// Maximum number of iterations. Set to 0 for unlimited iterations
     pub iter_limit: usize,
 
-    #[structopt(long, default_value="10000")]
+    #[structopt(long, default_value = "10000")]
     /// Maximum number of nodes. Set to 0 for unlimited nodes
     pub node_limit: usize,
 
-    #[structopt(long, default_value="5")]
+    #[structopt(long, default_value = "5")]
     /// Time limit in seconds
     pub time_limit: u64,
 
@@ -32,7 +35,11 @@ pub struct CliArgs {
 
     #[structopt(long)]
     /// Write iteration details for each egraph to iteration.details
-    pub iter_details: bool
+    pub iter_details: bool,
+
+    #[structopt(long)]
+    /// Write equivalences from a single subjects file to a single file
+    pub single_file_per_subjects: bool
 }
 
 impl Clone for CliArgs {
@@ -45,7 +52,8 @@ impl Clone for CliArgs {
             verbose: self.verbose,
             suppress_equiv_file_output: self.suppress_equiv_file_output,
             run_details: self.run_details,
-            iter_details: self.iter_details
+            iter_details: self.iter_details,
+            single_file_per_subjects: self.single_file_per_subjects,
         }
     }
 }

@@ -11,22 +11,20 @@ pub struct GlobalData {
     pub num_subjects: u32,
     pub num_subjects_files: u32,
     pub num_mutants: u32,
-    pub discovered_equivalences: u32
+    pub discovered_equivalences: u32,
 }
 
 impl GlobalData {
     pub fn handle_stop_reason(&mut self, stop_reason: &Option<StopReason>) {
         match stop_reason {
-            Some(stop_reason) => {
-                match stop_reason {
-                    StopReason::Saturated => self.saturations += 1,
-                    StopReason::IterationLimit(_) => self.iter_limits += 1,
-                    StopReason::TimeLimit(_) => self.time_limits += 1,
-                    StopReason::NodeLimit(_) => self.node_limits += 1,
-                    StopReason::Other(_) => self.others += 1
-                }
-            }
-            None => ()
+            Some(stop_reason) => match stop_reason {
+                StopReason::Saturated => self.saturations += 1,
+                StopReason::IterationLimit(_) => self.iter_limits += 1,
+                StopReason::TimeLimit(_) => self.time_limits += 1,
+                StopReason::NodeLimit(_) => self.node_limits += 1,
+                StopReason::Other(_) => self.others += 1,
+            },
+            None => (),
         }
     }
 
@@ -49,7 +47,8 @@ impl GlobalData {
 
 impl ToString for GlobalData {
     fn to_string(&self) -> String {
-        format!("stop-reason-iter-limit: {}
+        format!(
+            "stop-reason-iter-limit: {}
 stop-reason-time-limit: {}
 stop-reason-node-limit: {}
 stop-reason-saturation: {}

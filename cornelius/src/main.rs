@@ -1,12 +1,12 @@
-use cornelius::subjects::{run_on_subjects_file};
-use cornelius::util::io::{write_subjects_to_separate_files, write_run_details_to_file};
 use cornelius::cli::CliArgs;
 use cornelius::config::RunConfig;
 use cornelius::global_data::GlobalData;
-use structopt::StructOpt;
-use std::path::Path;
+use cornelius::subjects::run_on_subjects_file;
+use cornelius::util::io::{write_run_details_to_file, write_subjects_to_separate_files,
+                          write_subjects_to_single_file};
 use std::fs::{create_dir, remove_dir_all};
-
+use std::path::Path;
+use structopt::StructOpt;
 
 fn main() -> Result<(), String> {
     let _ = env_logger::builder().try_init();
@@ -65,22 +65,42 @@ fn main() -> Result<(), String> {
                         }
                     }
                 }
-                if ! args.suppress_equiv_file_output {
+                if !args.suppress_equiv_file_output {
                     let mut equiv_file = String::from(subj_file);
                     equiv_file.push_str(".equiv-class");
 
-                    match  write_subjects_to_separate_files(&subjects, "equiv-files") {
-                        Err(e) => {
-                            println!("Error writing results of subject file {} to equiv-class file {}.",
-                                subj_file, equiv_file);
+                    if args.single_file_per_subjects {
+                        let mut file_name = String::from("equiv-files/");
+                        let split: Vec<&str> = subj_file.split("/").collect();
+
+                        file_name.push_str(split.last().unwrap());
+                        file_name.push_str(".equiv-class");
+                        match write_subjects_to_single_file(&subjects, &file_name) {
+                            Err(e) => {
+                            println!(
+                            "Error writing results of subject file {} to equiv-class file {}.",
+                            subj_file, equiv_file
+                            );
                             println!("    {}", e);
+                            }
+                            Ok(()) => (),
                         }
-                        Ok(()) => (),
+
+                    } else {
+                        match write_subjects_to_separate_files(&subjects, "equiv-files") {
+                            Err(e) => {
+                                println!(
+                                    "Error writing results of subject file {} to equiv-class file {}.",
+                                    subj_file, equiv_file
+                                );
+                                println!("    {}", e);
+                            }
+                            Ok(()) => (),
+                        }
                     }
                 }
             }
-            Err(msg) =>
-                println!("Error running on subject file {}:\n    {}", subj_file, msg),
+            Err(msg) => println!("Error running on subject file {}:\n    {}", subj_file, msg),
         };
     }
     if args.java_files.len() > 1 {
