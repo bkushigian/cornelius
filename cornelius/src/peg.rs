@@ -147,6 +147,10 @@ define_language! {
 
     "ctx-cons" = ContextCons([Id; 3]),
 
+    /***                  Array Literal Stuff                 ***/
+    "array-nil" = ArrayNil,
+    "array-cons" = ArrayCons([Id; 2]),
+    "array-access" = ArrayAccess([Id; 2]),
   }
 }
 

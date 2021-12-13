@@ -8,6 +8,7 @@ import serializer.xml.XMLGenerator;
 
 import javax.xml.transform.TransformerException;
 import java.io.*;
+import java.nio.file.Path;
 import java.util.regex.Pattern;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -18,41 +19,133 @@ public class ExprSerializer {
   int mutantsLogged = 0;
   int maxExprsLogged = 0;
   int skippedMutants = 0;
-  final String exprsDir;
+
+  /**
+   * A list of expr files
+   */
+  final List<File> exprsFiles = new ArrayList<>();
+
+  /**
+   * a list of directories that contain expr files
+   */
+  final List<String> exprsDirs = new ArrayList<>();
   final PegExprVisitor pev = new PegExprVisitor();
 
-  public static void main(String[] args) throws IOException {
-    if (args.length != 1) {
-      System.err.println("usage: java ExprSerializer exprs-dir");
-      System.exit(1);
-    }
+  /**
+   * Count the number of times a peg translation error has occurred
+   */
+  final Map<String, List<String>> pegTranslationErrorLog = new HashMap<>();
 
-    ExprSerializer serializer = new ExprSerializer(args[0]);
+  /**
+   * Should we print errors to file at the end of the run?
+   */
+  private boolean logPegTranslationErrors;
+
+  /**
+   * Should we produce verbose output?
+   */
+  private boolean verbose;
+
+  protected void logPegTranslationError(String error, String source) {
+    if (error.startsWith("UnknownStatus:")) {
+      error = "UnknownIdentStatus";
+    }
+    pegTranslationErrorLog.computeIfAbsent(error, k -> new ArrayList<>()).add(source);
+  }
+
+  public static void main(String[] args) throws IOException {
+    ExprSerializer serializer = new ExprSerializer();
+    serializer.parseArgs(args);
     serializer.serialize();
   }
 
-  ExprSerializer(String exprsDir) {
-    this.exprsDir = exprsDir;
+  ExprSerializer() {
+  }
+
+  void parseArgs(String...args) {
+    for (int i = 0; i < args.length; ++i) {
+      final String arg = args[i];
+      switch (arg) {
+        case "-d":
+        case "--exprdir":
+          exprsDirs.add(args[++i]);
+          break;
+        case "--log-translation-errors":
+        case "-l":
+          this.logPegTranslationErrors = true;
+          break;
+        case "--verbose":
+        case "-v":
+          this.verbose = true;
+          break;
+        default:
+          exprsFiles.add(new File(arg));
+      }
+    }
   }
 
   void serialize() throws IOException {
-    final File exprsDir = new File(this.exprsDir);
-    if (!exprsDir.isDirectory()) {
-      throw new RuntimeException("Invalid expression directory: " + exprsDir);
-    }
+    // Setup some output directories
     File[] dirs = Util.setUpOutputDirectory("cornelius", "exprs", "exprs/subjects", "exprs/logs");
     final File subjectsDir = dirs[2];
     final File logsDir = dirs[3];
 
-    final File[] files = exprsDir.listFiles(f -> f.isFile() && f.getName().endsWith(".expr"));
-    for (File file : files) {
-      PegNode.clear();
-      ExprFile ef = new ExprFile(file);
-      ef.writeToCorFile(subjectsDir);
+    processExprsDirs();    // Add all files specified as a directory to the exprsFiles list
+
+    for (File file : exprsFiles) {
+      translateExprFile(subjectsDir, file);
     }
+    writeSerializationSummary();
+
+    writeLogs(logsDir);
+  }
+
+  private void translateExprFile(File subjectsDir, File file) throws IOException {
+    if (!file.getName().endsWith(".expr")) {
+      System.err.println("Bad expr file ending: " + file.getName());
+      return;
+    }
+    PegNode.clear();
+    ExprFile ef = new ExprFile(file);
+    ef.writeToCorFile(subjectsDir);
+  }
+
+  /**
+   * Take all registered exprsDirs and add the contents to file
+   */
+  private void processExprsDirs() {
+    for (String dirPath : exprsDirs) {
+      final File exprsDir = new File(dirPath);
+      if (!exprsDir.isDirectory()) {
+        throw new RuntimeException("Invalid expression directory: " + exprsDir);
+      }
+      final File[] files = exprsDir.listFiles(f -> f.isFile() && f.getName().endsWith(".expr"));
+      if (files == null) continue;
+      exprsFiles.addAll(Arrays.asList(files));
+    }
+  }
+
+  private void writeSerializationSummary() {
     System.out.println("Serialized " + maxExprsLogged + " maximal expressions");
     System.out.println("Serialized " + mutantsLogged + " mutant expressions");
     System.out.println("Skipped " + skippedMutants + " mutant expressions (couldn't parse the original expression)");
+  }
+
+  private void writeLogs(File logsDir) throws IOException {
+    if (logPegTranslationErrors) {
+
+      Path logPath = Paths.get(logsDir.toString(), "peg-translation-errors.log");
+      BufferedWriter translationErrorLog = new BufferedWriter(new FileWriter(logPath.toString()));
+      final List<Map.Entry<String, List<String>>> errors = new ArrayList<>(pegTranslationErrorLog.entrySet());
+      errors.sort(Comparator.comparingInt(e -> e.getValue().size()));
+      for (Map.Entry<String, List<String>> error : errors) {
+        translationErrorLog.write(error.getKey() + ": " + error.getValue().size());
+        translationErrorLog.newLine();
+      }
+
+      translationErrorLog.flush();
+      translationErrorLog.close();
+    }
   }
 
   /**
@@ -215,6 +308,11 @@ public class ExprSerializer {
     protected String startPos;
 
     /**
+     * A flag indicating if there was an error translating the Java source to a PegNode
+     */
+    protected boolean pegTranslationError = false;
+
+    /**
      * A mapping from identifier name to variable type ("LOCAL" or "GLOBAL" or "OTHER")
      */
     private Map<String, String> identMap;
@@ -254,7 +352,7 @@ public class ExprSerializer {
             globals.add(f.getKey());
             break;
           default:
-            throw new RuntimeException("Unknown status of " + f.getKey());
+            throw new RuntimeException("UnknownStatus: ident:" + f.getKey() + ", status:" + f.getValue());
         }
       }
       return initContext = PegContext.initWithParams(globals, locals);
@@ -274,6 +372,8 @@ public class ExprSerializer {
         try {
           expressionResult = tree.accept(pev, getInitCtx());
         } catch (RuntimeException e) {
+          pegTranslationError = true;
+          logPegTranslationError(e.getMessage(), source);
           return;
         }
         try {

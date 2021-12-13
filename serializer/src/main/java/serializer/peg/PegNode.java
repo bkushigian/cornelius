@@ -765,6 +765,21 @@ public abstract class PegNode {
         return opNode("max-expr", stringLit(startPos).id, pegId, ctx.asPegNode().id, ctx.heap.id);
     }
 
+    /*
+     * Arrays literals are formed as linked lists
+     */
+    public static PegNode nilArray() {
+        return opNode("array-nil");
+    }
+
+    public static PegNode consArray(final Integer valId, final Integer tailId) {
+      return opNode("array-cons", valId, tailId);
+    }
+
+    public static PegNode arrayAccess(final Integer nameId, final Integer idxId) {
+      return opNode("array-access", nameId, idxId);
+    }
+
     /**
      * @param objId the object to be cast
      * @param typeId the type to be cast to

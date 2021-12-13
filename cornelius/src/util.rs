@@ -192,7 +192,6 @@ pub mod io {
         }
 
         let file_contents = equiv_file_contents.join("\n");
-        println!("Writing contents to file {:?}: {}", file, file_contents);
         file.write_all(file_contents.as_bytes())
     }
 

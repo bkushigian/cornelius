@@ -2,11 +2,13 @@ package serializer.peg;
 
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.stmt.*;
 import serializer.Util;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Stack;
 
 public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVisitorAdapter<ExpressionResult,
         PegContext> {
@@ -400,6 +402,33 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     }
 
     @Override
+    public ExpressionResult visit(ArrayInitializerExpr n, PegContext arg) {
+        /*
+         * We want to visit each expression in the array literal from left to right. However, we want to
+         * form our array PegNode from right to left (it's a linked list with the left most value being
+         * in the outer cons).
+         *
+         * To make this happen we visit each Expression in the ArrayInitializerExpr and store its resulting
+         * PegNode in a stack. Then we pop off the stack and form a new array peg.
+         */
+        Stack<PegNode> pegStack = new Stack<>();
+        ExpressionResult er = arg.exprResult();    // Handle an empty array lit edge case
+        for (Expression expr : n.getValues()) {
+            er = expr.accept(this, er.context);
+            pegStack.push(er.peg);
+        }
+        // At this point ExpressionResult `er` should hold the proper context, and we now want to put
+        // our array values into a nested PegNode representing the array. We'll combine this value
+        // the the context from `er`
+
+        PegNode arr = PegNode.nilArray();
+        while (!pegStack.isEmpty()) {
+          arr = PegNode.consArray(pegStack.pop().id, arr.id);
+        }
+        return er.withPeg(arr);
+    }
+
+    @Override
     public ExpressionResult visit(ClassExpr n, PegContext arg) {
         throw new RuntimeException("ClassExpr");
     }
@@ -434,6 +463,158 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         throw new RuntimeException("InstanceOf");
     }
 
+    @Override
+    public ExpressionResult visit(TypeExpr n, PegContext arg) {
+        throw new RuntimeException("TypeExpr");
+    }
+
+    @Override
+    public ExpressionResult visit(SuperExpr n, PegContext arg) {
+        throw new RuntimeException("SuperExpr");
+    }
+
+    @Override
+    public ExpressionResult visit(SwitchExpr n, PegContext arg) {
+        throw new RuntimeException("SwitchExper");
+    }
+
+    @Override
+    public ExpressionResult visit(SingleMemberAnnotationExpr n, PegContext arg) {
+        throw new RuntimeException("SingleMemberAnnotationExpr");
+    }
+
+    @Override
+    public ExpressionResult visit(TextBlockLiteralExpr n, PegContext arg) {
+        throw new RuntimeException("TextBlockLiteralExpr");
+    }
+
+    @Override
+    public ExpressionResult visit(NormalAnnotationExpr n, PegContext arg) {
+        throw new RuntimeException("NormalAnnotationExpr");
+    }
+
+    @Override
+    public ExpressionResult visit(ArrayAccessExpr n, PegContext arg) {
+        ExpressionResult nameRes = n.getName().accept(this, arg);
+        ExpressionResult indexRes = n.getIndex().accept(this, nameRes.context);
+        return PegNode.arrayAccess(nameRes.peg.id, indexRes.peg.id).exprResult(indexRes.context);
+    }
+
+    @Override
+    public ExpressionResult visit(ArrayCreationExpr n, PegContext arg) {
+        throw new RuntimeException("ArrayCreationExpr");
+    }
+
+    @Override
+    public ExpressionResult visit(MarkerAnnotationExpr n, PegContext arg) {
+        throw new RuntimeException(("MarkerAnnotationExpr"));
+    }
+
+    @Override
+    public ExpressionResult visit(AssertStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(BlockStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(BreakStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(ContinueStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(DoStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(EmptyStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(ExplicitConstructorInvocationStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(ExpressionStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(ForEachStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(ForStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(IfStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(LabeledStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(ReturnStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(SwitchStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(SynchronizedStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(ThrowStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(TryStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(LocalClassDeclarationStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(WhileStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(UnparsableStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
+    @Override
+    public ExpressionResult visit(YieldStmt n, PegContext arg) {
+        throw new RuntimeException("ExprVisitor encountered a Statement");
+    }
+
     /**
      * Given a target, a value, and a context, create a new Expression result storing that new value in its target.
      * @param target target of assignment
@@ -456,7 +637,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
             return ctx.performWrite(target.asFieldAccessExpr(), value, this).withPeg(value);
         }
         else if (target.isArrayAccessExpr()) {
-            throw new RuntimeException("ArrayAccessExpr");
+            throw new RuntimeException("ArrayAccessAssignExpr");
         }
         else {
             throw new RuntimeException("UnrecognizedAssignmentTarget");
