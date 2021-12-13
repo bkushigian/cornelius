@@ -475,7 +475,7 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
 
     @Override
     public ExpressionResult visit(SwitchExpr n, PegContext arg) {
-        throw new RuntimeException("SwitchExper");
+        throw new RuntimeException("SwitchExpr");
     }
 
     @Override
