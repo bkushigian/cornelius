@@ -89,35 +89,20 @@ public class PegContext {
     }
 
     /**
-     * This allows us to look at program fragments w/out full info about
-     * params/fields/local vars. When we call `getLocalVar` we check to
-     * see if the value is stored in the local varialbe lookup, then if
-     * it's a field, and then returns unit if this variable is {@code false},
-     * and returns {@code (var NAME)} if this variable is true.
-     *
-     * Note, this is unsound if we don't track fields properly (since
-     * {@code a++} can lead to global state changes when {@code a} is a field).
-     */
-    public static boolean treatAllUnboundNamesAsVars = false;
-
-    /**
      * Lookup a key in the context. This key can correspond to a {@code parameter} or a {@code field}
      * @param key the method parameter or field name to look up in this context
      * @return the associated {@code PegNode} if it exists, and PegNode.unit() otherwise.
      */
     public PegNode getLocalVar(String key) {
-        if ("this".equals(key)) {
-            return PegNode.var("this");
-        }
         if (localVariableLookup.containsKey(key)) {
             return localVariableLookup.get(key);
+        }
+        if ("this".equals(key)) {
+            return PegNode.var("this");
         }
         if (isUnshadowedField(key)) {
             // Todo: check for static fields/etc
             return PegNode.rd(PegNode.path(getLocalVar("this").id, key).id, heap.id);
-        }
-        if (treatAllUnboundNamesAsVars) {
-            return PegNode.var(key);
         }
         return PegNode.unit();
     }

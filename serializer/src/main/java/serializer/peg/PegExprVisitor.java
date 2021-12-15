@@ -43,10 +43,8 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
      * @return PegNode representing this binary expression
      */
     private ExpressionResult handleBinExpr(BinaryExpr n, ExpressionResult lhs, ExpressionResult rhs) {
-        Optional<Integer> li, ri;
-        Optional<Boolean> lb, rb;
-        li = lhs.peg.asInteger(); ri = rhs.peg.asInteger();
-        lb = lhs.peg.asBoolean(); rb = rhs.peg.asBoolean();
+        Optional<Integer> li = lhs.peg.asInteger(), ri = rhs.peg.asInteger();
+        Optional<Boolean> lb = lhs.peg.asBoolean(), rb = rhs.peg.asBoolean();
 
         switch (n.getOperator()) {
             case OR:
