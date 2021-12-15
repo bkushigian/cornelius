@@ -54,9 +54,12 @@ public class ExprSerializer {
   }
 
   public static void main(String[] args) throws IOException {
+    long initTime = System.currentTimeMillis();
     ExprSerializer serializer = new ExprSerializer();
     serializer.parseArgs(args);
     serializer.serialize();
+    long finalTime = System.currentTimeMillis();
+    System.out.printf("Ran in %d seconds\n", (finalTime - initTime) / 1000);
   }
 
   ExprSerializer() {
