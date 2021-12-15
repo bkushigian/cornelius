@@ -1,12 +1,13 @@
-pub mod subjects;
-pub mod delta;
-pub mod peg;
-pub mod rewrites;
-pub mod evaluator;
-pub mod util;
 pub mod cli;
 pub mod config;
+pub mod delta;
+pub mod evaluator;
 pub mod global_data;
+pub mod peg;
+pub mod rewrites;
+pub mod subjects;
 mod tests;
+pub mod util;
 
-#[macro_use] extern crate log;
+#[macro_use]
+extern crate log;

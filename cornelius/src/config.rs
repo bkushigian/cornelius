@@ -1,5 +1,5 @@
-use instant::Duration;
 use crate::cli::CliArgs;
+use instant::Duration;
 
 pub struct RunConfig {
     pub iter_limit: usize,
@@ -8,6 +8,7 @@ pub struct RunConfig {
     pub verbose: bool,
     pub run_details: bool,
     pub iter_details: bool,
+    pub write_equivs_to_single_file: bool,
 }
 
 impl Default for RunConfig {
@@ -19,6 +20,7 @@ impl Default for RunConfig {
             verbose: false,
             run_details: false,
             iter_details: false,
+            write_equivs_to_single_file: true,
         }
     }
 }
@@ -61,33 +63,43 @@ impl RunConfig {
         self.iter_details = iter_details;
         self
     }
+
+    pub fn with_write_to_single_file(mut self, write_equivs_to_single_file: bool) -> RunConfig {
+        self.write_equivs_to_single_file = write_equivs_to_single_file;
+        self
+    }
 }
 
 impl ToString for RunConfig {
     fn to_string(&self) -> String {
-        format!("max-iter-limit: {}
+        format!(
+            "max-iter-limit: {}
 max-node-limit: {}
 max-time-limit: {}
 verbose: {}
 run-details: {}
-iter-details: {}",
-                self.iter_limit,
-                self.node_limit,
-                self.time_limit.as_secs(),
-                self.verbose,
-                self.run_details,
-                self.iter_details)
+iter-details: {}
+write-equivs-to-single-file: {}",
+            self.iter_limit,
+            self.node_limit,
+            self.time_limit.as_secs(),
+            self.verbose,
+            self.run_details,
+            self.iter_details,
+            self.write_equivs_to_single_file
+        )
     }
 }
 
 impl From<CliArgs> for RunConfig {
     fn from(args: CliArgs) -> Self {
-      RunConfig::default()
-        .with_iter_limit(args.iter_limit)
-        .with_node_limit(args.node_limit)
-        .with_time_limit(Duration::from_secs(args.time_limit))
-        .with_verbosity(args.verbose)
-        .with_run_details(args.run_details)
-        .with_iter_details(args.iter_details)
+        RunConfig::default()
+            .with_iter_limit(args.iter_limit)
+            .with_node_limit(args.node_limit)
+            .with_time_limit(Duration::from_secs(args.time_limit))
+            .with_verbosity(args.verbose)
+            .with_run_details(args.run_details)
+            .with_iter_details(args.iter_details)
+            .with_write_to_single_file(args.single_file_per_subjects)
     }
 }

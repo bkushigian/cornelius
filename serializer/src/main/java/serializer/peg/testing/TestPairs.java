@@ -4,7 +4,7 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.stmt.Statement;
 import serializer.peg.ExpressionResult;
-import serializer.peg.Util;
+import serializer.Util;
 
 import java.util.*;
 

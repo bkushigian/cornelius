@@ -131,6 +131,26 @@ define_language! {
     // Evaluate a theta node: (eval THETA N) produces the Nth value of the
     // sequence THETA
     "eval" = Eval([Id; 2]),
+
+    /***                   Maximal Expression Stuff           ***/
+    // A MaxExpr represents a maximal expression that was mutated (it is not a
+    // proper subexpression). To disambiguate different maximal expressions we
+    // pass in a line/column number string "lineno:colno" as the first arg, the
+    // peg id of the actual expression as the second argument, the resulting
+    // context as the third argument, and the resulting heap as the final
+    // argument.
+    //
+    // We've reified contexts as peg nodes to track changes in local state.
+    "max-expr" = MaxExpr([Id; 4]),
+
+    "ctx-nil" = ContextNil,
+
+    "ctx-cons" = ContextCons([Id; 3]),
+
+    /***                  Array Literal Stuff                 ***/
+    "array-nil" = ArrayNil,
+    "array-cons" = ArrayCons([Id; 2]),
+    "array-access" = ArrayAccess([Id; 2]),
   }
 }
 
@@ -144,298 +164,314 @@ pub fn is_var(v1: &'static str) -> impl Fn(&mut EGraph, Id, &Subst) -> bool {
     move |egraph, _, subst| egraph[subst[v1]].data.variable.is_some()
 }
 
-pub fn is_not_same_var(v1: &'static str, v2: &'static str) -> impl Fn(&mut EGraph, Id, &Subst) -> bool {
+pub fn is_not_same_var(
+    v1: &'static str,
+    v2: &'static str,
+) -> impl Fn(&mut EGraph, Id, &Subst) -> bool {
     let v1: egg::Var = v1.parse().unwrap();
     let v2: egg::Var = v2.parse().unwrap();
     move |egraph: &mut EGraph, _, subst: &Subst| egraph.find(subst[v1]) != egraph.find(subst[v2])
 }
 
 impl Peg {
-  pub fn as_int(&self) -> Option<i32> {
-    match self {
-      Peg::Num(n) => Some(*n),
-      _ => None
+    pub fn as_int(&self) -> Option<i32> {
+        match self {
+            Peg::Num(n) => Some(*n),
+            _ => None,
+        }
     }
-  }
 
-  pub fn as_bool(&self) -> Option<bool> {
-    match self {
-      Peg::Bool(b) => Some(*b),
-      _ => None
+    pub fn as_bool(&self) -> Option<bool> {
+        match self {
+            Peg::Bool(b) => Some(*b),
+            _ => None,
+        }
     }
-  }
 
-  pub fn is_const(&self) -> bool {
-    use Peg::*;
-    match self {
-      Num(_) | Bool(_) => true,
-      _ => false,
+    pub fn is_const(&self) -> bool {
+        use Peg::*;
+        match self {
+            Num(_) | Bool(_) => true,
+            _ => false,
+        }
     }
-  }
 
-  pub fn is_var(&self) -> bool {
-    use Peg::*;
-    match self {
-      Var(_) => true,
-      _ => false,
+    pub fn is_var(&self) -> bool {
+        use Peg::*;
+        match self {
+            Var(_) => true,
+            _ => false,
+        }
     }
-  }
 
-  pub fn is_num_binop(&self) -> bool {
-    use Peg::*;
-    match self {
-      Add(..) | Mul(..) | Div(..) | Sub(..) | BinOr(..) | BinAnd(..) | LShift(..) | URShift(..) | SRShift(..) => true,
-      _ => false,
+    pub fn is_num_binop(&self) -> bool {
+        use Peg::*;
+        match self {
+            Add(..) | Mul(..) | Div(..) | Sub(..) | BinOr(..) | BinAnd(..) | LShift(..)
+            | URShift(..) | SRShift(..) => true,
+            _ => false,
+        }
     }
-  }
 
-  pub fn is_bool_binop(&self) -> bool {
-    use Peg::*;
-    match self {
-      And(..) | Or(..) => true,
-      _ => false,
+    pub fn is_bool_binop(&self) -> bool {
+        use Peg::*;
+        match self {
+            And(..) | Or(..) => true,
+            _ => false,
+        }
     }
-  }
 
-  pub fn is_binop(&self) -> bool {
-    self.is_bool_binop() || self.is_num_binop()
-  }
-
-  pub fn is_ground(&self) -> bool {
-    match self {
-      Peg::Symbol(_) => true,
-      _ => self.is_const(),
+    pub fn is_binop(&self) -> bool {
+        self.is_bool_binop() || self.is_num_binop()
     }
-  }
 
-  pub fn plus(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Num(a), Num(b)) => Num(a + b),
-      _ => panic!(),
+    pub fn is_ground(&self) -> bool {
+        match self {
+            Peg::Symbol(_) => true,
+            _ => self.is_const(),
+        }
     }
-  }
 
-  pub fn equal(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Num(a),  Num(b))  => Bool(a == b),
-      (Bool(a), Bool(b)) => Bool(a == b),
-      _ => panic!(),
+    pub fn plus(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Num(a), Num(b)) => Num(a + b),
+            _ => panic!(),
+        }
     }
-  }
 
-  pub fn nequal(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Num(a),  Num(b))  => Bool(a != b),
-      (Bool(a), Bool(b)) => Bool(a != b),
-      _ => panic!(),
+    pub fn equal(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Num(a), Num(b)) => Bool(a == b),
+            (Bool(a), Bool(b)) => Bool(a == b),
+            _ => panic!(),
+        }
     }
-  }
 
-  pub fn lt(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Num(a), Num(b)) => Bool(a < b),
-      _ => panic!(),
+    pub fn nequal(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Num(a), Num(b)) => Bool(a != b),
+            (Bool(a), Bool(b)) => Bool(a != b),
+            _ => panic!(),
+        }
     }
-  }
 
-  pub fn le(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Num(a), Num(b)) => Bool(a <= b),
-      _ => panic!(),
+    pub fn lt(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Num(a), Num(b)) => Bool(a < b),
+            _ => panic!(),
+        }
     }
-  }
 
-  pub fn gt(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Num(a), Num(b)) => Bool(a > b),
-      _ => panic!(),
+    pub fn le(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Num(a), Num(b)) => Bool(a <= b),
+            _ => panic!(),
+        }
     }
-  }
 
-  pub fn ge(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Num(a), Num(b)) => Bool(a >= b),
-      _ => panic!(),
+    pub fn gt(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Num(a), Num(b)) => Bool(a > b),
+            _ => panic!(),
+        }
     }
-  }
 
-  pub fn minus(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Num(a), Num(b)) => Num(a - b),
-      _ => panic!(),
+    pub fn ge(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Num(a), Num(b)) => Bool(a >= b),
+            _ => panic!(),
+        }
     }
-  }
 
-  pub fn mult(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Num(a), Num(b)) => Num(a * b),
-      _ => panic!(),
+    pub fn minus(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Num(a), Num(b)) => Num(a - b),
+            _ => panic!(),
+        }
     }
-  }
 
-  pub fn div(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Num(a), Num(b)) => Num(a / b),
-      _ => panic!(),
+    pub fn mult(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Num(a), Num(b)) => Num(a * b),
+            _ => panic!(),
+        }
     }
-  }
 
-  pub fn bin_and(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Num(a), Num(b)) => Num(a & b),
-      _ => panic!(),
+    pub fn div(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Num(a), Num(b)) => Num(a / b),
+            _ => panic!(),
+        }
     }
-  }
 
-  pub fn bin_or(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Num(a), Num(b)) => Num(a | b),
-      _ => panic!(),
+    pub fn bin_and(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Num(a), Num(b)) => Num(a & b),
+            _ => panic!(),
+        }
     }
-  }
 
-  pub fn srshift(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Num(a), Num(b)) => {
-        let a = *a as u32;
-        let b = *b as u32;
-        Num((a >> b) as i32)
-      },
-      _ => panic!(),
+    pub fn bin_or(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Num(a), Num(b)) => Num(a | b),
+            _ => panic!(),
+        }
     }
-  }
 
-  pub fn urshift(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Num(a), Num(b)) => Num(a >> b),
-      _ => panic!(),
+    pub fn srshift(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Num(a), Num(b)) => {
+                let a = *a as u32;
+                let b = *b as u32;
+                Num((a >> b) as i32)
+            }
+            _ => panic!(),
+        }
     }
-  }
 
-  pub fn lshift(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Num(a), Num(b)) => Num(a << b),
-      _ => panic!(),
+    pub fn urshift(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Num(a), Num(b)) => Num(a >> b),
+            _ => panic!(),
+        }
     }
-  }
 
-  pub fn and(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Bool(a), Bool(b)) => Bool(*a && *b),
-      _ => panic!(),
+    pub fn lshift(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Num(a), Num(b)) => Num(a << b),
+            _ => panic!(),
+        }
     }
-  }
 
-  pub fn or(a: &Peg, b: &Peg) -> Peg {
-    use Peg::*;
-    match (a, b) {
-      (Bool(a), Bool(b)) => Bool(*a || *b),
-      _ => panic!(),
+    pub fn and(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Bool(a), Bool(b)) => Bool(*a && *b),
+            _ => panic!(),
+        }
     }
-  }
+
+    pub fn or(a: &Peg, b: &Peg) -> Peg {
+        use Peg::*;
+        match (a, b) {
+            (Bool(a), Bool(b)) => Bool(*a || *b),
+            _ => panic!(),
+        }
+    }
 }
 
 /// Data tracked for a PegAnalysis
 #[derive(Default, PartialEq, Debug, Clone)]
 pub struct PegAnalysisData {
-  pub constant: Option<Peg>,
-  pub variable: Option<Peg>
+    pub constant: Option<Peg>,
+    pub variable: Option<Peg>,
 }
 
 impl PegAnalysisData {
-  pub fn or(self, a: PegAnalysisData) -> PegAnalysisData {
-    PegAnalysisData {
-      constant: self.constant.or(a.constant),
-      variable: self.variable.or(a.variable)
+    pub fn or(self, a: PegAnalysisData) -> PegAnalysisData {
+        PegAnalysisData {
+            constant: self.constant.or(a.constant),
+            variable: self.variable.or(a.variable),
+        }
     }
-  }
 }
 
 #[derive(Default)]
 pub struct PegAnalysis;
 
 fn eval(egraph: &EGraph, enode: &Peg) -> Option<Peg> {
-  let x = |i: &Id| egraph[*i].data.constant.clone();
+    let x = |i: &Id| egraph[*i].data.constant.clone();
 
-  match enode {
-    // Arithmetic
-    Peg::Num(_) | Peg::Bool(_) => Some(enode.clone()),
-    Peg::Add([a, b]) => Some(Peg::Num((Wrapping(x(a)?.as_int()?) + Wrapping(x(b)?.as_int()?)).0)),
-    Peg::Sub([a, b]) => Some(Peg::Num((Wrapping(x(a)?.as_int()?) - Wrapping(x(b)?.as_int()?)).0)),
-    Peg::Mul([a, b]) => Some(Peg::Num((Wrapping(x(a)?.as_int()?) * Wrapping(x(b)?.as_int()?)).0)),
-    Peg::Div([a, b]) => {
-      let d = x(b)?.as_int()?;
-      if d == 0 {
-        Some(Peg::Error)
-      } else {
-        Some(Peg::Num(x(a)?.as_int()? / d))
-      }
-    },
+    match enode {
+        // Arithmetic
+        Peg::Num(_) | Peg::Bool(_) => Some(enode.clone()),
+        Peg::Add([a, b]) => Some(Peg::Num(
+            (Wrapping(x(a)?.as_int()?) + Wrapping(x(b)?.as_int()?)).0,
+        )),
+        Peg::Sub([a, b]) => Some(Peg::Num(
+            (Wrapping(x(a)?.as_int()?) - Wrapping(x(b)?.as_int()?)).0,
+        )),
+        Peg::Mul([a, b]) => Some(Peg::Num(
+            (Wrapping(x(a)?.as_int()?) * Wrapping(x(b)?.as_int()?)).0,
+        )),
+        Peg::Div([a, b]) => {
+            let d = x(b)?.as_int()?;
+            if d == 0 {
+                Some(Peg::Error)
+            } else {
+                Some(Peg::Num(x(a)?.as_int()? / d))
+            }
+        }
 
-    Peg::Neg(a) => Some(Peg::Num(-x(a)?.as_int()?)),
+        Peg::Neg(a) => Some(Peg::Num(-x(a)?.as_int()?)),
 
-    // Comparison
-    Peg::Gte([a, b]) => Some(Peg::Bool(x(a)?.as_int()? >= x(b)?.as_int()?)),
-    Peg::Gt([a, b])  => Some(Peg::Bool(x(a)?.as_int()? >  x(b)?.as_int()?)),
-    Peg::Lte([a, b]) => Some(Peg::Bool(x(a)?.as_int()? <= x(b)?.as_int()?)),
-    Peg::Lt([a, b])  => Some(Peg::Bool(x(a)?.as_int()? <  x(b)?.as_int()?)),
+        // Comparison
+        Peg::Gte([a, b]) => Some(Peg::Bool(x(a)?.as_int()? >= x(b)?.as_int()?)),
+        Peg::Gt([a, b]) => Some(Peg::Bool(x(a)?.as_int()? > x(b)?.as_int()?)),
+        Peg::Lte([a, b]) => Some(Peg::Bool(x(a)?.as_int()? <= x(b)?.as_int()?)),
+        Peg::Lt([a, b]) => Some(Peg::Bool(x(a)?.as_int()? < x(b)?.as_int()?)),
 
-    Peg::Equ([a, b]) => {
-      // To check for equality,
-      let a = x(a)?;
-      let b = x(b)?;
-      if a.is_const() && b.is_const() {
-        // FIXME Is this correct? In particular, will this ever return false
-        // when it should return true?
-        Some(Peg::Bool(a == b))
-      } else {
-        None
-      }
+        Peg::Equ([a, b]) => {
+            // To check for equality,
+            let a = x(a)?;
+            let b = x(b)?;
+            if a.is_const() && b.is_const() {
+                // FIXME Is this correct? In particular, will this ever return false
+                // when it should return true?
+                Some(Peg::Bool(a == b))
+            } else {
+                None
+            }
+        }
+        Peg::Neq([a, b]) => {
+            // To check for equality,
+            let a = x(a)?;
+            let b = x(b)?;
+            if a.is_const() && b.is_const() {
+                // FIXME Is this correct? In particular, will this ever return false
+                // when it should return true?
+                Some(Peg::Bool(a != b))
+            } else {
+                None
+            }
+        }
+
+        _ => None,
     }
-    Peg::Neq([a, b]) => {
-      // To check for equality,
-      let a = x(a)?;
-      let b = x(b)?;
-      if a.is_const() && b.is_const() {
-        // FIXME Is this correct? In particular, will this ever return false
-        // when it should return true?
-        Some(Peg::Bool(a != b))
-      } else {
-        None
-      }
-    }
-
-    _ => None,
-  }
 }
 
 impl Analysis<Peg> for PegAnalysis {
     type Data = PegAnalysisData;
     fn merge(&self, to: &mut Self::Data, from: Self::Data) -> bool {
-      merge_if_different(to, to.clone().or(from))
+        merge_if_different(to, to.clone().or(from))
     }
 
     fn make(egraph: &EGraph, enode: &Peg) -> Self::Data {
         let _x = |i: &Id| egraph[*i].data.clone();
         match enode {
-          Peg::Var(_) => PegAnalysisData {constant: None, variable: Some(enode.clone())},
-          _ => PegAnalysisData {constant: eval(egraph, enode), variable: None}
+            Peg::Var(_) => PegAnalysisData {
+                constant: None,
+                variable: Some(enode.clone()),
+            },
+            _ => PegAnalysisData {
+                constant: eval(egraph, enode),
+                variable: None,
+            },
         }
     }
 

@@ -4,6 +4,7 @@ import com.github.javaparser.ast.expr.FieldAccessExpr;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -95,6 +96,9 @@ public class PegContext {
     public PegNode getLocalVar(String key) {
         if (localVariableLookup.containsKey(key)) {
             return localVariableLookup.get(key);
+        }
+        if ("this".equals(key)) {
+            return PegNode.var("this");
         }
         if (isUnshadowedField(key)) {
             // Todo: check for static fields/etc
@@ -278,5 +282,22 @@ public class PegContext {
 
     public ExpressionResult exprResult() {
         return exprResult(PegNode.unit());
+    }
+
+    /**
+     * Return a PegNode representation of this context sorted. We represent a context
+     * as a linked structure of key-value pairs.
+     * @return A sorted linked list of key-value pairs
+     */
+    public PegNode asPegNode() {
+        final List<String> sortedLocals = new ArrayList<>(localVariableLookup.keySet());
+        sortedLocals.sort(null);
+        PegNode ctx= PegNode.nilContext();
+        for (int i = sortedLocals.size() - 1; i >= 0; i--) {
+            final String local = sortedLocals.get(i);
+            final PegNode val = localVariableLookup.get(local);
+            ctx = PegNode.consContext(local, val.id, ctx.id);
+        }
+        return ctx;
     }
 }

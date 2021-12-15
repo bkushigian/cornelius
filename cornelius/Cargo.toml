@@ -1,6 +1,6 @@
 [package]
 name = "cornelius"
-version = "0.1.0"
+version = "0.1.3"
 authors = ["Ben Kushigian <benku@cs.washington.edu>"]
 edition = "2018"
 [lib]
@@ -15,7 +15,7 @@ path = "src/main.rs"
 
 [dependencies]
 roxmltree = "0.9.1"
-egg = { git = "https://github.com/mwillsey/egg" }
+egg = { git = "https://github.com/mwillsey/egg", rev = "dd3642eb882cd13a9dea480669a66ebd16b00232" }
 
 # serde
 serde = { version = "1.0", features = ["derive"] }

@@ -753,6 +753,33 @@ public abstract class PegNode {
         return opNode("return-node", pegId, heapId);
     }
 
+    public static PegNode nilContext() {
+        return opNode("ctx-nil");
+    }
+
+    public static PegNode consContext(final String key, final Integer valId, final Integer contextTailId) {
+        return opNode("ctx-cons", stringLit(key).id, valId, contextTailId);
+    }
+
+    public static PegNode maxExpr(final String startPos, final Integer pegId, final PegContext ctx) {
+        return opNode("max-expr", stringLit(startPos).id, pegId, ctx.asPegNode().id, ctx.heap.id);
+    }
+
+    /*
+     * Arrays literals are formed as linked lists
+     */
+    public static PegNode nilArray() {
+        return opNode("array-nil");
+    }
+
+    public static PegNode consArray(final Integer valId, final Integer tailId) {
+      return opNode("array-cons", valId, tailId);
+    }
+
+    public static PegNode arrayAccess(final Integer nameId, final Integer idxId) {
+      return opNode("array-access", nameId, idxId);
+    }
+
     /**
      * @param objId the object to be cast
      * @param typeId the type to be cast to
