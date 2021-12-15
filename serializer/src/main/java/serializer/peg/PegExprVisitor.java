@@ -544,11 +544,6 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     }
 
     @Override
-    public ExpressionResult visit(ExpressionStmt n, PegContext arg) {
-        throw new RuntimeException("ExprVisitor encountered a Statement");
-    }
-
-    @Override
     public ExpressionResult visit(ForEachStmt n, PegContext arg) {
         throw new RuntimeException("ExprVisitor encountered a Statement");
     }
