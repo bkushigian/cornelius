@@ -151,6 +151,29 @@ define_language! {
     "array-nil" = ArrayNil,
     "array-cons" = ArrayCons([Id; 2]),
     "array-access" = ArrayAccess([Id; 2]),
+
+    /***                  Generic Linked List                 ***/
+    "nil" = Nil,
+    "cons" = Cons([Id; 2]),
+
+    /***                  Type Annotations                    ***/
+
+    // A `type-annotation` node takes the form:
+    //
+    //     (type-annotation TYPE INTERFACES SUPERCLASSES)
+    //
+    // where
+    //
+    // + TYPE is the literal type (e.g., "int", "java.util.List")
+    //
+    // + INTERFACES is an alphabetically sorted linked list of interfaces that
+    //   this type implements
+    //
+    // + SUPERCLASSES is an inheritance-ordered sorted linked list of
+    //   superclasses that this type transitively extends
+    "type-annotation" = TypeAnnotation([Id; 3]),
+
+
   }
 }
 

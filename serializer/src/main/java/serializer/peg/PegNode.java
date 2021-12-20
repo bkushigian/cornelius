@@ -798,10 +798,73 @@ public abstract class PegNode {
         return opNode("type-name", stringLit(name).id);
     }
 
+    // Implement a generic linked list
+
+    /**
+     * The Nil from a generic linked list
+     * @return an empty linked list
+     */
+    public static PegNode nil() {
+        return opNode("nil");
+    }
+
+    /**
+     * the Cons operator from a generic linked list
+     * @param headId id of the value to be stored
+     * @param tailId id of the tail to be stored
+     * @return a new linked list with length len(tail) + 1
+     */
+    public static PegNode cons(final Integer headId, final Integer tailId) {
+        return opNode("cons", headId, tailId);
+    }
+
+    /**
+     * Return a `type-annotation` node. This is used to include type information
+     * for values. If no information is given for a value (say, type), `nil` is
+     * produced by default.
+     *
+     * E.g, {@code typeAnnotations("int", null, null)} will produce PegNode
+     * {@code (type-annotation (string-lit "int") nil nil)}
+     *
+     *
+     *
+     * @param type the literal type of a value
+     * @param interfaces the interfaces this value implements
+     * @param superClasses the list of superclasses this value's type extends, in order.
+     * @return a (type-annotation type interfaces superclasses) node.
+     */
+    public PegNode typeAnnotationNode(final String type, final List<String> interfaces, final List<String> superClasses) {
+        // First get a stringLit node for type, or `nil` for no type
+        final PegNode typeNode = type == null ? nil() : stringLit(type);
+
+        // Next, sort "interfaces" (in reverse order, since we will be creating a linked list out of them). This will
+        // give a canonical ordering to the interfaces so that we don't need to do any AC stuff in the egraph. That way
+        // ematching will always fire when possible.
+
+        PegNode iList = nil();
+        if (interfaces != null) {
+            interfaces.sort(Comparator.reverseOrder());
+            for (String i : interfaces) {
+                iList = cons(stringLit(i).id, iList.id);
+            }
+        }
+
+        // Finally, let's get the superclasses. These don't need to be sorted because we want the
+        // inheritance order to remain intact.
+
+        PegNode scList = nil();
+        if (superClasses != null) {
+            for (int i = superClasses.size() - 1; i >= 0 ; --i ) {
+                scList = cons(stringLit(superClasses.get(i)).id, scList.id);
+            }
+        }
+        return opNode("type-annotation", typeNode.id, iList.id, scList.id);
+    }
+
     /**
      * @param objId id of the object to be cast
      * @param typeId type to cast the object to
-     * @return
+     * @return a cast node
      */
     public static PegNode cast(final Integer objId, final Integer typeId) {
         return opNode("cast", objId, typeId);
