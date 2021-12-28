@@ -38,11 +38,10 @@ public class PegTranslatorTest {
 
     final Map<String, PegNode> translated = translator.translate(cu);
     final TestPairs testPairs = translator.testPairs;
-    List<String> failed = new ArrayList<>();
     int i = 0;
     for (String m : translated.keySet()) {
       ++i;
-      System.out.printf("%-40s [%d/%d]", m, i, translated.size());
+      System.out.printf("%-40s [%d/%d]\n", m, i, translated.size());
       if (testPairs.testPairLookupTable.containsKey(m)) {
         System.out.print("   ... Found expected PEG ... ");
       }
