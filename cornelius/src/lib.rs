@@ -1,7 +1,6 @@
 pub mod cli;
 pub mod config;
 pub mod delta;
-pub mod evaluator;
 pub mod global_data;
 pub mod peg;
 pub mod rewrites;
