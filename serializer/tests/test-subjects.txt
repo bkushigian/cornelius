@@ -1,0 +1,4 @@
+field-access
+field-write
+loops Loops.java
+method-invocation
