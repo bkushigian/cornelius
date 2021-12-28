@@ -629,8 +629,8 @@ public abstract class PegNode {
         return ThetaNode.thetaNode(init);
     }
 
-    public static PegNode var(String name) {
-        return opNode("var", opNode(name).id);
+    public static PegNode var(String name, Integer tpAnnot) {
+        return opNode("var", opNode(name).id, tpAnnot);
     }
 
     public static PegNode derefs(String derefs) {
@@ -685,10 +685,22 @@ public abstract class PegNode {
         return opNode("new", stringLit(type).id, actuals, heap);
     }
 
+
+    /**
+     * Pass node for a theta node
+     * @param condition
+     * @return
+     */
     public static PegNode pass(Integer condition) {
         return opNode("pass", condition);
     }
 
+    /**
+     * Eval node for a theta anode
+     * @param seq
+     * @param pass
+     * @return
+     */
     public static PegNode eval(Integer seq, Integer pass) {
         return opNode("eval", seq, pass);
     }
@@ -818,6 +830,7 @@ public abstract class PegNode {
         return opNode("cons", headId, tailId);
     }
 
+
     /**
      * Return a `type-annotation` node. This is used to include type information
      * for values. If no information is given for a value (say, type), `nil` is
@@ -826,14 +839,12 @@ public abstract class PegNode {
      * E.g, {@code typeAnnotations("int", null, null)} will produce PegNode
      * {@code (type-annotation (string-lit "int") nil nil)}
      *
-     *
-     *
      * @param type the literal type of a value
      * @param interfaces the interfaces this value implements
      * @param superClasses the list of superclasses this value's type extends, in order.
      * @return a (type-annotation type interfaces superclasses) node.
      */
-    public PegNode typeAnnotationNode(final String type, final List<String> interfaces, final List<String> superClasses) {
+    public static PegNode typeAnnotationNode(final String type, final List<String> interfaces, final List<String> superClasses) {
         // First get a stringLit node for type, or `nil` for no type
         final PegNode typeNode = type == null ? nil() : stringLit(type);
 

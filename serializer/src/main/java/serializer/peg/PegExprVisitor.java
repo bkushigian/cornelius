@@ -357,7 +357,11 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
         }
         final PegNode actuals = PegNode.actuals(actualsPegs.toArray(new Integer[]{}));
 
-        final PegNode invocation = PegNode.invoke(ctx.heap.id, scope.peg.id, n.getNameAsString(), actuals.id);
+        final PegNode invocation = PegNode.invoke(
+                ctx.heap.id,
+                scope.peg.id,
+                n.getNameAsString(),
+                actuals.id);
         // We also need to update the context's heap since we've called a method which may have changed heap state
         ctx = context.withHeap(PegNode.projectHeap(invocation.id));
         return PegNode.invokeToPeg(invocation.id).exprResult(ctx);

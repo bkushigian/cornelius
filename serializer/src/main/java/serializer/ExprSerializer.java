@@ -200,6 +200,47 @@ public class ExprSerializer {
             int idx = line.indexOf(":");
             maxExpr.startPos = line.substring(idx + 1).trim();
 
+            // Handle type annotation
+          } else if (line.startsWith("typeMap:")) {
+            assert maxExpr != null;
+            final String mapString = line.substring(line.indexOf(':'+1));
+            for (String keyValString : mapString.split(",")) {
+              String[] split = keyValString.split(":");
+              if (split.length != 2) {
+                throw new RuntimeException("Invalid keyVal String " + keyValString + " for type map line: " + line);
+              }
+              maxExpr.typeMap.computeIfAbsent(split[0], k -> new TypeData()).typeName = split[1];
+            }
+
+            // Handle interface annotation
+          } else if (line.startsWith("interfaceMap:")) {
+            assert maxExpr != null;
+            final String mapString = line.substring(line.indexOf(':'+1));
+            for (String keyValString : mapString.split(",")) {
+              String[] split = keyValString.split(":");
+              if (split.length != 2) {
+                throw new RuntimeException("Invalid keyVal String " + keyValString + " for type map line: " + line);
+              }
+              String key = split[0], val = split[1];
+              final List<String> valList = parseList(val);
+              maxExpr.typeMap.computeIfAbsent(key, k -> new TypeData()).interfaces = valList;
+            }
+
+
+            // Handle superclass annotation
+          } else if (line.startsWith("superclassMap:")) {
+            assert maxExpr != null;
+            final String mapString = line.substring(line.indexOf(':'+1));
+            for (String keyValString : mapString.split(",")) {
+              String[] split = keyValString.split(":");
+              if (split.length != 2) {
+                throw new RuntimeException("Invalid keyVal String " + keyValString + " for type map line: " + line);
+              }
+              String key = split[0], val = split[1];
+              final List<String> valList = parseList(val);
+              maxExpr.typeMap.computeIfAbsent(key, k -> new TypeData()).superclasses = valList;
+            }
+
             // Handle maxExpr's identMap
           } else if (line.startsWith("identMap:")) {
             assert ns != null;
@@ -235,6 +276,14 @@ public class ExprSerializer {
           maxExpr.computePegNodes();
         }
       }
+    }
+
+    private List<String> parseList(String val) {
+      assert val.startsWith("{") && val.endsWith("}");
+      val = val.substring(1, val.length() - 1);
+      assert ! val.startsWith("{") && ! val.endsWith("}");
+      final List<String> valList = new ArrayList<>(Arrays.asList(val.split("|")));
+      return valList;
     }
 
     void writeToCorFile(final File outputDir) throws IOException {
@@ -315,6 +364,9 @@ public class ExprSerializer {
      */
     protected boolean pegTranslationError = false;
 
+
+    protected Map<String, TypeData> typeMap = new HashMap<>();
+
     /**
      * A mapping from identifier name to variable type ("LOCAL" or "GLOBAL" or "OTHER")
      */
@@ -358,7 +410,12 @@ public class ExprSerializer {
             throw new RuntimeException("UnknownStatus: ident:" + f.getKey() + ", status:" + f.getValue());
         }
       }
-      return initContext = PegContext.initWithParams(globals, locals);
+      Map<String, PegNode> typeMap = new HashMap<>();
+      for (String k : this.typeMap.keySet()) {
+        final TypeData td = this.typeMap.get(k);
+        typeMap.put(k, PegNode.typeAnnotationNode(td.typeName, td.interfaces, td.superclasses));
+      }
+      return initContext = PegContext.initWithParams(globals, locals, typeMap);
     }
 
 
@@ -436,6 +493,12 @@ public class ExprSerializer {
       peg = PegNode.maxExpr(maxExpr.startPos, expressionResult.peg.id, expressionResult.context);
       context = expressionResult.context;
     }
+  }
+
+  class TypeData {
+    String typeName = "";
+    List<String> interfaces = new ArrayList<>();
+    List<String> superclasses = new ArrayList<>();
   }
 
   private String trimParseErrorMessage(String msg) {
