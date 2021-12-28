@@ -195,27 +195,32 @@ public class ExprSerializer {
             }
 
           } else if (line.startsWith("startPos:")) {
-            assert ns != null;
             if (maxExpr == null) continue;
             int idx = line.indexOf(":");
             maxExpr.startPos = line.substring(idx + 1).trim();
 
             // Handle type annotation
           } else if (line.startsWith("typeMap:")) {
-            assert maxExpr != null;
-            final String mapString = line.substring(line.indexOf(':'+1));
+            if (maxExpr == null) continue;;
+            final String mapString = line.substring(line.indexOf(':') + 1).trim();
+            if (mapString.isEmpty()) continue;
             for (String keyValString : mapString.split(",")) {
               String[] split = keyValString.split(":");
               if (split.length != 2) {
                 throw new RuntimeException("Invalid keyVal String " + keyValString + " for type map line: " + line);
               }
-              maxExpr.typeMap.computeIfAbsent(split[0], k -> new TypeData()).typeName = split[1];
+              try {
+                maxExpr.typeMap.computeIfAbsent(split[0], k -> new TypeData()).typeName = split[1];
+              } catch (NullPointerException e) {
+                throw e;
+              }
             }
 
             // Handle interface annotation
           } else if (line.startsWith("interfaceMap:")) {
-            assert maxExpr != null;
-            final String mapString = line.substring(line.indexOf(':'+1));
+            if (maxExpr == null) continue;;
+            final String mapString = line.substring(line.indexOf(':') + 1).trim();
+            if (mapString.isEmpty()) continue;
             for (String keyValString : mapString.split(",")) {
               String[] split = keyValString.split(":");
               if (split.length != 2) {
@@ -225,12 +230,11 @@ public class ExprSerializer {
               final List<String> valList = parseList(val);
               maxExpr.typeMap.computeIfAbsent(key, k -> new TypeData()).interfaces = valList;
             }
-
-
             // Handle superclass annotation
           } else if (line.startsWith("superclassMap:")) {
-            assert maxExpr != null;
-            final String mapString = line.substring(line.indexOf(':'+1));
+            if (maxExpr == null) continue;;
+            final String mapString = line.substring(line.indexOf(':') + 1).trim();
+            if (mapString.isEmpty()) continue;
             for (String keyValString : mapString.split(",")) {
               String[] split = keyValString.split(":");
               if (split.length != 2) {
@@ -282,7 +286,10 @@ public class ExprSerializer {
       assert val.startsWith("{") && val.endsWith("}");
       val = val.substring(1, val.length() - 1);
       assert ! val.startsWith("{") && ! val.endsWith("}");
-      final List<String> valList = new ArrayList<>(Arrays.asList(val.split("|")));
+      final List<String> valList = new ArrayList<>();
+      for (String v : val.split("\\|")) {
+        if (!v.isEmpty()) valList.add(v);
+      }
       return valList;
     }
 
@@ -365,7 +372,7 @@ public class ExprSerializer {
     protected boolean pegTranslationError = false;
 
 
-    protected Map<String, TypeData> typeMap = new HashMap<>();
+    protected final Map<String, TypeData> typeMap = new HashMap<>();
 
     /**
      * A mapping from identifier name to variable type ("LOCAL" or "GLOBAL" or "OTHER")
@@ -435,6 +442,7 @@ public class ExprSerializer {
           pegTranslationError = true;
           logPegTranslationError(e.getMessage(), source);
           return;
+
         }
         try {
           peg = PegNode.maxExpr(startPos, expressionResult.peg.id, expressionResult.context);
