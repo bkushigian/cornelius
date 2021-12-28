@@ -22,3 +22,4 @@ framework/lib
 .DS_Store
 
 *-equiv-classes
+tests/*.xml
