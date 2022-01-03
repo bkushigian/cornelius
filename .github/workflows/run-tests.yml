@@ -5,6 +5,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Install Serializer
+        working-directory: ./serializer
+        run: mvn install
       - name: Build Test Inputs
         working-directory: .
         run: serializer/tests/serialize-subjects.sh
@@ -18,12 +21,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Build Test Inputs
-        working-directory: .
-        run: tests/serialize-subjects.sh
       - name: Install Serializer
         working-directory: ./serializer
         run: mvn install
+      - name: Build Test Inputs
+        working-directory: .
+        run: tests/serialize-subjects.sh
       - name: Run Clojure Tests
         working-directory: ./serializer/pegnodes
         run: lein run
