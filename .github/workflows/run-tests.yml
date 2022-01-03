@@ -5,6 +5,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Build Test Inputs
+        working-directory: .
+        run: serializer/tests/serialize-subjects.sh
       - name: Build Cargo
         working-directory: ./cornelius
         run: cargo build --verbose
@@ -15,6 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Build Test Inputs
+        working-directory: .
+        run: tests/serialize-subjects.sh
       - name: Install Serializer
         working-directory: ./serializer
         run: mvn install
