@@ -1,0 +1,4 @@
+1:ROR:>(int,int):!=(int,int):Max@max(int,int):3:a > b |==> a != b
+2:ROR:>(int,int):>=(int,int):Max@max(int,int):3:a > b |==> a >= b
+3:ROR:>(int,int):FALSE(int,int):Max@max(int,int):3:a > b |==> false
+4:STD:<RETURN>:<NO-OP>:Max@max(int,int):4:return a; |==> <NO-OP>

@@ -1,0 +1,8 @@
+1:STD:<ASSIGN>:<NO-OP>:NonSerializable@setX(int):4:this.x = x; |==> <NO-OP>
+2:STD:<CALL>:<NO-OP>:NonSerializable@setAndReturnX(int):8:setX(x); |==> <NO-OP>
+3:AOR:+(int,int):*(int,int):NonSerializable@createNewIntegers():18:new java.lang.Integer(x) + new Integer(2) |==> new java.lang.Integer(x) * new Integer(2)
+4:AOR:+(int,int):-(int,int):NonSerializable@createNewIntegers():18:new java.lang.Integer(x) + new Integer(2) |==> new java.lang.Integer(x) - new Integer(2)
+5:AOR:+(int,int):/(int,int):NonSerializable@createNewIntegers():18:new java.lang.Integer(x) + new Integer(2) |==> new java.lang.Integer(x) / new Integer(2)
+6:AOR:+(int,int):*(int,int):NonSerializable@add(int,int):22:x + y |==> x * y
+7:AOR:+(int,int):-(int,int):NonSerializable@add(int,int):22:x + y |==> x - y
+8:AOR:+(int,int):/(int,int):NonSerializable@add(int,int):22:x + y |==> x / y

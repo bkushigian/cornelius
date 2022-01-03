@@ -1,0 +1,12 @@
+1:EVR:<TYPE_CAST(java.lang.String)>:<DEFAULT>:Casts@castString(java.lang.Object):3:(String)o |==> null
+2:EVR:<TYPE_CAST(S)>:<DEFAULT>:Casts@override(T):7:(S)t |==> null
+3:EVR:<TYPE_CAST(T)>:<DEFAULT>:Casts@override(T):8:(T)s |==> null
+4:ROR:!=(int,int):<(int,int):Casts@override(T):10:s.overriddenMethod() != t.overriddenMethod() |==> s.overriddenMethod() < t.overriddenMethod()
+5:ROR:!=(int,int):>(int,int):Casts@override(T):10:s.overriddenMethod() != t.overriddenMethod() |==> s.overriddenMethod() > t.overriddenMethod()
+6:ROR:==(int,int):<=(int,int):Casts@override(T):11:t.overriddenMethod() == t2.overriddenMethod() |==> t.overriddenMethod() <= t2.overriddenMethod()
+7:ROR:==(int,int):>=(int,int):Casts@override(T):11:t.overriddenMethod() == t2.overriddenMethod() |==> t.overriddenMethod() >= t2.overriddenMethod()
+8:COR:&&(boolean,boolean):==(boolean,boolean):Casts@override(T):10:s.overriddenMethod() != t.overriddenMethod() && t.overriddenMethod() == t2.overriddenMethod() |==> s.overriddenMethod() != t.overriddenMethod() == (t.overriddenMethod() == t2.overriddenMethod())
+9:LVR:POS:0:T@overriddenMethod():23:2 |==> 0
+10:LVR:POS:NEG:T@overriddenMethod():23:2 |==> -2
+11:LVR:POS:0:S@overriddenMethod():17:1 |==> 0
+12:LVR:POS:NEG:S@overriddenMethod():17:1 |==> -1

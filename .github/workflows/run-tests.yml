@@ -26,7 +26,7 @@ jobs:
         run: mvn install
       - name: Build Test Inputs
         working-directory: .
-        run: tests/serialize-subjects.sh
+        run: serializer/tests/serialize-subjects.sh
       - name: Run Clojure Tests
         working-directory: ./serializer/pegnodes
         run: lein run

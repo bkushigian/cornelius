@@ -22,15 +22,28 @@ SERIALIZER_JAR=$(find "$TARGET" -name "serialization-*-jar-with-dependencies.jar
 SERIALIZER_JAR=$(realpath "$SERIALIZER_JAR")
 cd "$TESTS/subjects"
 
+echo "CWD: $(pwd)"
+echo "TESTS: $TESTS"
+echo "SERIALIZER: $SERIALIZER"
+echo "TARGET: $TARGET"
+echo "ROOT: $ROOT"
+echo "TESTS_OUTPUT: $TESTS_OUTPUT"
+echo "SERIALIZER_JAR: $SERIALIZER_JAR"
 
 while read -r line
 do
     subject="$(echo "$line " | cut -d' ' -f1)"
     java_file="$(echo "$line " | cut -d' ' -f2)"
+    echo "Compiling subject $subject with java file '$java_file'"
     if [ -z "$java_file" ]
     then
         echo "No default java file provided: searching for a java file"
-        java_file=$(find "$subject" -name "*.java" -d 1)
+        echo "Searching for subject $subject"
+        echo "find \"$subject\" -name \"*.java\" -maxdepth 3 -mindepth 0"
+        echo "CWD: $(pwd)"
+        ls "$subject"
+        java_file=$(find "$subject" -name "*.java" -maxdepth 1 -mindepth 0)
+        echo "Found java file '$java_file'"
     else
         java_file="$subject/$java_file"
     fi

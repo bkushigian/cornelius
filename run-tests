@@ -34,14 +34,14 @@ fi
 
 cd pegnodes || exit
 
-printf "\033[1mRunning Clojure Tests...\033[0m"
-if lein run
-then
-    printf "\033[1;32mSUCCESS\033[0m\n"
-else
-    printf "\033[1;31mFAILURE\033[0m\n"
-    exit 1
-fi
+# printf "\033[1mRunning Clojure Tests...\033[0m"
+# if lein run
+# then
+#     printf "\033[1;32mSUCCESS\033[0m\n"
+# else
+#     printf "\033[1;31mFAILURE\033[0m\n"
+#     exit 1
+# fi
 
 cd ../../cornelius || exit
 

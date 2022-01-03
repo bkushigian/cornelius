@@ -50,89 +50,89 @@ mod const_prop {
     #[test]
     fn vars_eq() {
         assert!(test_no_straight_rewrite(
-            "(== (var a) (var b))",
+            "(== (var a nil) (var b nil))",
             "false",
             &[]
         ));
         assert!(test_no_straight_rewrite(
-            "(== (var a) (var b))",
+            "(== (var a nil) (var b nil))",
             "true",
             &[]
         ));
-        assert!(test_no_straight_rewrite("(== 1 (var b))", "false", &[]));
-        assert!(test_no_straight_rewrite("(== 1 (var b))", "true", &[]));
+        assert!(test_no_straight_rewrite("(== 1 (var b nil))", "false", &[]));
+        assert!(test_no_straight_rewrite("(== 1 (var b nil))", "true", &[]));
     }
 
     #[test]
     fn vars_ne() {
         assert!(test_no_straight_rewrite(
-            "(!= (var a) (var b))",
+            "(!= (var a nil) (var b nil))",
             "false",
             &[]
         ));
         assert!(test_no_straight_rewrite(
-            "(!= (var a) (var b))",
+            "(!= (var a nil) (var b nil))",
             "true",
             &[]
         ));
-        assert!(test_no_straight_rewrite("(!= 1 (var b))", "false", &[]));
-        assert!(test_no_straight_rewrite("(!= 1 (var b))", "true", &[]));
+        assert!(test_no_straight_rewrite("(!= 1 (var b nil))", "false", &[]));
+        assert!(test_no_straight_rewrite("(!= 1 (var b nil))", "true", &[]));
     }
 
     #[test]
     fn vars_gt() {
         assert!(test_no_straight_rewrite(
-            "(> (var a) (var b))",
+            "(> (var a nil) (var b nil))",
             "false",
             &[]
         ));
-        assert!(test_no_straight_rewrite("(> (var a) (var b))", "true", &[]));
-        assert!(test_no_straight_rewrite("(> 1 (var b))", "false", &[]));
-        assert!(test_no_straight_rewrite("(> 1 (var b))", "true", &[]));
+        assert!(test_no_straight_rewrite("(> (var a nil) (var b nil))", "true", &[]));
+        assert!(test_no_straight_rewrite("(> 1 (var b nil))", "false", &[]));
+        assert!(test_no_straight_rewrite("(> 1 (var b nil))", "true", &[]));
     }
 
     #[test]
     fn vars_gte() {
         assert!(test_no_straight_rewrite(
-            "(>= (var a) (var b))",
+            "(>= (var a nil) (var b nil))",
             "false",
             &[]
         ));
         assert!(test_no_straight_rewrite(
-            "(>= (var a) (var b))",
+            "(>= (var a nil) (var b nil))",
             "true",
             &[]
         ));
-        assert!(test_no_straight_rewrite("(>= 1 (var b))", "false", &[]));
-        assert!(test_no_straight_rewrite("(>= 1 (var b))", "true", &[]));
+        assert!(test_no_straight_rewrite("(>= 1 (var b nil))", "false", &[]));
+        assert!(test_no_straight_rewrite("(>= 1 (var b nil))", "true", &[]));
     }
 
     #[test]
     fn vars_lt() {
         assert!(test_no_straight_rewrite(
-            "(< (var a) (var b))",
+            "(< (var a nil) (var b nil))",
             "false",
             &[]
         ));
-        assert!(test_no_straight_rewrite("(< (var a) (var b))", "true", &[]));
-        assert!(test_no_straight_rewrite("(< 1 (var b))", "false", &[]));
-        assert!(test_no_straight_rewrite("(< 1 (var b))", "true", &[]));
+        assert!(test_no_straight_rewrite("(< (var a nil) (var b nil))", "true", &[]));
+        assert!(test_no_straight_rewrite("(< 1 (var b nil))", "false", &[]));
+        assert!(test_no_straight_rewrite("(< 1 (var b nil))", "true", &[]));
     }
 
     #[test]
     fn vars_lte() {
         assert!(test_no_straight_rewrite(
-            "(<= (var a) (var b))",
+            "(<= (var a nil) (var b nil))",
             "false",
             &[]
         ));
         assert!(test_no_straight_rewrite(
-            "(<= (var a) (var b))",
+            "(<= (var a nil) (var b nil))",
             "true",
             &[]
         ));
-        assert!(test_no_straight_rewrite("(<= 1 (var b))", "false", &[]));
-        assert!(test_no_straight_rewrite("(<= 1 (var b))", "true", &[]));
+        assert!(test_no_straight_rewrite("(<= 1 (var b nil))", "false", &[]));
+        assert!(test_no_straight_rewrite("(<= 1 (var b nil))", "true", &[]));
     }
 
     // Helper functions
@@ -192,37 +192,37 @@ mod propagate_equality {
     #[test]
     fn eq_propagation_5() {
         assert!(test_straight_rewrite(
-            "(== 1  (phi (var c) 1 2))",
-            "(phi (var c) true false)"
+            "(== 1  (phi (var c nil) 1 2))",
+            "(phi (var c nil) true false)"
         ));
     }
 
     #[test]
     fn eq_propagation_6() {
-        assert!(!test_straight_rewrite("(== 1  (phi (var c) 1 2))", "true"));
+        assert!(!test_straight_rewrite("(== 1  (phi (var c nil) 1 2))", "true"));
     }
 
     #[test]
     fn eq_propagation_7() {
         assert!(test_straight_rewrite(
-            "(== 1  (phi (var c) 1 2))",
-            "(var c)"
+            "(== 1  (phi (var c nil) 1 2))",
+            "(var c nil)"
         ));
     }
 
     #[test]
     fn eq_propagation_8() {
         assert!(test_straight_rewrite(
-            "(== 1  (phi (var c) 2 1))",
-            "(! (var c))"
+            "(== 1  (phi (var c nil) 2 1))",
+            "(! (var c nil))"
         ));
     }
 
     #[test]
     fn eq_propagation_9() {
         assert!(test_straight_rewrite(
-            "(== 2  (phi (var c) 2 1))",
-            "(var c)"
+            "(== 2  (phi (var c nil) 2 1))",
+            "(var c nil)"
         ));
     }
 }
@@ -254,29 +254,29 @@ mod propagate_non_equality {
     #[test]
     fn neq_propagation_5() {
         assert!(test_straight_rewrite(
-            "(!= 1  (phi (var c) 1 2))",
-            "(phi (var c) false true)"
+            "(!= 1  (phi (var c nil) 1 2))",
+            "(phi (var c nil) false true)"
         ));
         assert!(test_straight_rewrite(
-            "(!= 1  (phi (var c) 1 2))",
-            "(! (var c))"
+            "(!= 1  (phi (var c nil) 1 2))",
+            "(! (var c nil))"
         ));
     }
 
     #[test]
     fn neq_propagation_6() {
-        assert!(!test_straight_rewrite("(!= 1  (phi (var c) 1 2))", "true"));
+        assert!(!test_straight_rewrite("(!= 1  (phi (var c nil) 1 2))", "true"));
     }
 
     #[test]
     fn neq_propagation_7() {
-        assert!(!test_straight_rewrite("(!= 1  (phi (var c) 1 2))", "false"));
+        assert!(!test_straight_rewrite("(!= 1  (phi (var c nil) 1 2))", "false"));
     }
 
     #[test]
     fn neq_propagation_8() {
         assert!(test_no_straight_rewrite(
-            "(!= 1  (phi (var c) 3 2))",
+            "(!= 1  (phi (var c nil) 3 2))",
             "false",
             &[]
         ));
@@ -284,7 +284,7 @@ mod propagate_non_equality {
 
     #[test]
     fn neq_propagation_9() {
-        assert!(test_straight_rewrite("(!= 1  (phi (var c) 3 2))", "true"));
+        assert!(test_straight_rewrite("(!= 1  (phi (var c nil) 3 2))", "true"));
     }
 }
 
@@ -295,7 +295,7 @@ mod refine_equalities {
     #[test]
     #[ignore]
     fn eq_refine_const_pass() {
-        let start = "(phi (== (var a) 5) (var a) 5)";
+        let start = "(phi (== (var a nil) 5) (var a nil) 5)";
         let end = "5";
         assert!(test_straight_rewrite(start, end));
     }
@@ -304,8 +304,8 @@ mod refine_equalities {
     #[ignore]
     fn eq_refine_var_trigger() {
         assert!(test_straight_rewrite(
-            "(phi (== (var a) (var b)) (var a) (var b))",
-            "(var b)"
+            "(phi (== (var a nil) (var b nil)) (var a nil) (var b nil))",
+            "(var b nil)"
         ));
     }
 }
@@ -317,33 +317,33 @@ mod distribute_over_phi {
     #[test]
     fn push_plus_over_phi_1() {
         assert!(test_straight_rewrite(
-            "(+ (phi (var a) 3 4) 1)",
-            "(phi (var a) 4 5)"
+            "(+ (phi (var a nil) 3 4) 1)",
+            "(phi (var a nil) 4 5)"
         ));
     }
 
     #[test]
     fn push_plus_over_phi_2() {
         assert!(test_straight_rewrite(
-            "(+ (phi (var a) (phi (var b) 1 2) 3) 1)",
-            "(phi (var a) (phi (var b) 2 3) 4)"
+            "(+ (phi (var a nil) (phi (var b nil) 1 2) 3) 1)",
+            "(phi (var a nil) (phi (var b nil) 2 3) 4)"
         ));
     }
 
     #[test]
     fn push_ge_over_phi_a() {
-        assert!(test_straight_rewrite("(>= 1 (phi (var a) 1 1))", "true"));
+        assert!(test_straight_rewrite("(>= 1 (phi (var a nil) 1 1))", "true"));
     }
 
     #[test]
     fn push_ge_over_phi_b() {
-        assert!(test_straight_rewrite("(>= 2 (phi (var a) 0 1))", "true"));
+        assert!(test_straight_rewrite("(>= 2 (phi (var a nil) 0 1))", "true"));
     }
 
     #[test]
     fn push_ge_over_phi_1() {
         assert!(test_straight_rewrite(
-            "(>= (phi (var a) (phi (var b) 0 2) 3) 4)",
+            "(>= (phi (var a nil) (phi (var b nil) 0 2) 3) 4)",
             "false"
         ));
     }
@@ -351,7 +351,7 @@ mod distribute_over_phi {
     #[test]
     fn push_ge_over_phi_2() {
         assert!(test_straight_rewrite(
-            "(>= (phi (var a) (phi (var b) 1 2) 3) 1)",
+            "(>= (phi (var a nil) (phi (var b nil) 1 2) 3) 1)",
             "true"
         ));
     }
@@ -359,15 +359,15 @@ mod distribute_over_phi {
     #[test]
     fn push_ge_over_phi_3() {
         assert!(test_straight_rewrite(
-            "(>=  2 (phi (var a) (phi (var b) 0 2) 3) )",
-            "(var a)"
+            "(>=  2 (phi (var a nil) (phi (var b nil) 0 2) 3) )",
+            "(var a nil)"
         ));
     }
 
     #[test]
     fn push_ge_over_phi_4() {
         assert!(test_straight_rewrite(
-            "(>= 3 (phi (var a) (phi (var b) 1 2) 3))",
+            "(>= 3 (phi (var a nil) (phi (var b nil) 1 2) 3))",
             "true"
         ));
     }
@@ -375,7 +375,7 @@ mod distribute_over_phi {
     #[test]
     fn push_le_over_phi_1() {
         assert!(test_no_straight_rewrite(
-            "(<= 1 (phi (var a) (phi (var b) 0 2) 3))",
+            "(<= 1 (phi (var a nil) (phi (var b nil) 0 2) 3))",
             "false",
             &[]
         ));
@@ -384,7 +384,7 @@ mod distribute_over_phi {
     #[test]
     fn push_le_over_phi_2() {
         assert!(test_straight_rewrite(
-            "(<= 1 (phi (var a) (phi (var b) 1 2) 3))",
+            "(<= 1 (phi (var a nil) (phi (var b nil) 1 2) 3))",
             "true"
         ));
     }
@@ -392,15 +392,15 @@ mod distribute_over_phi {
     #[test]
     fn push_le_over_phi_3() {
         assert!(test_straight_rewrite(
-            "(<= (phi (var a) (phi (var b) 0 2) 3) 2)",
-            "(var a)"
+            "(<= (phi (var a nil) (phi (var b nil) 0 2) 3) 2)",
+            "(var a nil)"
         ));
     }
 
     #[test]
     fn push_le_over_phi_4() {
         assert!(test_straight_rewrite(
-            "(<= (phi (var a) (phi (var b) 1 2) 3) 3)",
+            "(<= (phi (var a nil) (phi (var b nil) 1 2) 3) 3)",
             "true"
         ));
     }
@@ -408,7 +408,7 @@ mod distribute_over_phi {
     #[test]
     fn push_gt_over_phi_1() {
         assert!(test_no_straight_rewrite(
-            "(> (phi (var a) (phi (var b) 1 2) 3) 1)",
+            "(> (phi (var a nil) (phi (var b nil) 1 2) 3) 1)",
             "false",
             &[]
         ));
@@ -417,7 +417,7 @@ mod distribute_over_phi {
     #[test]
     fn push_gt_over_phi_2() {
         assert!(test_straight_rewrite(
-            "(> (phi (var a) (phi (var b) 1 2) 3) 0)",
+            "(> (phi (var a nil) (phi (var b nil) 1 2) 3) 0)",
             "true"
         ));
     }
@@ -425,7 +425,7 @@ mod distribute_over_phi {
     #[test]
     fn push_gt_over_phi_3() {
         assert!(test_straight_rewrite(
-            "(>  3 (phi (var a) (phi (var b) 0 1) 2) )",
+            "(>  3 (phi (var a nil) (phi (var b nil) 0 1) 2) )",
             "true"
         ));
     }
@@ -433,7 +433,7 @@ mod distribute_over_phi {
     #[test]
     fn push_gt_over_phi_4() {
         assert!(test_straight_rewrite(
-            "(> 4 (phi (var a) (phi (var b) 1 2) 3))",
+            "(> 4 (phi (var a nil) (phi (var b nil) 1 2) 3))",
             "true"
         ));
     }
@@ -441,7 +441,7 @@ mod distribute_over_phi {
     #[test]
     fn push_gt_over_phi_5() {
         assert!(test_no_straight_rewrite(
-            "(> 4 (phi (var a) (phi (var b) 1 2) 4))",
+            "(> 4 (phi (var a nil) (phi (var b nil) 1 2) 4))",
             "true",
             &[]
         ));
@@ -450,7 +450,7 @@ mod distribute_over_phi {
     #[test]
     fn push_lt_over_phi_1() {
         assert!(test_straight_rewrite(
-            "(< 0 (phi (var a) (phi (var b) 1 2) 3))",
+            "(< 0 (phi (var a nil) (phi (var b nil) 1 2) 3))",
             "true"
         ));
     }
@@ -458,7 +458,7 @@ mod distribute_over_phi {
     #[test]
     fn push_lt_over_phi_2() {
         assert!(test_straight_rewrite(
-            "(< 1 (phi (var a) (phi (var b) 2 3) 4))",
+            "(< 1 (phi (var a nil) (phi (var b nil) 2 3) 4))",
             "true"
         ));
     }
@@ -466,7 +466,7 @@ mod distribute_over_phi {
     #[test]
     fn push_lt_over_phi_3() {
         assert!(test_straight_rewrite(
-            "(< (phi (var a) (phi (var b) 0 2) 3) 0)",
+            "(< (phi (var a nil) (phi (var b nil) 0 2) 3) 0)",
             "false"
         ));
     }
@@ -474,7 +474,7 @@ mod distribute_over_phi {
     #[test]
     fn push_lt_over_phi_4() {
         assert!(test_straight_rewrite(
-            "(< (phi (var a) (phi (var b) 1 2) 3) 4)",
+            "(< (phi (var a nil) (phi (var b nil) 1 2) 3) 4)",
             "true"
         ));
     }
@@ -486,24 +486,24 @@ mod misc {
 
     #[test]
     fn test_max_1() {
-        assert!(test_no_straight_rewrite("(phi (! (phi (> (var a) (var b)) true false)) (var b) (phi (> (var a) (var b)) (var a) -2147483648))", "(var b)", &[]))
+        assert!(test_no_straight_rewrite("(phi (! (phi (> (var a nil) (var b nil)) true false)) (var b nil) (phi (> (var a nil) (var b nil)) (var a nil) -2147483648))", "(var b nil)", &[]))
     }
 
     #[test]
     fn test_max_2() {
-        assert!(test_no_straight_rewrite("(phi (! (phi (!= (var a) (var b)) true false)) (var b) (phi (!= (var a) (var b)) (var a) -2147483648))", "(var b)", &[]))
+        assert!(test_no_straight_rewrite("(phi (! (phi (!= (var a nil) (var b nil)) true false)) (var b nil) (phi (!= (var a nil) (var b nil)) (var a nil) -2147483648))", "(var b nil)", &[]))
     }
 
     #[test]
     fn test_max_3() {
-        assert!(test_no_straight_rewrite("(phi (! (phi (>= (var a) (var b)) true false)) (var b) (phi (>= (var a) (var b)) (var a) -2147483648))", "(var b)", &[]))
+        assert!(test_no_straight_rewrite("(phi (! (phi (>= (var a nil) (var b nil)) true false)) (var b nil) (phi (>= (var a nil) (var b nil)) (var a nil) -2147483648))", "(var b nil)", &[]))
     }
 
     #[test]
     fn test_max_4() {
         assert!(test_straight_rewrite(
-            "(phi (! (phi false true false)) (var b) (phi false (var a) -2147483648))",
-            "(var b)"
+            "(phi (! (phi false true false)) (var b nil) (phi false (var a nil) -2147483648))",
+            "(var b nil)"
         ));
     }
 
@@ -511,22 +511,22 @@ mod misc {
     fn ensure_no_rewrite_1() {
         // The following are all just sanity checks. These all pass
         assert!(test_no_straight_rewrite(
-            "(phi (>= (var a) (var b)) true false)",
+            "(phi (>= (var a nil) (var b nil)) true false)",
             "true",
             &[]
         ));
         assert!(test_no_straight_rewrite(
-            "(phi (>= (var a) (var b)) true false)",
+            "(phi (>= (var a nil) (var b nil)) true false)",
             "false",
             &[]
         ));
         assert!(test_no_straight_rewrite(
-            "(phi (<= (var a) (var b)) true false)",
+            "(phi (<= (var a nil) (var b nil)) true false)",
             "true",
             &[]
         ));
         assert!(test_no_straight_rewrite(
-            "(phi (<= (var a) (var b)) true false)",
+            "(phi (<= (var a nil) (var b nil)) true false)",
             "false",
             &[]
         ));
@@ -541,12 +541,12 @@ mod misc {
             &[]
         ));
         assert!(test_no_straight_rewrite(
-            "(phi (> (var a) (var b)) true false)",
+            "(phi (> (var a nil) (var b nil)) true false)",
             "true",
             &[]
         ));
         assert!(test_no_straight_rewrite(
-            "(phi (< (var a) (var b)) true false)",
+            "(phi (< (var a nil) (var b nil)) true false)",
             "true",
             &[]
         ));
@@ -565,9 +565,9 @@ mod misc {
     #[test]
     fn ensure_no_rewrite_2() {
         assert!(test_no_straight_rewrite(
-            "(> (var a) (var b))",
+            "(> (var a nil) (var b nil))",
             "false",
-            &["(! (phi (> (var a) (var b)) true false))"]
+            &["(! (phi (> (var a nil) (var b nil)) true false))"]
         ))
     }
 
@@ -576,7 +576,7 @@ mod misc {
         assert!(test_no_straight_rewrite(
             "false",
             "true",
-            &["(! (phi (> (var a) (var b)) true false))"]
+            &["(! (phi (> (var a nil) (var b nil)) true false))"]
         ));
     }
 
@@ -585,8 +585,8 @@ mod misc {
     fn eq_distr_var_1() {
         // Ignored until equality distribution is restored
         assert!(test_straight_rewrite(
-            "(eq-distr (var a) (var b) (var c))",
-            "(var c)"
+            "(eq-distr (var a nil) (var b nil) (var c nil))",
+            "(var c nil)"
         ));
     }
 
@@ -595,7 +595,7 @@ mod misc {
     fn eq_distr_eq_1() {
         // Ignored until equality distribution is restored
         assert!(test_straight_rewrite(
-            "(eq-distr (var a) (var b) (== (var a) (var b)))",
+            "(eq-distr (var a nil) (var b nil) (== (var a nil) (var b nil)))",
             "true"
         ));
     }
@@ -661,7 +661,7 @@ mod heap {
     #[test]
     fn rd_wr() {
         assert!(test_straight_rewrite(
-            "(rd (path (var a) (derefs .a.b)) (wr (path (var a) (derefs .a.b)) 3 (heap 0 unit)))",
+            "(rd (path (var a nil) (derefs .a.b)) (wr (path (var a nil) (derefs .a.b)) 3 (heap 0 unit)))",
             "3"
         ));
     }
@@ -681,7 +681,7 @@ mod heap {
             //     }
             // }
 
-            "(return-node (rd (path (var this) (derefs x)) (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0 unit))) (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0 unit)))",
+            "(return-node (rd (path (var this nil) (derefs x)) (wr (path (var this nil) (derefs x)) (- (var a nil) (var a nil)) (heap 0 unit))) (wr (path (var this nil) (derefs x)) (- (var a nil) (var a nil)) (heap 0 unit)))",
             // Mutant
             // public class MyClass {
             //     int x = 0;
@@ -694,7 +694,7 @@ mod heap {
             //     }
             // }
 
-            "(return-node 0 (wr (path (var this) (derefs x)) (- (var a) (var a)) (heap 0 unit)))"))
+            "(return-node 0 (wr (path (var this nil) (derefs x)) (- (var a nil) (var a nil)) (heap 0 unit)))"))
     }
 
     #[test]
@@ -712,12 +712,12 @@ mod heap {
             //      }
             // }
             "(return-node
-    (rd (path (var this) (derefs x))
-        (wr (path (var this) (derefs x))
-            (phi (> (var a) (var b)) (var a) (var b))
+    (rd (path (var this nil) (derefs x))
+        (wr (path (var this nil) (derefs x))
+            (phi (> (var a nil) (var b nil)) (var a nil) (var b nil))
             (heap 0 unit)))
-    (wr (path (var this) (derefs x))
-        (phi (> (var a) (var b)) (var a) (var b))
+    (wr (path (var this nil) (derefs x))
+        (phi (> (var a nil) (var b nil)) (var a nil) (var b nil))
         (heap 0 unit)))",
             // Mutant Program
             // public class MyClass
@@ -729,12 +729,12 @@ mod heap {
             //      }
             // }
             "(return-node
-    (rd (path (var this) (derefs x))
-        (wr (path (var this) (derefs x))
-            (phi (>= (var a) (var b)) (var a) (var b))
+    (rd (path (var this nil) (derefs x))
+        (wr (path (var this nil) (derefs x))
+            (phi (>= (var a nil) (var b nil)) (var a nil) (var b nil))
             (heap 0 unit)))
-    (wr (path (var this) (derefs x))
-        (phi (>= (var a) (var b)) (var a) (var b))
+    (wr (path (var this nil) (derefs x))
+        (phi (>= (var a nil) (var b nil)) (var a nil) (var b nil))
         (heap 0 unit)))"
         ))
     }
