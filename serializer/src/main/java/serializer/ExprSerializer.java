@@ -420,7 +420,17 @@ public class ExprSerializer {
       Map<String, PegNode> typeMap = new HashMap<>();
       for (String k : this.typeMap.keySet()) {
         final TypeData td = this.typeMap.get(k);
-        typeMap.put(k, PegNode.typeAnnotationNode(td.typeName, td.interfaces, td.superclasses));
+        if (td.isArray()) {
+          typeMap.put(k, PegNode.stringLit("Array"));
+        } else if (td.isCollection()) {
+          typeMap.put(k, PegNode.stringLit("Collection"));
+        }
+        // TODO: Currently I am just hardcoding either "ARRAY" or "COLLECTION". At some point I want to
+        //       use the following line to be completely general, but this will involve updating the
+        //       Rust backend to handle this more complex data form. For the present paper I think it's
+        //       fine to just use this info and reimplement to make it more expressive in future iterations.
+
+        // typeMap.put(k, PegNode.typeAnnotationNode(td.typeName, td.interfaces, td.superclasses));
       }
       return initContext = PegContext.initWithParams(globals, locals, typeMap);
     }
@@ -503,10 +513,18 @@ public class ExprSerializer {
     }
   }
 
-  class TypeData {
+  static class TypeData {
     String typeName = "";
     List<String> interfaces = new ArrayList<>();
     List<String> superclasses = new ArrayList<>();
+
+    public boolean isArray() {
+      return "Array".equals(typeName);
+    }
+
+    public boolean isCollection() {
+      return interfaces.contains("java.util.Collection");
+    }
   }
 
   private String trimParseErrorMessage(String msg) {
