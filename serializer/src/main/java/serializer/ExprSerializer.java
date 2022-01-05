@@ -250,12 +250,15 @@ public class ExprSerializer {
             assert ns != null;
             if (maxExpr == null) continue;
             int idx = line.indexOf(":");
-            final String mapString = line.substring(idx + 1);
+            final String mapString = line.substring(idx + 1).trim();
             if (mapString.contains(",")){
               for (String keyVal : mapString.split(",")) {
                 String[] split = keyVal.split(":");
                 maxExpr.identMap.put(split[0].trim(), split[1].trim());
               }
+            } else if (mapString.contains(":")) {
+              String[] split = mapString.split(":");
+              maxExpr.identMap.put(split[0].trim(), split[1].trim());
             }
             // Handle mutated expressions
           } else if (mutPattern.matcher(line).find()) {
@@ -456,9 +459,16 @@ public class ExprSerializer {
         }
         try {
           peg = PegNode.maxExpr(startPos, expressionResult.peg.id, expressionResult.context);
+          if (verbose) {
+            System.out.println("---------------------------------");
+            System.out.println("0:" + peg.toDerefString());
+          }
           context = expressionResult.context;
           for (Mutant m : mutants) {
             m.computePegNodes(initContext);
+            if (verbose) {
+              System.out.println(m.m_no + ":" + m.peg.toDerefString());
+            }
           }
         }
         catch (NullPointerException e) {
