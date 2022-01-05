@@ -93,6 +93,10 @@ pub fn rw_rules() -> Box<RewriteSystem> {
 
         /***                       Heapy Stuff                       ***/
         rw!("rd-wr"; "(rd ?path (wr ?path ?val ?heap))"  => "?val"),
+
+        /***                       Type-Guided Rewrites                       ***/
+        rw!("array-length"; "(< (rd (path (var ?v \"Array\") (derefs (length))) ?h) 0)" => "false"),
+        rw!("collection-size"; "(< (invoke->peg (invoke ?hp (var ?v \"Collection\") (size) (actuals))) 0)" => "false"),
     ];
     Box::new(rules)
 }
