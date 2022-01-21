@@ -184,6 +184,12 @@ public class ExprSerializer {
 
             // Handle new max expression
           } else if (line.startsWith("maxExpr:")) {
+            StringJoiner joiner = new StringJoiner(" ");
+            while (line != null && line.endsWith("\\\n")) {
+             joiner.add(line.substring(0, line.length() - 2));
+             line = in.readLine();
+            }
+            if (line == null) throw new RuntimeException("Illegal expr file");
             assert ns != null;
             assert maxExpr == null;
             int idx = line.indexOf(":");
@@ -195,22 +201,70 @@ public class ExprSerializer {
             }
 
           } else if (line.startsWith("startPos:")) {
-            assert ns != null;
             if (maxExpr == null) continue;
             int idx = line.indexOf(":");
             maxExpr.startPos = line.substring(idx + 1).trim();
+
+            // Handle type annotation
+          } else if (line.startsWith("typeMap:")) {
+            if (maxExpr == null) continue;;
+            final String mapString = line.substring(line.indexOf(':') + 1).trim();
+            if (mapString.isEmpty()) continue;
+            for (String keyValString : mapString.split(",")) {
+              String[] split = keyValString.split(":");
+              if (split.length != 2) {
+                throw new RuntimeException("Invalid keyVal String " + keyValString + " for type map line: " + line);
+              }
+              try {
+                maxExpr.typeMap.computeIfAbsent(split[0], k -> new TypeData()).typeName = split[1];
+              } catch (NullPointerException e) {
+                throw e;
+              }
+            }
+
+            // Handle interface annotation
+          } else if (line.startsWith("interfaceMap:")) {
+            if (maxExpr == null) continue;;
+            final String mapString = line.substring(line.indexOf(':') + 1).trim();
+            if (mapString.isEmpty()) continue;
+            for (String keyValString : mapString.split(",")) {
+              String[] split = keyValString.split(":");
+              if (split.length != 2) {
+                throw new RuntimeException("Invalid keyVal String " + keyValString + " for type map line: " + line);
+              }
+              String key = split[0], val = split[1];
+              final List<String> valList = parseList(val);
+              maxExpr.typeMap.computeIfAbsent(key, k -> new TypeData()).interfaces = valList;
+            }
+            // Handle superclass annotation
+          } else if (line.startsWith("superclassMap:")) {
+            if (maxExpr == null) continue;;
+            final String mapString = line.substring(line.indexOf(':') + 1).trim();
+            if (mapString.isEmpty()) continue;
+            for (String keyValString : mapString.split(",")) {
+              String[] split = keyValString.split(":");
+              if (split.length != 2) {
+                throw new RuntimeException("Invalid keyVal String " + keyValString + " for type map line: " + line);
+              }
+              String key = split[0], val = split[1];
+              final List<String> valList = parseList(val);
+              maxExpr.typeMap.computeIfAbsent(key, k -> new TypeData()).superclasses = valList;
+            }
 
             // Handle maxExpr's identMap
           } else if (line.startsWith("identMap:")) {
             assert ns != null;
             if (maxExpr == null) continue;
             int idx = line.indexOf(":");
-            final String mapString = line.substring(idx + 1);
+            final String mapString = line.substring(idx + 1).trim();
             if (mapString.contains(",")){
               for (String keyVal : mapString.split(",")) {
                 String[] split = keyVal.split(":");
                 maxExpr.identMap.put(split[0].trim(), split[1].trim());
               }
+            } else if (mapString.contains(":")) {
+              String[] split = mapString.split(":");
+              maxExpr.identMap.put(split[0].trim(), split[1].trim());
             }
             // Handle mutated expressions
           } else if (mutPattern.matcher(line).find()) {
@@ -235,6 +289,17 @@ public class ExprSerializer {
           maxExpr.computePegNodes();
         }
       }
+    }
+
+    private List<String> parseList(String val) {
+      assert val.startsWith("{") && val.endsWith("}");
+      val = val.substring(1, val.length() - 1);
+      assert ! val.startsWith("{") && ! val.endsWith("}");
+      final List<String> valList = new ArrayList<>();
+      for (String v : val.split("\\|")) {
+        if (!v.isEmpty()) valList.add(v);
+      }
+      return valList;
     }
 
     void writeToCorFile(final File outputDir) throws IOException {
@@ -315,6 +380,9 @@ public class ExprSerializer {
      */
     protected boolean pegTranslationError = false;
 
+
+    protected final Map<String, TypeData> typeMap = new HashMap<>();
+
     /**
      * A mapping from identifier name to variable type ("LOCAL" or "GLOBAL" or "OTHER")
      */
@@ -358,7 +426,22 @@ public class ExprSerializer {
             throw new RuntimeException("UnknownStatus: ident:" + f.getKey() + ", status:" + f.getValue());
         }
       }
-      return initContext = PegContext.initWithParams(globals, locals);
+      Map<String, PegNode> typeMap = new HashMap<>();
+      for (String k : this.typeMap.keySet()) {
+        final TypeData td = this.typeMap.get(k);
+        if (td.isArray()) {
+          typeMap.put(k, PegNode.stringLit("Array"));
+        } else if (td.isCollection()) {
+          typeMap.put(k, PegNode.stringLit("Collection"));
+        }
+        // TODO: Currently I am just hardcoding either "ARRAY" or "COLLECTION". At some point I want to
+        //       use the following line to be completely general, but this will involve updating the
+        //       Rust backend to handle this more complex data form. For the present paper I think it's
+        //       fine to just use this info and reimplement to make it more expressive in future iterations.
+
+        // typeMap.put(k, PegNode.typeAnnotationNode(td.typeName, td.interfaces, td.superclasses));
+      }
+      return initContext = PegContext.initWithParams(globals, locals, typeMap);
     }
 
 
@@ -378,12 +461,20 @@ public class ExprSerializer {
           pegTranslationError = true;
           logPegTranslationError(e.getMessage(), source);
           return;
+
         }
         try {
           peg = PegNode.maxExpr(startPos, expressionResult.peg.id, expressionResult.context);
+          if (verbose) {
+            System.out.println("---------------------------------");
+            System.out.println("0:" + peg.toDerefString());
+          }
           context = expressionResult.context;
           for (Mutant m : mutants) {
             m.computePegNodes(initContext);
+            if (verbose) {
+              System.out.println(m.m_no + ":" + m.peg.toDerefString());
+            }
           }
         }
         catch (NullPointerException e) {
@@ -435,6 +526,20 @@ public class ExprSerializer {
       final ExpressionResult expressionResult = tree.accept(pev, initCtx);
       peg = PegNode.maxExpr(maxExpr.startPos, expressionResult.peg.id, expressionResult.context);
       context = expressionResult.context;
+    }
+  }
+
+  static class TypeData {
+    String typeName = "";
+    List<String> interfaces = new ArrayList<>();
+    List<String> superclasses = new ArrayList<>();
+
+    public boolean isArray() {
+      return "Array".equals(typeName);
+    }
+
+    public boolean isCollection() {
+      return interfaces.contains("java.util.Collection");
     }
   }
 

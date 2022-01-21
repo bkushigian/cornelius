@@ -101,8 +101,10 @@ public class PegTranslator {
      */
     public PegNode translate(final MethodDeclaration n,
                                        final PegClassVisitor.ClassVisitorResult classVisitorResult) {
-        final PegContext initCtx = PegContext.initWithParams(classVisitorResult.getFieldNames(),
-                Util.getParameterList(n));
+        final PegContext initCtx = PegContext.initWithParams(
+                classVisitorResult.getFieldNames(),
+                Util.getParameterList(n),
+                new HashMap<>());
         final ExpressionResult result = n.accept(stmtVisitor, initCtx);
         return result.context.asPeg().orElseThrow(IllegalStateException::new);
     }

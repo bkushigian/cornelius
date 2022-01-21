@@ -163,8 +163,10 @@ public class FileSerializeDataCollector {
                                                              ClassVisitResult cvr)
   {
     if (decl.isAbstract()) return;
-    final PegContext initCtx = PegContext.initWithParams(classVisitorResult.getFieldNames(),
-            Util.getParameterList(decl));
+    final PegContext initCtx = PegContext.initWithParams(
+            classVisitorResult.getFieldNames(),
+            Util.getParameterList(decl),
+            new HashMap<>());
     try {
       final PegContext ctx = decl.accept(stmtVisitor, initCtx).context;
       final VisitResult<?> vr = cvr.add(decl, ctx.asPeg().orElseThrow(IllegalStateException::new));

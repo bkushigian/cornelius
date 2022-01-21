@@ -1,0 +1,45 @@
+1:COR:c:TRUE:DataFlow@dataflow1(boolean):4:c |==> false
+2:COR:c:FALSE:DataFlow@dataflow1(boolean):4:c |==> true
+3:STD:<ASSIGN>:<NO-OP>:DataFlow@dataflow1(boolean):5:result = 1; |==> <NO-OP>
+4:COR:c1:TRUE:DataFlow@dataflow2(boolean,boolean):12:c1 |==> false
+5:COR:c1:FALSE:DataFlow@dataflow2(boolean,boolean):12:c1 |==> true
+6:STD:<ASSIGN>:<NO-OP>:DataFlow@dataflow2(boolean,boolean):13:result = 1; |==> <NO-OP>
+7:COR:c2:TRUE:DataFlow@dataflow2(boolean,boolean):15:c2 |==> false
+8:COR:c2:FALSE:DataFlow@dataflow2(boolean,boolean):15:c2 |==> true
+9:STD:<ASSIGN>:<NO-OP>:DataFlow@dataflow2(boolean,boolean):16:result += 1; |==> <NO-OP>
+10:ROR:==(int,int):<=(int,int):DataFlow@dataflow2(boolean,boolean):18:result == 0 |==> result <= 0
+11:ROR:==(int,int):>=(int,int):DataFlow@dataflow2(boolean,boolean):18:result == 0 |==> result >= 0
+12:ROR:==(int,int):FALSE(int,int):DataFlow@dataflow2(boolean,boolean):18:result == 0 |==> false
+13:ROR:<=(int,int):<(int,int):DataFlow@miniTriangle(int,int,int):24:a <= 0 |==> a < 0
+14:ROR:<=(int,int):==(int,int):DataFlow@miniTriangle(int,int,int):24:a <= 0 |==> a == 0
+15:ROR:<=(int,int):TRUE(int,int):DataFlow@miniTriangle(int,int,int):24:a <= 0 |==> true
+16:ROR:<=(int,int):<(int,int):DataFlow@miniTriangle(int,int,int):24:b <= 0 |==> b < 0
+17:ROR:<=(int,int):==(int,int):DataFlow@miniTriangle(int,int,int):24:b <= 0 |==> b == 0
+18:ROR:<=(int,int):TRUE(int,int):DataFlow@miniTriangle(int,int,int):24:b <= 0 |==> true
+19:COR:||(boolean,boolean):!=(boolean,boolean):DataFlow@miniTriangle(int,int,int):24:a <= 0 || b <= 0 |==> a <= 0 != b <= 0
+20:COR:||(boolean,boolean):LHS(boolean,boolean):DataFlow@miniTriangle(int,int,int):24:a <= 0 || b <= 0 |==> a <= 0
+21:COR:||(boolean,boolean):RHS(boolean,boolean):DataFlow@miniTriangle(int,int,int):24:a <= 0 || b <= 0 |==> b <= 0
+22:COR:||(boolean,boolean):TRUE(boolean,boolean):DataFlow@miniTriangle(int,int,int):24:a <= 0 || b <= 0 |==> true
+23:ROR:<=(int,int):<(int,int):DataFlow@miniTriangle(int,int,int):24:c <= 0 |==> c < 0
+24:ROR:<=(int,int):==(int,int):DataFlow@miniTriangle(int,int,int):24:c <= 0 |==> c == 0
+25:ROR:<=(int,int):TRUE(int,int):DataFlow@miniTriangle(int,int,int):24:c <= 0 |==> true
+26:COR:||(boolean,boolean):!=(boolean,boolean):DataFlow@miniTriangle(int,int,int):24:a <= 0 || b <= 0 || c <= 0 |==> (a <= 0 || b <= 0) != c <= 0
+27:COR:||(boolean,boolean):LHS(boolean,boolean):DataFlow@miniTriangle(int,int,int):24:a <= 0 || b <= 0 || c <= 0 |==> a <= 0 || b <= 0
+28:COR:||(boolean,boolean):RHS(boolean,boolean):DataFlow@miniTriangle(int,int,int):24:a <= 0 || b <= 0 || c <= 0 |==> c <= 0
+29:COR:||(boolean,boolean):TRUE(boolean,boolean):DataFlow@miniTriangle(int,int,int):24:a <= 0 || b <= 0 || c <= 0 |==> true
+30:STD:<RETURN>:<NO-OP>:DataFlow@miniTriangle(int,int,int):24:return INVALID; |==> <NO-OP>
+31:ROR:==(int,int):<=(int,int):DataFlow@miniTriangle(int,int,int):25:a == b |==> a <= b
+32:ROR:==(int,int):>=(int,int):DataFlow@miniTriangle(int,int,int):25:a == b |==> a >= b
+33:ROR:==(int,int):FALSE(int,int):DataFlow@miniTriangle(int,int,int):25:a == b |==> false
+34:STD:<ASSIGN>:<NO-OP>:DataFlow@miniTriangle(int,int,int):26:trian += 1; |==> <NO-OP>
+35:ROR:==(int,int):<=(int,int):DataFlow@miniTriangle(int,int,int):28:trian == 0 |==> trian <= 0
+36:ROR:==(int,int):>=(int,int):DataFlow@miniTriangle(int,int,int):28:trian == 0 |==> trian >= 0
+37:ROR:==(int,int):FALSE(int,int):DataFlow@miniTriangle(int,int,int):28:trian == 0 |==> false
+38:AOR:+(int,int):*(int,int):DataFlow@miniTriangle(int,int,int):29:a + b |==> a * b
+39:AOR:+(int,int):-(int,int):DataFlow@miniTriangle(int,int,int):29:a + b |==> a - b
+40:AOR:+(int,int):/(int,int):DataFlow@miniTriangle(int,int,int):29:a + b |==> a / b
+41:ROR:<=(int,int):<(int,int):DataFlow@miniTriangle(int,int,int):29:a + b <= c |==> a + b < c
+42:ROR:<=(int,int):==(int,int):DataFlow@miniTriangle(int,int,int):29:a + b <= c |==> a + b == c
+43:ROR:<=(int,int):TRUE(int,int):DataFlow@miniTriangle(int,int,int):29:a + b <= c |==> true
+44:STD:<RETURN>:<NO-OP>:DataFlow@miniTriangle(int,int,int):30:return INVALID; |==> <NO-OP>
+45:STD:<RETURN>:<NO-OP>:DataFlow@miniTriangle(int,int,int):32:return SCALENE; |==> <NO-OP>

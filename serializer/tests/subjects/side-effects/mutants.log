@@ -1,0 +1,58 @@
+1:ROR:==(int,int):FALSE(int,int):SideEffects@getBoolWithSideEffects():6:counter++ % 2 == 0 |==> false
+2:ROR:==(int,int):TRUE(int,int):SideEffects@getBoolWithSideEffects():6:counter++ % 2 == 0 |==> true
+3:COR:||(boolean,boolean):!=(boolean,boolean):SideEffects@shortCircuitOr(boolean):73:cond || getBoolWithSideEffects() |==> cond != getBoolWithSideEffects()
+4:COR:||(boolean,boolean):FALSE(boolean,boolean):SideEffects@shortCircuitOr(boolean):73:cond || getBoolWithSideEffects() |==> false
+5:COR:||(boolean,boolean):LHS(boolean,boolean):SideEffects@shortCircuitOr(boolean):73:cond || getBoolWithSideEffects() |==> cond
+6:COR:||(boolean,boolean):RHS(boolean,boolean):SideEffects@shortCircuitOr(boolean):73:cond || getBoolWithSideEffects() |==> getBoolWithSideEffects()
+7:COR:||(boolean,boolean):TRUE(boolean,boolean):SideEffects@shortCircuitOr(boolean):73:cond || getBoolWithSideEffects() |==> true
+8:COR:&&(boolean,boolean):==(boolean,boolean):SideEffects@shortCircuitAnd(boolean):89:cond && getBoolWithSideEffects() |==> cond == getBoolWithSideEffects()
+9:COR:&&(boolean,boolean):FALSE(boolean,boolean):SideEffects@shortCircuitAnd(boolean):89:cond && getBoolWithSideEffects() |==> false
+10:COR:&&(boolean,boolean):LHS(boolean,boolean):SideEffects@shortCircuitAnd(boolean):89:cond && getBoolWithSideEffects() |==> cond
+11:COR:&&(boolean,boolean):RHS(boolean,boolean):SideEffects@shortCircuitAnd(boolean):89:cond && getBoolWithSideEffects() |==> getBoolWithSideEffects()
+12:COR:&&(boolean,boolean):TRUE(boolean,boolean):SideEffects@shortCircuitAnd(boolean):89:cond && getBoolWithSideEffects() |==> true
+13:COR:||(boolean,boolean):!=(boolean,boolean):SideEffects@nestedShortCircuit(boolean,boolean):110:cond1 || cond2 |==> cond1 != cond2
+14:COR:||(boolean,boolean):FALSE(boolean,boolean):SideEffects@nestedShortCircuit(boolean,boolean):110:cond1 || cond2 |==> false
+15:COR:||(boolean,boolean):LHS(boolean,boolean):SideEffects@nestedShortCircuit(boolean,boolean):110:cond1 || cond2 |==> cond1
+16:COR:||(boolean,boolean):RHS(boolean,boolean):SideEffects@nestedShortCircuit(boolean,boolean):110:cond1 || cond2 |==> cond2
+17:COR:||(boolean,boolean):TRUE(boolean,boolean):SideEffects@nestedShortCircuit(boolean,boolean):110:cond1 || cond2 |==> true
+18:COR:||(boolean,boolean):!=(boolean,boolean):SideEffects@nestedShortCircuit(boolean,boolean):110:(cond1 || cond2) || getBoolWithSideEffects() |==> (cond1 || cond2) != getBoolWithSideEffects()
+19:COR:||(boolean,boolean):FALSE(boolean,boolean):SideEffects@nestedShortCircuit(boolean,boolean):110:(cond1 || cond2) || getBoolWithSideEffects() |==> false
+20:COR:||(boolean,boolean):LHS(boolean,boolean):SideEffects@nestedShortCircuit(boolean,boolean):110:(cond1 || cond2) || getBoolWithSideEffects() |==> (cond1 || cond2)
+21:COR:||(boolean,boolean):RHS(boolean,boolean):SideEffects@nestedShortCircuit(boolean,boolean):110:(cond1 || cond2) || getBoolWithSideEffects() |==> getBoolWithSideEffects()
+22:COR:||(boolean,boolean):TRUE(boolean,boolean):SideEffects@nestedShortCircuit(boolean,boolean):110:(cond1 || cond2) || getBoolWithSideEffects() |==> true
+23:ROR:!=(java.lang.Object,java.lang.Object):FALSE(java.lang.Object,java.lang.Object):SideEffects@nullCheck():134:ref != null |==> false
+24:ROR:!=(java.lang.Object,java.lang.Object):TRUE(java.lang.Object,java.lang.Object):SideEffects@nullCheck():134:ref != null |==> true
+25:COR:&&(boolean,boolean):==(boolean,boolean):SideEffects@nullCheck():134:ref != null && !ref.getBoolWithSideEffects() |==> ref != null == !ref.getBoolWithSideEffects()
+26:COR:&&(boolean,boolean):FALSE(boolean,boolean):SideEffects@nullCheck():134:ref != null && !ref.getBoolWithSideEffects() |==> false
+27:COR:&&(boolean,boolean):LHS(boolean,boolean):SideEffects@nullCheck():134:ref != null && !ref.getBoolWithSideEffects() |==> ref != null
+28:COR:&&(boolean,boolean):RHS(boolean,boolean):SideEffects@nullCheck():134:ref != null && !ref.getBoolWithSideEffects() |==> !ref.getBoolWithSideEffects()
+29:COR:&&(boolean,boolean):TRUE(boolean,boolean):SideEffects@nullCheck():134:ref != null && !ref.getBoolWithSideEffects() |==> true
+30:ROR:==(int,int):FALSE(int,int):SideEffects@isNew():157:bytesWritten == 0 |==> false
+31:ROR:==(int,int):TRUE(int,int):SideEffects@isNew():157:bytesWritten == 0 |==> true
+32:ROR:==(int,int):FALSE(int,int):SideEffects@isNew():157:charsWritten == 0 |==> false
+33:ROR:==(int,int):TRUE(int,int):SideEffects@isNew():157:charsWritten == 0 |==> true
+34:COR:&&(boolean,boolean):==(boolean,boolean):SideEffects@isNew():157:(bytesWritten == 0) && (charsWritten == 0) |==> (bytesWritten == 0) == (charsWritten == 0)
+35:COR:&&(boolean,boolean):FALSE(boolean,boolean):SideEffects@isNew():157:(bytesWritten == 0) && (charsWritten == 0) |==> false
+36:COR:&&(boolean,boolean):LHS(boolean,boolean):SideEffects@isNew():157:(bytesWritten == 0) && (charsWritten == 0) |==> (bytesWritten == 0)
+37:COR:&&(boolean,boolean):RHS(boolean,boolean):SideEffects@isNew():157:(bytesWritten == 0) && (charsWritten == 0) |==> (charsWritten == 0)
+38:COR:&&(boolean,boolean):TRUE(boolean,boolean):SideEffects@isNew():157:(bytesWritten == 0) && (charsWritten == 0) |==> true
+39:COR:||(boolean,boolean):!=(boolean,boolean):SideEffects@nestedMethodInvoke(boolean,boolean,boolean):186:cond2 || cond3 |==> cond2 != cond3
+40:COR:||(boolean,boolean):FALSE(boolean,boolean):SideEffects@nestedMethodInvoke(boolean,boolean,boolean):186:cond2 || cond3 |==> false
+41:COR:||(boolean,boolean):LHS(boolean,boolean):SideEffects@nestedMethodInvoke(boolean,boolean,boolean):186:cond2 || cond3 |==> cond2
+42:COR:||(boolean,boolean):RHS(boolean,boolean):SideEffects@nestedMethodInvoke(boolean,boolean,boolean):186:cond2 || cond3 |==> cond3
+43:COR:||(boolean,boolean):TRUE(boolean,boolean):SideEffects@nestedMethodInvoke(boolean,boolean,boolean):186:cond2 || cond3 |==> true
+44:COR:&&(boolean,boolean):==(boolean,boolean):SideEffects@nestedMethodInvoke(boolean,boolean,boolean):186:cond1 && (cond2 || cond3) |==> cond1 == (cond2 || cond3)
+45:COR:&&(boolean,boolean):FALSE(boolean,boolean):SideEffects@nestedMethodInvoke(boolean,boolean,boolean):186:cond1 && (cond2 || cond3) |==> false
+46:COR:&&(boolean,boolean):LHS(boolean,boolean):SideEffects@nestedMethodInvoke(boolean,boolean,boolean):186:cond1 && (cond2 || cond3) |==> cond1
+47:COR:&&(boolean,boolean):RHS(boolean,boolean):SideEffects@nestedMethodInvoke(boolean,boolean,boolean):186:cond1 && (cond2 || cond3) |==> (cond2 || cond3)
+48:COR:&&(boolean,boolean):TRUE(boolean,boolean):SideEffects@nestedMethodInvoke(boolean,boolean,boolean):186:cond1 && (cond2 || cond3) |==> true
+49:COR:||(boolean,boolean):!=(boolean,boolean):SideEffects@nestedRead(boolean,boolean,boolean):227:cond2 || cond3 |==> cond2 != cond3
+50:COR:||(boolean,boolean):FALSE(boolean,boolean):SideEffects@nestedRead(boolean,boolean,boolean):227:cond2 || cond3 |==> false
+51:COR:||(boolean,boolean):LHS(boolean,boolean):SideEffects@nestedRead(boolean,boolean,boolean):227:cond2 || cond3 |==> cond2
+52:COR:||(boolean,boolean):RHS(boolean,boolean):SideEffects@nestedRead(boolean,boolean,boolean):227:cond2 || cond3 |==> cond3
+53:COR:||(boolean,boolean):TRUE(boolean,boolean):SideEffects@nestedRead(boolean,boolean,boolean):227:cond2 || cond3 |==> true
+54:COR:&&(boolean,boolean):==(boolean,boolean):SideEffects@nestedRead(boolean,boolean,boolean):227:cond1 && (cond2 || cond3) |==> cond1 == (cond2 || cond3)
+55:COR:&&(boolean,boolean):FALSE(boolean,boolean):SideEffects@nestedRead(boolean,boolean,boolean):227:cond1 && (cond2 || cond3) |==> false
+56:COR:&&(boolean,boolean):LHS(boolean,boolean):SideEffects@nestedRead(boolean,boolean,boolean):227:cond1 && (cond2 || cond3) |==> cond1
+57:COR:&&(boolean,boolean):RHS(boolean,boolean):SideEffects@nestedRead(boolean,boolean,boolean):227:cond1 && (cond2 || cond3) |==> (cond2 || cond3)
+58:COR:&&(boolean,boolean):TRUE(boolean,boolean):SideEffects@nestedRead(boolean,boolean,boolean):227:cond1 && (cond2 || cond3) |==> true

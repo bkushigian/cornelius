@@ -5,19 +5,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Install Serializer
+        working-directory: ./serializer
+        run: mvn install
+      - name: Build Test Inputs
+        working-directory: .
+        run: serializer/tests/serialize-subjects.sh
       - name: Build Cargo
         working-directory: ./cornelius
         run: cargo build --verbose
       - name: Run Cargo Tests
         working-directory: ./cornelius
         run: cargo test --verbose
-  run-clojure-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install Serializer
-        working-directory: ./serializer
-        run: mvn install
-      - name: Run Clojure Tests
-        working-directory: ./serializer/pegnodes
-        run: lein run

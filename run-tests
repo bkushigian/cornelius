@@ -8,32 +8,48 @@ then
     printf "\033[1;32mSUCCESS\033[0m\n"
 else
     printf "\033[1;31mFAILURE\033[0m\n"
+    exit 1
 fi
 
 printf "\033[1mRunning Unit Tests...\033[0m"
-if mvn test > /dev/null
+if mvn test
 then
     printf "\033[1;32mSUCCESS\033[0m\n"
 else
     printf "\033[1;31mFAILURE\033[0m\n"
+    exit 1
 fi
+
+printf "\033[1mRemoving old test subject files...\033[0m"
+rm ../tests/*.xml
+printf "\033[1mSerializing test subjects...\033[0m"
+if bash tests/serialize-subjects.sh
+then
+    printf "\033[1;32mSUCCESS\033[0m\n"
+else
+    printf "\033[1;31mFAILURE\033[0m\n"
+    exit 1
+fi
+
 
 cd pegnodes || exit
 
-printf "\033[1mRunning Clojure Tests...\033[0m"
-if lein run > /dev/null
-then
-    printf "\033[1;32mSUCCESS\033[0m\n"
-else
-    printf "\033[1;31mFAILURE\033[0m\n"
-fi
+# printf "\033[1mRunning Clojure Tests...\033[0m"
+# if lein run
+# then
+#     printf "\033[1;32mSUCCESS\033[0m\n"
+# else
+#     printf "\033[1;31mFAILURE\033[0m\n"
+#     exit 1
+# fi
 
 cd ../../cornelius || exit
 
 printf "\033[1mRunning Cargo Tests...\033[0m"
-if cargo test > /dev/null
+if cargo test
 then
     printf "\033[1;32mSUCCESS\033[0m\n"
 else
     printf "\033[1;31mFAILURE\033[0m\n"
+    exit 1
 fi

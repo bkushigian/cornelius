@@ -4,10 +4,7 @@ import com.github.javaparser.ast.expr.FieldAccessExpr;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -17,6 +14,7 @@ public class PegContext {
     final public Set<String> fieldNames;
     final public PegNode.Heap heap;
     final public ImmutableSet<PegNode> exitConditions;
+    final public ImmutableMap<String, PegNode> typeMap;
 
     // FIXME The following relies on there being a _unique_ return node in the AST
     final private PegNode returnNode;
@@ -26,7 +24,7 @@ public class PegContext {
     }
 
     public PegContext withReturnNode(PegNode rn) {
-        return new PegContext(localVariableLookup, fieldNames, heap, exitConditions, rn);
+        return new PegContext(localVariableLookup, fieldNames, heap, exitConditions, rn, typeMap);
     }
 
 
@@ -34,12 +32,14 @@ public class PegContext {
                        final Set<String> fieldNames,
                        final PegNode.Heap heap,
                        final ImmutableSet<PegNode> exitConditions,
-                       final PegNode returnNode) {
+                       final PegNode returnNode,
+                       final ImmutableMap<String, PegNode> typeMap) {
         this.localVariableLookup = localVariableLookup;
         this.fieldNames = fieldNames;
         this.heap = heap;
         this.exitConditions = exitConditions;
         this.returnNode = returnNode;
+        this.typeMap = typeMap;
     }
 
     /**
@@ -66,13 +66,16 @@ public class PegContext {
         if (c1.getReturnNode() != null && c2.getReturnNode() != null) throw new RuntimeException("InvalidReturn");
         final PegNode returnNode = Optional.ofNullable(c1.returnNode).orElse(c2.returnNode);
 
+        // TODO: How to combine type maps?
+        assert c1.typeMap == c2.typeMap;
         return initMap(
                 domain,
                 p -> PegNode.phi(guardId, c1.getLocalVar(p).id, c2.getLocalVar(p).id),
                 c1.fieldNames,
                 combinedHeap,
                 combinedExitConditions,
-                returnNode);
+                returnNode,
+                c1.typeMap);
     }
 
     /**
@@ -98,7 +101,7 @@ public class PegContext {
             return localVariableLookup.get(key);
         }
         if ("this".equals(key)) {
-            return PegNode.var("this");
+            return PegNode.var("this", PegNode.nil().id);
         }
         if (isUnshadowedField(key)) {
             // Todo: check for static fields/etc
@@ -128,7 +131,7 @@ public class PegContext {
         } else {
             b.putAll(localVariableLookup);
         }
-        return new PegContext(b.build(), fieldNames, heap, exitConditions, returnNode);
+        return new PegContext(b.build(), fieldNames, heap, exitConditions, returnNode, typeMap);
     }
 
     /**
@@ -181,7 +184,11 @@ public class PegContext {
      *         in {@code heap}'s value
      */
     public PegContext withHeap(final PegNode.Heap heap) {
-      return new PegContext(localVariableLookup, fieldNames, heap, exitConditions, returnNode);
+      return new PegContext(localVariableLookup, fieldNames, heap, exitConditions, returnNode, typeMap);
+    }
+
+    public PegContext withTypeMap(Map<String, PegNode> typeMap) {
+        return new PegContext(localVariableLookup, fieldNames, heap, exitConditions, returnNode, ImmutableMap.copyOf(typeMap));
     }
 
     /**
@@ -194,7 +201,7 @@ public class PegContext {
       builder.addAll(exitConditions);
       builder.add(exitCondition);
       final ImmutableSet<PegNode> exitConditions = builder.build();
-      return new PegContext(localVariableLookup, fieldNames, heap, exitConditions, returnNode);
+      return new PegContext(localVariableLookup, fieldNames, heap, exitConditions, returnNode, typeMap);
     }
 
     /**
@@ -238,17 +245,18 @@ public class PegContext {
                                      final Set<String> fieldNames,
                                      final PegNode.Heap heap,
                                      final ImmutableSet<PegNode> exitConditions,
-                                     final PegNode returnNode)
+                                     final PegNode returnNode,
+                                     final ImmutableMap<String, PegNode> typeMap)
     {
 
         final ImmutableMap.Builder<String, PegNode> builder = ImmutableMap.builderWithExpectedSize(keys.size());
         keys.forEach(k -> builder.put(k, f.apply(k)));
-        return new PegContext(builder.build(), fieldNames, heap, exitConditions, returnNode);
+        return new PegContext(builder.build(), fieldNames, heap, exitConditions, returnNode, typeMap);
     }
 
     /**
      * Initialize a context with a set of parameters and fieldNames. This is how a new context should be created
-     * @param fieldNames: the names of all fields accessed by this method. This is used for implicit {@code this}
+     * @param fieldNames the names of all fields accessed by this method. This is used for implicit {@code this}
      *                  dereferences, so it suffices to only include those field names that are referenced without a
      *                  prefix of {@code this}
      * @param params the list of parameter names. If the method is not static, this should include {@code this}.
@@ -257,12 +265,22 @@ public class PegContext {
      * particular, each paramter name {@code name} will map to a {@code (var name)}.
      *
      */
-    public static PegContext initWithParams(final Set<String> fieldNames, final List<String> params) {
+    public static PegContext initWithParams(final Set<String> fieldNames,
+                                            final List<String> params,
+                                            final Map<String, PegNode> typeMap) {
         final ImmutableMap.Builder<String, PegNode> builder = ImmutableMap.builder();
         for (String param : params) {
-            builder.put(param, PegNode.var(param));
+            final PegNode tpAnnot = typeMap.containsKey(param) ?  typeMap.get(param) : PegNode.nil();
+            builder.put(param, PegNode.var(param, tpAnnot.id));
         }
-        return new PegContext(builder.build(), fieldNames, PegNode.initialHeap(), ImmutableSet.of(), null);
+
+        return new PegContext(
+                builder.build(),
+                fieldNames,
+                PegNode.initialHeap(),
+                ImmutableSet.of(),
+                null,
+                ImmutableMap.copyOf(typeMap));
     }
 
     /**

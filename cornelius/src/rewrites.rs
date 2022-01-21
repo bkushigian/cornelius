@@ -90,51 +90,13 @@ pub fn rw_rules() -> Box<RewriteSystem> {
         rw!("if-false";    "(phi false ?x ?y)"       => "?y"),
         rw!("nesting-and"; "(phi (&& ?a ?b) ?t ?e)"  => "(phi ?a (phi ?b ?t ?e) ?e)"),
         rw!("same-branch"; "(phi ?c ?t ?t)"          => "?t"),
-        // Equality Refinement
-        // swap all a's for b's in t
-        //rw!("equality-refinement"; "(phi (== (var ?a) ?b) ?t ?e)" =>
-        //    "(phi (== (var ?a) ?b) (swap (var ?a) ?b ?t) ?e)"),
-
-        //// Swapping
-        //rw!("swap-match";        "(swap (var ?a) ?b (var ?a))"         => "?b"),
-        //rw!("swap-var-pass-through"; "(swap (var ?a) ?b ?c)"           => "?c" if is_not_same_var("?a", "?c")),
-        //rw!("swap-const-pass-through"; "(swap (var ?a) ?b ?c)"         => "?c" if is_const("?c")),
-        //rw!("swap-or";   "(swap (var ?a) ?b (|| ?l ?r))"  => "(|| (swap (var ?a) ?b ?l) (swap (var ?a) ?b ?r))"),
-        //rw!("swap-and";  "(swap (var ?a) ?b (&& ?l ?r))"  => "(&& (swap (var ?a) ?b ?l) (swap (var ?a) ?b ?r))"),
-        //rw!("swap-plus"; "(swap (var ?a) ?b (+ ?l ?r))"   => "(+  (swap (var ?a) ?b ?l) (swap (var ?a) ?b ?r))"),
-        //rw!("swap-sub";  "(swap (var ?a) ?b (- ?l ?r))"   => "(-  (swap (var ?a) ?b ?l) (swap (var ?a) ?b ?r))"),
-        //rw!("swap-mul";  "(swap (var ?a) ?b (* ?l ?r))"   => "(*  (swap (var ?a) ?b ?l) (swap (var ?a) ?b ?r))"),
-        //rw!("swap-div";  "(swap (var ?a) ?b (/ ?l ?r))"   => "(/  (swap (var ?a) ?b ?l) (swap (var ?a) ?b ?r))"),
-        //rw!("swap-lt";   "(swap (var ?a) ?b (< ?l ?r))"   => "(<  (swap (var ?a) ?b ?l) (swap (var ?a) ?b ?r))"),
-        //rw!("swap-gt";   "(swap (var ?a) ?b (> ?l ?r))"   => "(>  (swap (var ?a) ?b ?l) (swap (var ?a) ?b ?r))"),
-        //rw!("swap-le";   "(swap (var ?a) ?b (<= ?l ?r))"  => "(<= (swap (var ?a) ?b ?l) (swap (var ?a) ?b ?r))"),
-        //rw!("swap-ge";   "(swap (var ?a) ?b (>= ?l ?r))"  => "(>= (swap (var ?a) ?b ?l) (swap (var ?a) ?b ?r))"),
-        //rw!("swap-neq";  "(swap (var ?a) ?b (!= ?l ?r))"  => "(!= (swap (var ?a) ?b ?l) (swap (var ?a) ?b ?r))"),
-        //rw!("swap-eq";   "(swap (var ?a) ?b (== ?l ?r))"  => "(== (swap (var ?a) ?b ?l) (swap (var ?a) ?b ?r))"),
-
-        //rw!("condition-distribution"; "(phi ?c ?t ?e)"
-        //    => "(phi ?c (cond-distr ?c ?t) (cond-distr ?c e))"),
-
-        //rw!("cond-distr-phi";  "(cond-distr ?c (phi ?d ?t ?e))"
-        //    => "(phi (cond-distr ?c ?d) (cond-distr ?c ?t) (cond-distr ?c ?e))"),
-        //rw!("cond-distr-or";   "(cond-distr ?c (|| ?l ?r))"  => "(|| (cond-distr ?c ?l) (cond-distr ?c ?r))"),
-        //rw!("cond-distr-and";  "(cond-distr ?c (&& ?l ?r))"  => "(&& (cond-distr ?c ?l) (cond-distr ?c ?r))"),
-        //rw!("cond-distr-plus"; "(cond-distr ?c (+ ?l ?r))"   => "(+  (cond-distr ?c ?l) (cond-distr ?c ?r))"),
-        //rw!("cond-distr-sub";  "(cond-distr ?c (- ?l ?r))"   => "(-  (cond-distr ?c ?l) (cond-distr ?c ?r))"),
-        //rw!("cond-distr-mul";  "(cond-distr ?c (* ?l ?r))"   => "(*  (cond-distr ?c ?l) (cond-distr ?c ?r))"),
-        //rw!("cond-distr-div";  "(cond-distr ?c (/ ?l ?r))"   => "(/  (cond-distr ?c ?l) (cond-distr ?c ?r))"),
-        //rw!("cond-distr-lt";   "(cond-distr ?c (< ?l ?r))"   => "(<  (cond-distr ?c ?l) (cond-distr ?c ?r))"),
-        //rw!("cond-distr-gt";   "(cond-distr ?c (> ?l ?r))"   => "(>  (cond-distr ?c ?l) (cond-distr ?c ?r))"),
-        //rw!("cond-distr-le";   "(cond-distr ?c (<= ?l ?r))"  => "(<= (cond-distr ?c ?l) (cond-distr ?c ?r))"),
-        //rw!("cond-distr-ge";   "(cond-distr ?c (>= ?l ?r))"  => "(>= (cond-distr ?c ?l) (cond-distr ?c ?r))"),
-        //rw!("cond-distr-not";  "(cond-distr ?c (! ?x))"      => "(!  (cond-distr ?c ?x))"),
-        //rw!("cond-distr-eq";   "(cond-distr ?c ?c)"          => "true"),
-        //rw!("cond-distr-neq";  "(cond-distr ?c (! ?c))"      => "false"),
-        //rw!("cond-distr-var";   "(cond-distr ?c (var ?v))"    => "(var ?v)"),
-        //rw!("cond-distr-const"; "(cond-distr ?c ?n)"    => "?n" if is_const("?n")),
 
         /***                       Heapy Stuff                       ***/
         rw!("rd-wr"; "(rd ?path (wr ?path ?val ?heap))"  => "?val"),
+
+        /***                       Type-Guided Rewrites                       ***/
+        rw!("array-length"; "(< (rd (path (var ?v \"Array\") (derefs (length))) ?h) 0)" => "false"),
+        rw!("collection-size"; "(< (invoke->peg (invoke ?hp (var ?v \"Collection\") (size) (actuals))) 0)" => "false"),
     ];
     Box::new(rules)
 }

@@ -1,0 +1,44 @@
+1:STD:<RETURN>:<NO-OP>:MethodInvocation@doNothing():10:return; |==> <NO-OP>
+2:EVR:<IDENTIFIER(int)>:<DEFAULT>:MethodInvocation@identity(int):17:x |==> 0
+3:AOR:+(int,int):%(int,int):MethodInvocation@add(int,int):24:a + b |==> a % b
+4:AOR:+(int,int):*(int,int):MethodInvocation@add(int,int):24:a + b |==> a * b
+5:AOR:+(int,int):-(int,int):MethodInvocation@add(int,int):24:a + b |==> a - b
+6:AOR:+(int,int):/(int,int):MethodInvocation@add(int,int):24:a + b |==> a / b
+7:AOR:+(int,int):%(int,int):MethodInvocation@invoke(int,int):31:add(a, b) + add(a, b) |==> add(a, b) % add(a, b)
+8:AOR:+(int,int):*(int,int):MethodInvocation@invoke(int,int):31:add(a, b) + add(a, b) |==> add(a, b) * add(a, b)
+9:AOR:+(int,int):-(int,int):MethodInvocation@invoke(int,int):31:add(a, b) + add(a, b) |==> add(a, b) - add(a, b)
+10:AOR:+(int,int):/(int,int):MethodInvocation@invoke(int,int):31:add(a, b) + add(a, b) |==> add(a, b) / add(a, b)
+11:EVR:<IDENTIFIER(java.lang.Integer)>:<DEFAULT>:MethodInvocation@identity(java.lang.Integer):38:x |==> null
+12:EVR:<NEW_CLASS(java.util.ArrayList<java.lang.Integer>)>:<DEFAULT>:MethodInvocation@aSmallList(int,int):45:new ArrayList<>() |==> null
+13:STD:<CALL>:<NO-OP>:MethodInvocation@aSmallList(int,int):46:list.add(a); |==> <NO-OP>
+14:STD:<CALL>:<NO-OP>:MethodInvocation@aSmallList(int,int):47:list.add(b); |==> <NO-OP>
+15:EVR:<IDENTIFIER(java.util.List<java.lang.Integer>)>:<DEFAULT>:MethodInvocation@aSmallList(int,int):48:list |==> null
+16:COR:c:TRUE:MethodInvocation@branching(boolean,int):55:c |==> false
+17:COR:c:FALSE:MethodInvocation@branching(boolean,int):55:c |==> true
+18:EVR:<METHOD_INVOCATION(int)>:<DEFAULT>:MethodInvocation@branching(boolean,int):56:identity(x) |==> 0
+19:EVR:<METHOD_INVOCATION(int)>:<DEFAULT>:MethodInvocation@branching(boolean,int):58:identity(x) |==> 0
+20:COR:c:TRUE:MethodInvocation@branchingWithInvocation1(boolean,int):69:c |==> false
+21:COR:c:FALSE:MethodInvocation@branchingWithInvocation1(boolean,int):69:c |==> true
+22:EVR:<METHOD_INVOCATION(int)>:<DEFAULT>:MethodInvocation@branchingWithInvocation1(boolean,int):70:identity(x) |==> 0
+23:STD:<CALL>:<NO-OP>:MethodInvocation@branchingWithInvocation1(boolean,int):72:doNothing(); |==> <NO-OP>
+24:EVR:<METHOD_INVOCATION(int)>:<DEFAULT>:MethodInvocation@branchingWithInvocation1(boolean,int):73:identity(x) |==> 0
+25:COR:c:TRUE:MethodInvocation@branchingWithInvocation2(boolean,int):85:c |==> false
+26:COR:c:FALSE:MethodInvocation@branchingWithInvocation2(boolean,int):85:c |==> true
+27:EVR:<METHOD_INVOCATION(int)>:<DEFAULT>:MethodInvocation@branchingWithInvocation2(boolean,int):86:identity(x) |==> 0
+28:LVR:POS:0:MethodInvocation@branchingWithInvocation2(boolean,int):88:1 |==> 0
+29:LVR:POS:NEG:MethodInvocation@branchingWithInvocation2(boolean,int):88:1 |==> -1
+30:LVR:POS:0:MethodInvocation@branchingWithInvocation2(boolean,int):88:2 |==> 0
+31:LVR:POS:NEG:MethodInvocation@branchingWithInvocation2(boolean,int):88:2 |==> -2
+32:STD:<CALL>:<NO-OP>:MethodInvocation@branchingWithInvocation2(boolean,int):88:aSmallList(1, 2); |==> <NO-OP>
+33:EVR:<METHOD_INVOCATION(int)>:<DEFAULT>:MethodInvocation@branchingWithInvocation2(boolean,int):89:identity(x) |==> 0
+34:LVR:POS:0:MethodInvocation:93:1 |==> 0
+35:LVR:POS:NEG:MethodInvocation:93:1 |==> -1
+36:LVR:TRUE:FALSE:MethodInvocation@updateField(int):96:true |==> false
+37:LVR:TRUE:FALSE:MethodInvocation@updateField(int):97:true |==> false
+38:LVR:0:POS:MethodInvocation@updateField(int):98:0 |==> 1
+39:LVR:0:NEG:MethodInvocation@updateField(int):98:0 |==> -1
+40:STD:<ASSIGN>:<NO-OP>:MethodInvocation@updateField(int):98:c = 0; |==> <NO-OP>
+41:AOR:+(int,int):%(int,int):MethodInvocation@updateField(int):99:c + c |==> c % c
+42:AOR:+(int,int):*(int,int):MethodInvocation@updateField(int):99:c + c |==> c * c
+43:AOR:+(int,int):-(int,int):MethodInvocation@updateField(int):99:c + c |==> c - c
+44:AOR:+(int,int):/(int,int):MethodInvocation@updateField(int):99:c + c |==> c / c

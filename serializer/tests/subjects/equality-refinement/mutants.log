@@ -1,0 +1,8 @@
+1:ROR:==(int,int):<=(int,int):EqualityRefinement@areEqual(int,int):3:a == b |==> a <= b
+2:ROR:==(int,int):>=(int,int):EqualityRefinement@areEqual(int,int):3:a == b |==> a >= b
+3:ROR:==(int,int):FALSE(int,int):EqualityRefinement@areEqual(int,int):3:a == b |==> false
+4:ROR:==(int,int):<=(int,int):EqualityRefinement@areEqual(int,int):4:a == b |==> a <= b
+5:ROR:==(int,int):>=(int,int):EqualityRefinement@areEqual(int,int):4:a == b |==> a >= b
+6:ROR:==(int,int):FALSE(int,int):EqualityRefinement@areEqual(int,int):4:a == b |==> false
+7:STD:<RETURN>:<NO-OP>:EqualityRefinement@areEqual(int,int):5:return true; |==> <NO-OP>
+8:STD:<RETURN>:<NO-OP>:EqualityRefinement@areEqual(int,int):7:return false; |==> <NO-OP>

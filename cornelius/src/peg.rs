@@ -46,9 +46,7 @@ define_language! {
     "++_"  = PreInc(Id),
     "--_"  = PreDec(Id),
     "phi"  = Phi([Id; 3]),
-    "swap" = Swap([Id; 3]),
-    "cond-distr" = EqDistr([Id; 2]),
-    "var"  = Var(Id),
+    "var"  = Var([Id; 2]),
     Symbol(egg::Symbol),
 
     /***                       Heapy Stuff                       ***/
@@ -77,7 +75,7 @@ define_language! {
     /***                       Method Stuff                      ***/
 
     // (invoke heap receiver method actuals)
-    // A normal (i.e., non-static), method invocation
+    // A normal (i.e., non-static) method invocation
     "invoke" = Invoke([Id; 4]),
     // Get the heap state from an invoke node
     "invoke->heap-state" = InvokeToHeapState(Id),
@@ -86,12 +84,8 @@ define_language! {
     // Get the returned value of an invoke node
     "invoke->peg" = InvokeToPeg(Id),
     // (invoke-static heap method actuals)
-    // A normal (i.e., non-static), method invocation
+    // A static method invocation
     "invoke-static" = InvokeStatic([Id; 3]),
-    // Project the heap from a method invocation
-    "proj-heap" = ProjHeap(Id),
-    // Project the return value from a method invocation
-    "proj-val" = ProjVal(Id),
     // Method name that is being invoked
     "method" = MethodName(Id),
     // Actual paramters passed to a method
@@ -103,6 +97,8 @@ define_language! {
     /***                          Cast Stuff                     ***/
 
     // (can-cast? obj type-name)
+    // This node represents the boolean predicate "obj can legally be cast to
+    // type-name"
     "can-cast?" = CanCast([Id; 2]),
     // (cast obj type-name)
     "cast" = Cast([Id; 2]),
@@ -112,9 +108,11 @@ define_language! {
     /***                       Object Creation                  ***/
     // (new type actuals heap)
     //
-    // type should be the name of the constructor, actuals should be an (actuals
-    // id1 id2 ...) node (represented by Peg::Actuals), and heap is the heap in
-    // which object creation takes place.
+    // Represent a `new ...` expression.
+    // + `type`: is the name of the constructor
+    // + `actuals`: an (actuals id1 id2 ...) node representing the actual
+    //              arguments passed to the constructor
+    // + `heap` is the heap in which object creation takes place.
     "new" = New([Id; 3]),
 
     /***                         Loops                          ***/
@@ -128,8 +126,10 @@ define_language! {
     // A pass node returns the index of the first false value in a sequence
     "pass" = Pass(Id),
 
-    // Evaluate a theta node: (eval THETA N) produces the Nth value of the
-    // sequence THETA
+    // Evaluate a theta node at a given iteration.
+    //
+    // (eval THETA N) produces the Nth value of the sequence
+    // THETA.
     "eval" = Eval([Id; 2]),
 
     /***                   Maximal Expression Stuff           ***/
@@ -151,6 +151,29 @@ define_language! {
     "array-nil" = ArrayNil,
     "array-cons" = ArrayCons([Id; 2]),
     "array-access" = ArrayAccess([Id; 2]),
+
+    /***                  Generic Linked List                 ***/
+    "nil" = Nil,
+    "cons" = Cons([Id; 2]),
+
+    /***                  Type Annotations                    ***/
+
+    // A `type-annotation` node takes the form:
+    //
+    //     (type-annotation TYPE INTERFACES SUPERCLASSES)
+    //
+    // where
+    //
+    // + TYPE is the literal type (e.g., "int", "java.util.List")
+    //
+    // + INTERFACES is an alphabetically sorted linked list of interfaces that
+    //   this type implements
+    //
+    // + SUPERCLASSES is an inheritance-ordered sorted linked list of
+    //   superclasses that this type transitively extends
+    "type-annotation" = TypeAnnotation([Id; 3]),
+
+
   }
 }
 

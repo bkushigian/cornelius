@@ -1,0 +1,120 @@
+1:LVR:0:POS:Triangle@classify(int,int,int):4:0 |==> 1
+2:LVR:0:NEG:Triangle@classify(int,int,int):4:0 |==> -1
+3:LVR:POS:0:Triangle@classify(int,int,int):4:1 |==> 0
+4:LVR:POS:NEG:Triangle@classify(int,int,int):4:1 |==> -1
+5:LVR:POS:0:Triangle@classify(int,int,int):4:2 |==> 0
+6:LVR:POS:NEG:Triangle@classify(int,int,int):4:2 |==> -2
+7:LVR:POS:0:Triangle@classify(int,int,int):4:3 |==> 0
+8:LVR:POS:NEG:Triangle@classify(int,int,int):4:3 |==> -3
+9:LVR:0:POS:Triangle@classify(int,int,int):6:0 |==> 1
+10:LVR:0:NEG:Triangle@classify(int,int,int):6:0 |==> -1
+11:ROR:<=(int,int):<(int,int):Triangle@classify(int,int,int):6:a <= 0 |==> a < 0
+12:ROR:<=(int,int):==(int,int):Triangle@classify(int,int,int):6:a <= 0 |==> a == 0
+13:LVR:0:POS:Triangle@classify(int,int,int):6:0 |==> 1
+14:LVR:0:NEG:Triangle@classify(int,int,int):6:0 |==> -1
+15:ROR:<=(int,int):<(int,int):Triangle@classify(int,int,int):6:b <= 0 |==> b < 0
+16:ROR:<=(int,int):==(int,int):Triangle@classify(int,int,int):6:b <= 0 |==> b == 0
+17:COR:||(boolean,boolean):!=(boolean,boolean):Triangle@classify(int,int,int):6:a <= 0 || b <= 0 |==> a <= 0 != b <= 0
+18:LVR:0:POS:Triangle@classify(int,int,int):6:0 |==> 1
+19:LVR:0:NEG:Triangle@classify(int,int,int):6:0 |==> -1
+20:ROR:<=(int,int):<(int,int):Triangle@classify(int,int,int):6:c <= 0 |==> c < 0
+21:ROR:<=(int,int):==(int,int):Triangle@classify(int,int,int):6:c <= 0 |==> c == 0
+22:COR:||(boolean,boolean):!=(boolean,boolean):Triangle@classify(int,int,int):6:a <= 0 || b <= 0 || c <= 0 |==> (a <= 0 || b <= 0) != c <= 0
+23:STD:<RETURN>:<NO-OP>:Triangle@classify(int,int,int):7:return INVALID; |==> <NO-OP>
+24:LVR:0:POS:Triangle@classify(int,int,int):8:0 |==> 1
+25:LVR:0:NEG:Triangle@classify(int,int,int):8:0 |==> -1
+26:ROR:==(int,int):<=(int,int):Triangle@classify(int,int,int):9:a == b |==> a <= b
+27:ROR:==(int,int):>=(int,int):Triangle@classify(int,int,int):9:a == b |==> a >= b
+28:LVR:POS:0:Triangle@classify(int,int,int):10:1 |==> 0
+29:LVR:POS:NEG:Triangle@classify(int,int,int):10:1 |==> -1
+30:AOR:+(int,int):%(int,int):Triangle@classify(int,int,int):10:trian + 1 |==> trian % 1
+31:AOR:+(int,int):*(int,int):Triangle@classify(int,int,int):10:trian + 1 |==> trian * 1
+32:AOR:+(int,int):-(int,int):Triangle@classify(int,int,int):10:trian + 1 |==> trian - 1
+33:AOR:+(int,int):/(int,int):Triangle@classify(int,int,int):10:trian + 1 |==> trian / 1
+34:STD:<ASSIGN>:<NO-OP>:Triangle@classify(int,int,int):10:trian = trian + 1; |==> <NO-OP>
+35:ROR:==(int,int):<=(int,int):Triangle@classify(int,int,int):11:a == c |==> a <= c
+36:ROR:==(int,int):>=(int,int):Triangle@classify(int,int,int):11:a == c |==> a >= c
+37:LVR:POS:0:Triangle@classify(int,int,int):12:2 |==> 0
+38:LVR:POS:NEG:Triangle@classify(int,int,int):12:2 |==> -2
+39:AOR:+(int,int):%(int,int):Triangle@classify(int,int,int):12:trian + 2 |==> trian % 2
+40:AOR:+(int,int):*(int,int):Triangle@classify(int,int,int):12:trian + 2 |==> trian * 2
+41:AOR:+(int,int):-(int,int):Triangle@classify(int,int,int):12:trian + 2 |==> trian - 2
+42:AOR:+(int,int):/(int,int):Triangle@classify(int,int,int):12:trian + 2 |==> trian / 2
+43:STD:<ASSIGN>:<NO-OP>:Triangle@classify(int,int,int):12:trian = trian + 2; |==> <NO-OP>
+44:ROR:==(int,int):<=(int,int):Triangle@classify(int,int,int):13:b == c |==> b <= c
+45:ROR:==(int,int):>=(int,int):Triangle@classify(int,int,int):13:b == c |==> b >= c
+46:LVR:POS:0:Triangle@classify(int,int,int):14:3 |==> 0
+47:LVR:POS:NEG:Triangle@classify(int,int,int):14:3 |==> -3
+48:AOR:+(int,int):%(int,int):Triangle@classify(int,int,int):14:trian + 3 |==> trian % 3
+49:AOR:+(int,int):*(int,int):Triangle@classify(int,int,int):14:trian + 3 |==> trian * 3
+50:AOR:+(int,int):-(int,int):Triangle@classify(int,int,int):14:trian + 3 |==> trian - 3
+51:AOR:+(int,int):/(int,int):Triangle@classify(int,int,int):14:trian + 3 |==> trian / 3
+52:STD:<ASSIGN>:<NO-OP>:Triangle@classify(int,int,int):14:trian = trian + 3; |==> <NO-OP>
+53:LVR:0:POS:Triangle@classify(int,int,int):15:0 |==> 1
+54:LVR:0:NEG:Triangle@classify(int,int,int):15:0 |==> -1
+55:ROR:==(int,int):<=(int,int):Triangle@classify(int,int,int):15:trian == 0 |==> trian <= 0
+56:ROR:==(int,int):>=(int,int):Triangle@classify(int,int,int):15:trian == 0 |==> trian >= 0
+57:AOR:+(int,int):%(int,int):Triangle@classify(int,int,int):16:a + b |==> a % b
+58:AOR:+(int,int):*(int,int):Triangle@classify(int,int,int):16:a + b |==> a * b
+59:AOR:+(int,int):-(int,int):Triangle@classify(int,int,int):16:a + b |==> a - b
+60:AOR:+(int,int):/(int,int):Triangle@classify(int,int,int):16:a + b |==> a / b
+61:ROR:<=(int,int):<(int,int):Triangle@classify(int,int,int):16:a + b <= c |==> a + b < c
+62:ROR:<=(int,int):==(int,int):Triangle@classify(int,int,int):16:a + b <= c |==> a + b == c
+63:AOR:+(int,int):%(int,int):Triangle@classify(int,int,int):16:a + c |==> a % c
+64:AOR:+(int,int):*(int,int):Triangle@classify(int,int,int):16:a + c |==> a * c
+65:AOR:+(int,int):-(int,int):Triangle@classify(int,int,int):16:a + c |==> a - c
+66:AOR:+(int,int):/(int,int):Triangle@classify(int,int,int):16:a + c |==> a / c
+67:ROR:<=(int,int):<(int,int):Triangle@classify(int,int,int):16:a + c <= b |==> a + c < b
+68:ROR:<=(int,int):==(int,int):Triangle@classify(int,int,int):16:a + c <= b |==> a + c == b
+69:COR:||(boolean,boolean):!=(boolean,boolean):Triangle@classify(int,int,int):16:a + b <= c || a + c <= b |==> a + b <= c != a + c <= b
+70:AOR:+(int,int):%(int,int):Triangle@classify(int,int,int):16:b + c |==> b % c
+71:AOR:+(int,int):*(int,int):Triangle@classify(int,int,int):16:b + c |==> b * c
+72:AOR:+(int,int):-(int,int):Triangle@classify(int,int,int):16:b + c |==> b - c
+73:AOR:+(int,int):/(int,int):Triangle@classify(int,int,int):16:b + c |==> b / c
+74:ROR:<=(int,int):<(int,int):Triangle@classify(int,int,int):16:b + c <= a |==> b + c < a
+75:ROR:<=(int,int):==(int,int):Triangle@classify(int,int,int):16:b + c <= a |==> b + c == a
+76:COR:||(boolean,boolean):!=(boolean,boolean):Triangle@classify(int,int,int):16:a + b <= c || a + c <= b || b + c <= a |==> (a + b <= c || a + c <= b) != b + c <= a
+77:STD:<RETURN>:<NO-OP>:Triangle@classify(int,int,int):17:return INVALID; |==> <NO-OP>
+78:STD:<RETURN>:<NO-OP>:Triangle@classify(int,int,int):19:return SCALENE; |==> <NO-OP>
+79:LVR:POS:0:Triangle@classify(int,int,int):20:3 |==> 0
+80:LVR:POS:NEG:Triangle@classify(int,int,int):20:3 |==> -3
+81:ROR:>(int,int):!=(int,int):Triangle@classify(int,int,int):20:trian > 3 |==> trian != 3
+82:ROR:>(int,int):>=(int,int):Triangle@classify(int,int,int):20:trian > 3 |==> trian >= 3
+83:STD:<RETURN>:<NO-OP>:Triangle@classify(int,int,int):21:return EQUILATERAL; |==> <NO-OP>
+84:LVR:POS:0:Triangle@classify(int,int,int):22:1 |==> 0
+85:LVR:POS:NEG:Triangle@classify(int,int,int):22:1 |==> -1
+86:ROR:==(int,int):<=(int,int):Triangle@classify(int,int,int):22:trian == 1 |==> trian <= 1
+87:ROR:==(int,int):>=(int,int):Triangle@classify(int,int,int):22:trian == 1 |==> trian >= 1
+88:AOR:+(int,int):%(int,int):Triangle@classify(int,int,int):22:a + b |==> a % b
+89:AOR:+(int,int):*(int,int):Triangle@classify(int,int,int):22:a + b |==> a * b
+90:AOR:+(int,int):-(int,int):Triangle@classify(int,int,int):22:a + b |==> a - b
+91:AOR:+(int,int):/(int,int):Triangle@classify(int,int,int):22:a + b |==> a / b
+92:ROR:>(int,int):!=(int,int):Triangle@classify(int,int,int):22:a + b > c |==> a + b != c
+93:ROR:>(int,int):>=(int,int):Triangle@classify(int,int,int):22:a + b > c |==> a + b >= c
+94:COR:&&(boolean,boolean):==(boolean,boolean):Triangle@classify(int,int,int):22:trian == 1 && a + b > c |==> trian == 1 == a + b > c
+95:STD:<RETURN>:<NO-OP>:Triangle@classify(int,int,int):23:return ISOSCELES; |==> <NO-OP>
+96:LVR:POS:0:Triangle@classify(int,int,int):24:2 |==> 0
+97:LVR:POS:NEG:Triangle@classify(int,int,int):24:2 |==> -2
+98:ROR:==(int,int):<=(int,int):Triangle@classify(int,int,int):24:trian == 2 |==> trian <= 2
+99:ROR:==(int,int):>=(int,int):Triangle@classify(int,int,int):24:trian == 2 |==> trian >= 2
+100:AOR:+(int,int):%(int,int):Triangle@classify(int,int,int):24:a + c |==> a % c
+101:AOR:+(int,int):*(int,int):Triangle@classify(int,int,int):24:a + c |==> a * c
+102:AOR:+(int,int):-(int,int):Triangle@classify(int,int,int):24:a + c |==> a - c
+103:AOR:+(int,int):/(int,int):Triangle@classify(int,int,int):24:a + c |==> a / c
+104:ROR:>(int,int):!=(int,int):Triangle@classify(int,int,int):24:a + c > b |==> a + c != b
+105:ROR:>(int,int):>=(int,int):Triangle@classify(int,int,int):24:a + c > b |==> a + c >= b
+106:COR:&&(boolean,boolean):==(boolean,boolean):Triangle@classify(int,int,int):24:trian == 2 && a + c > b |==> trian == 2 == a + c > b
+107:STD:<RETURN>:<NO-OP>:Triangle@classify(int,int,int):25:return ISOSCELES; |==> <NO-OP>
+108:LVR:POS:0:Triangle@classify(int,int,int):26:3 |==> 0
+109:LVR:POS:NEG:Triangle@classify(int,int,int):26:3 |==> -3
+110:ROR:==(int,int):<=(int,int):Triangle@classify(int,int,int):26:trian == 3 |==> trian <= 3
+111:ROR:==(int,int):>=(int,int):Triangle@classify(int,int,int):26:trian == 3 |==> trian >= 3
+112:AOR:+(int,int):%(int,int):Triangle@classify(int,int,int):26:b + c |==> b % c
+113:AOR:+(int,int):*(int,int):Triangle@classify(int,int,int):26:b + c |==> b * c
+114:AOR:+(int,int):-(int,int):Triangle@classify(int,int,int):26:b + c |==> b - c
+115:AOR:+(int,int):/(int,int):Triangle@classify(int,int,int):26:b + c |==> b / c
+116:ROR:>(int,int):!=(int,int):Triangle@classify(int,int,int):26:b + c > a |==> b + c != a
+117:ROR:>(int,int):>=(int,int):Triangle@classify(int,int,int):26:b + c > a |==> b + c >= a
+118:COR:&&(boolean,boolean):==(boolean,boolean):Triangle@classify(int,int,int):26:trian == 3 && b + c > a |==> trian == 3 == b + c > a
+119:STD:<RETURN>:<NO-OP>:Triangle@classify(int,int,int):27:return ISOSCELES; |==> <NO-OP>
+120:EVR:<IDENTIFIER(int)>:<DEFAULT>:Triangle@classify(int,int,int):28:INVALID |==> 0
