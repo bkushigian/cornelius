@@ -183,18 +183,16 @@ public class ExprSerializer {
             ns = line.trim().substring(1, line.length() - 1);
 
             // Handle new max expression
-          } else if (line.startsWith("maxExpr:")) {
-            StringJoiner joiner = new StringJoiner(" ");
-            while (line != null && line.endsWith("\\\n")) {
+          } else if (line.startsWith(">>>startMaxExpr<<<")) {
+            StringJoiner joiner = new StringJoiner("\n");
+            while ((line = in.readLine()) != null && !line.startsWith(">>>endMaxExpr<<<")) {
              joiner.add(line.substring(0, line.length() - 2));
-             line = in.readLine();
             }
-            if (line == null) throw new RuntimeException("Illegal expr file");
+            if (line == null) throw new RuntimeException("Illegal expr file: " + file.getName());
             assert ns != null;
             assert maxExpr == null;
-            int idx = line.indexOf(":");
             try {
-              maxExpr = new MaxExpr(ns, line.trim().substring(idx + 1));
+              maxExpr = new MaxExpr(ns, joiner.toString());
               nsToMaxExprs.computeIfAbsent(ns, k -> new ArrayList<>()).add(maxExpr);
             } catch (ParseProblemException e) {
               maxExpr = null;
