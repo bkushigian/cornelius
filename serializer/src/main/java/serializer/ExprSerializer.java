@@ -279,7 +279,7 @@ public class ExprSerializer {
           } else if (line.startsWith("-----")) {
             maxExpr = null;
           } else if (!line.isEmpty()) {
-            throw new RuntimeException("Invalid file line: " + i + ": " + line);
+            throw new RuntimeException("In " + file.getName() + ": Invalid file line: " + i + ": " + line);
           }
         }
       } // `ns` and `maxExpr` are out of scope
