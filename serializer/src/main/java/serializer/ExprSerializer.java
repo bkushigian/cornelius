@@ -178,7 +178,6 @@ public class ExprSerializer {
           line = line.trim();
 
           // Handle new namespace
-          System.out.println("INSPECTING LINE: " + line);
           if (line.startsWith("[")) {
             assert line.endsWith("]");
             ns = line.trim().substring(1, line.length() - 1);
@@ -187,15 +186,14 @@ public class ExprSerializer {
           } else if (line.startsWith(">>>startMaxExpr<<<")) {
             StringJoiner joiner = new StringJoiner("\n");
             while ((line = in.readLine()) != null && !line.startsWith(">>>endMaxExpr<<<")) {
-             System.out.println("    MAX-EXPR LINE: " + line);
+              i++;
              joiner.add(line);
             }
-            System.out.println("INSPECTING LINE: " + line);
+            ++i;
             if (line == null) throw new RuntimeException("Illegal expr file: " + file.getName() + ":" + i);
             assert ns != null;
             assert maxExpr == null;
             try {
-              System.out.println("Max Expr Found: " + joiner.toString());
               maxExpr = new MaxExpr(ns, joiner.toString());
               nsToMaxExprs.computeIfAbsent(ns, k -> new ArrayList<>()).add(maxExpr);
             } catch (ParseProblemException e) {
@@ -276,16 +274,16 @@ public class ExprSerializer {
             }
             String m_no = line.substring(0, line.indexOf(':'));
             line = in.readLine();
-            System.out.println("INSPECTING LINE: " + line);
+            i++;
             if (!line.startsWith(">>>startMutant<<<")) {
               throw new RuntimeException("Illegal expr file: " + file.getName());
             }
             final StringJoiner joiner = new StringJoiner("\n");
             while ((line = in.readLine()) != null && !line.startsWith(">>>endMutant<<<")) {
-              System.out.println("    MUTANT LINE: " + line);
+              i++;
               joiner.add(line);
             }
-            System.out.println("INSPECTING LINE: " + line);
+            i++;
             if (line == null) throw new RuntimeException("Illegal expr file: " + file.getName() + ":" + i);
             maxExpr.addMutant(m_no, joiner.toString());
             // Handle maxExpr Separators

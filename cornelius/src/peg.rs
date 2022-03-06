@@ -1,11 +1,12 @@
 use egg::*;
-use std::num::Wrapping;
+use crate::primitives::{JavaLong, JavaInt, IsZero};
 
 pub type EGraph = egg::EGraph<Peg, PegAnalysis>;
 
 define_language! {
   pub enum Peg {
-    Num(i32),
+    Num(JavaInt),
+    Long(JavaLong),
     Bool(bool),
     // A generic error. This is a stand in for all exceptional behavior and is
     // unsound.
@@ -173,7 +174,7 @@ define_language! {
     //   superclasses that this type transitively extends
     "type-annotation" = TypeAnnotation([Id; 3]),
 
-
+    "instanceof" = InstanceOf([Id; 2]),
   }
 }
 
@@ -187,6 +188,30 @@ pub fn is_var(v1: &'static str) -> impl Fn(&mut EGraph, Id, &Subst) -> bool {
     move |egraph, _, subst| egraph[subst[v1]].data.variable.is_some()
 }
 
+pub fn are_bit_disjoint_constants(a: &'static str, b: &'static str) 
+    -> impl Fn(&mut EGraph, Id, &Subst) -> bool
+{
+    let a: egg::Var = a.parse().unwrap();
+    let b: egg::Var = b.parse().unwrap();
+    let zero_int = Peg::Num(JavaInt::from(0));
+    let zero_long = Peg::Long(JavaLong::from(0));
+    move |egraph, _, subst | {
+        let a_const = egraph[subst[a]].data.constant.clone();
+        let b_const = egraph[subst[b]].data.constant.clone();
+        if a_const.is_some() && b_const.is_some() {
+            let a = egraph.add(a_const.unwrap());
+            let b = egraph.add(b_const.unwrap());
+            let bw_and: Id = egraph.add(Peg::BinAnd([a,b]));
+            let nodes = egraph[bw_and].nodes.clone();
+            nodes.contains(&zero_int) || nodes.contains(&zero_long)
+
+        }
+        else {
+            false
+        }
+    }
+}
+
 pub fn is_not_same_var(
     v1: &'static str,
     v2: &'static str,
@@ -197,13 +222,6 @@ pub fn is_not_same_var(
 }
 
 impl Peg {
-    pub fn as_int(&self) -> Option<i32> {
-        match self {
-            Peg::Num(n) => Some(*n),
-            _ => None,
-        }
-    }
-
     pub fn as_bool(&self) -> Option<bool> {
         match self {
             Peg::Bool(b) => Some(*b),
@@ -212,9 +230,8 @@ impl Peg {
     }
 
     pub fn is_const(&self) -> bool {
-        use Peg::*;
         match self {
-            Num(_) | Bool(_) => true,
+            Peg::Num(_) | Peg::Bool(_) | Peg::Long(_) => true,
             _ => false,
         }
     }
@@ -228,10 +245,11 @@ impl Peg {
     }
 
     pub fn is_num_binop(&self) -> bool {
-        use Peg::*;
         match self {
-            Add(..) | Mul(..) | Div(..) | Sub(..) | BinOr(..) | BinAnd(..) | LShift(..)
-            | URShift(..) | SRShift(..) => true,
+            Peg::Add(..) | Peg::Mul(..) | Peg::Div(..) | Peg::Sub(..)
+                         | Peg::BinOr(..) | Peg::BinAnd(..) | Peg::LShift(..)
+                         | Peg::URShift(..) | Peg::SRShift(..)
+              => true,
             _ => false,
         }
     }
@@ -255,145 +273,188 @@ impl Peg {
         }
     }
 
-    pub fn plus(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn plus(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Num(a), Num(b)) => Num(a + b),
-            _ => panic!(),
+            (Peg::Num(a), Peg::Num(b)) => Some(Peg::Num(*a + *b)),
+            (Peg::Long(a), Peg::Long(b)) => Some(Peg::Long(*a + *b)),
+            (Peg::Num(a), Peg::Long(b)) => Some(Peg::Long(*a + *b)),
+            (Peg::Long(a), Peg::Num(b)) => Some(Peg::Long(*a + *b)),
+            _ => None,
         }
     }
 
-    pub fn equal(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn equal(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Num(a), Num(b)) => Bool(a == b),
-            (Bool(a), Bool(b)) => Bool(a == b),
-            _ => panic!(),
+            (Peg::Num(a), Peg::Num(b)) => Some(Peg::Bool(a == b)),
+            (Peg::Long(a), Peg::Long(b)) => Some(Peg::Bool(a == b)),
+            (Peg::Num(a), Peg::Long(b)) => Some(Peg::Bool(a == b)),
+            (Peg::Long(a), Peg::Num(b)) => Some(Peg::Bool(a == b)),
+            (Peg::Bool(a), Peg::Bool(b)) => Some(Peg::Bool(a == b)),
+            _ => None,
         }
     }
 
-    pub fn nequal(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn nequal(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Num(a), Num(b)) => Bool(a != b),
-            (Bool(a), Bool(b)) => Bool(a != b),
-            _ => panic!(),
+            (Peg::Num(a), Peg::Num(b)) => Some(Peg::Bool(a != b)),
+            (Peg::Long(a), Peg::Long(b)) => Some(Peg::Bool(a != b)),
+            (Peg::Num(a), Peg::Long(b)) => Some(Peg::Bool(a != b)),
+            (Peg::Long(a), Peg::Num(b)) => Some(Peg::Bool(a != b)),
+            (Peg::Bool(a), Peg::Bool(b)) => Some(Peg::Bool(a != b)),
+            _ => None,
         }
     }
 
-    pub fn lt(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn lt(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Num(a), Num(b)) => Bool(a < b),
-            _ => panic!(),
+            (Peg::Num(a), Peg::Num(b)) => Some(Peg::Bool(a.lt(b))),
+            (Peg::Long(a), Peg::Long(b)) => Some(Peg::Bool(a.lt(b))),
+            (Peg::Num(a), Peg::Long(b)) => Some(Peg::Bool(a.promote_to_java_long().lt(b))),
+            (Peg::Long(a), Peg::Num(b)) => Some(Peg::Bool(a.lt(&b.promote_to_java_long()))),
+            _ => None,
         }
     }
 
-    pub fn le(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn le(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Num(a), Num(b)) => Bool(a <= b),
-            _ => panic!(),
+            (Peg::Num(a), Peg::Num(b)) => Some(Peg::Bool(a.le(b))),
+            (Peg::Long(a), Peg::Long(b)) => Some(Peg::Bool(a.le(b))),
+            (Peg::Num(a), Peg::Long(b)) => Some(Peg::Bool(a.promote_to_java_long().le(b))),
+            (Peg::Long(a), Peg::Num(b)) => Some(Peg::Bool(a.le(&b.promote_to_java_long()))),
+            _ => None,
         }
     }
 
-    pub fn gt(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn gt(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Num(a), Num(b)) => Bool(a > b),
-            _ => panic!(),
+            (Peg::Num(a), Peg::Num(b)) => Some(Peg::Bool(a.gt(b))),
+            (Peg::Long(a), Peg::Long(b)) => Some(Peg::Bool(a.gt(b))),
+            (Peg::Num(a), Peg::Long(b)) => Some(Peg::Bool(a.promote_to_java_long().gt(b))),
+            (Peg::Long(a), Peg::Num(b)) => Some(Peg::Bool(a.gt(&b.promote_to_java_long()))),
+            _ => None,
         }
     }
 
-    pub fn ge(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn ge(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Num(a), Num(b)) => Bool(a >= b),
-            _ => panic!(),
+            (Peg::Num(a), Peg::Num(b)) => Some(Peg::Bool(a.ge(b))),
+            (Peg::Long(a), Peg::Long(b)) => Some(Peg::Bool(a.ge(b))),
+            (Peg::Num(a), Peg::Long(b)) => Some(Peg::Bool(a.promote_to_java_long().ge(b))),
+            (Peg::Long(a), Peg::Num(b)) => Some(Peg::Bool(a.ge(&b.promote_to_java_long()))),
+            _ => None,
         }
     }
 
-    pub fn minus(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn minus(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Num(a), Num(b)) => Num(a - b),
-            _ => panic!(),
+            (Peg::Num(a), Peg::Num(b)) => Some(Peg::Num(*a - *b)),
+            (Peg::Long(a), Peg::Long(b)) => Some(Peg::Long(*a - *b)),
+            (Peg::Num(a), Peg::Long(b)) => Some(Peg::Long(*a - *b)),
+            (Peg::Long(a), Peg::Num(b)) => Some(Peg::Long(*a - *b)),
+            _ => None,
         }
     }
 
-    pub fn mult(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn mult(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Num(a), Num(b)) => Num(a * b),
-            _ => panic!(),
+            (Peg::Num(a), Peg::Num(b)) => Some(Peg::Num(*a * *b)),
+            (Peg::Long(a), Peg::Long(b)) => Some(Peg::Long(*a * *b)),
+            (Peg::Num(a), Peg::Long(b)) => Some(Peg::Long(*a * *b)),
+            (Peg::Long(a), Peg::Num(b)) => Some(Peg::Long(*a * *b)),
+            _ => None,
         }
     }
 
-    pub fn div(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn div(a: &Peg, b: &Peg) -> Option<Peg> {
+        match b {
+            Peg::Num(b) => if b.is_zero() { return Some(Peg::Error)},
+            Peg::Long(b) => if b.is_zero() { return Some(Peg::Error)},
+            _ => return None,
+        }
         match (a, b) {
-            (Num(a), Num(b)) => Num(a / b),
-            _ => panic!(),
+            (Peg::Num(a), Peg::Num(b)) => Some(Peg::Num(*a / *b)),
+            (Peg::Long(a), Peg::Long(b)) => Some(Peg::Long(*a / *b)),
+            (Peg::Num(a), Peg::Long(b)) => Some(Peg::Long(*a / *b)),
+            (Peg::Long(a), Peg::Num(b)) => Some(Peg::Long(*a / *b)),
+            _ => None,
         }
     }
 
-    pub fn bin_and(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn bin_and(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Num(a), Num(b)) => Num(a & b),
-            _ => panic!(),
+            (Peg::Num(a), Peg::Num(b)) => Some(Peg::Num(*a & *b)),
+            (Peg::Long(a), Peg::Long(b)) => Some(Peg::Long(*a & *b)),
+            (Peg::Num(a), Peg::Long(b)) => Some(Peg::Long(*a & *b)),
+            (Peg::Long(a), Peg::Num(b)) => Some(Peg::Long(*a & *b)),
+            _ => None,
         }
     }
 
-    pub fn bin_or(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn bin_or(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Num(a), Num(b)) => Num(a | b),
-            _ => panic!(),
+            (Peg::Num(a), Peg::Num(b)) => Some(Peg::Num(*a | *b)),
+            (Peg::Long(a), Peg::Long(b)) => Some(Peg::Long(*a | *b)),
+            (Peg::Num(a), Peg::Long(b)) => Some(Peg::Long(*a | *b)),
+            (Peg::Long(a), Peg::Num(b)) => Some(Peg::Long(*a | *b)),
+            _ => None,
         }
     }
 
-    pub fn srshift(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn xor(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Num(a), Num(b)) => {
-                let a = *a as u32;
-                let b = *b as u32;
-                Num((a >> b) as i32)
-            }
-            _ => panic!(),
+            (Peg::Num(a), Peg::Num(b)) => Some(Peg::Num(*a ^ *b)),
+            (Peg::Long(a), Peg::Long(b)) => Some(Peg::Long(*a ^ *b)),
+            (Peg::Num(a), Peg::Long(b)) => Some(Peg::Long(*a ^ *b)),
+            (Peg::Long(a), Peg::Num(b)) => Some(Peg::Long(*a ^ *b)),
+            _ => None,
         }
     }
 
-    pub fn urshift(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn srshift(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Num(a), Num(b)) => Num(a >> b),
-            _ => panic!(),
+            (Peg::Num(a), Peg::Num(b)) => Some(Peg::Num(*a >> *b)),
+            (Peg::Long(a), Peg::Long(b)) => Some(Peg::Long(*a >> *b)),
+            (Peg::Num(a), Peg::Long(b)) => Some(Peg::Long(*a >> *b)),
+            (Peg::Long(a), Peg::Num(b)) => Some(Peg::Long(*a >> *b)),
+            _ => None,
         }
     }
 
-    pub fn lshift(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn urshift(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Num(a), Num(b)) => Num(a << b),
-            _ => panic!(),
+            _ => None,
         }
     }
 
-    pub fn and(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn lshift(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Bool(a), Bool(b)) => Bool(*a && *b),
-            _ => panic!(),
+            (Peg::Num(a), Peg::Num(b)) => Some(Peg::Num(*a << *b)),
+            (Peg::Long(a), Peg::Long(b)) => Some(Peg::Long(*a << *b)),
+            (Peg::Num(a), Peg::Long(b)) => Some(Peg::Long(*a << *b)),
+            (Peg::Long(a), Peg::Num(b)) => Some(Peg::Long(*a << *b)),
+            _ => None,
         }
     }
 
-    pub fn or(a: &Peg, b: &Peg) -> Peg {
-        use Peg::*;
+    pub fn and(a: &Peg, b: &Peg) -> Option<Peg> {
         match (a, b) {
-            (Bool(a), Bool(b)) => Bool(*a || *b),
-            _ => panic!(),
+            (Peg::Bool(a), Peg::Bool(b)) => Some(Peg::Bool(*a && *b)),
+            _ => None,
+        }
+    }
+
+    pub fn or(a: &Peg, b: &Peg) -> Option<Peg> {
+        match (a, b) {
+            (Peg::Bool(a), Peg::Bool(b)) => Some(Peg::Bool(*a || *b)),
+            _ => None,
+        }
+    }
+
+    pub fn neg(a: &Peg) -> Option<Peg> {
+        match a {
+            Peg::Num(x) => Some(Peg::Num(- *x)),
+            Peg::Long(x) => Some(Peg::Long(- *x)),
+            _ => None,
         }
     }
 }
@@ -422,32 +483,28 @@ fn eval(egraph: &EGraph, enode: &Peg) -> Option<Peg> {
 
     match enode {
         // Arithmetic
-        Peg::Num(_) | Peg::Bool(_) => Some(enode.clone()),
-        Peg::Add([a, b]) => Some(Peg::Num(
-            (Wrapping(x(a)?.as_int()?) + Wrapping(x(b)?.as_int()?)).0,
-        )),
-        Peg::Sub([a, b]) => Some(Peg::Num(
-            (Wrapping(x(a)?.as_int()?) - Wrapping(x(b)?.as_int()?)).0,
-        )),
-        Peg::Mul([a, b]) => Some(Peg::Num(
-            (Wrapping(x(a)?.as_int()?) * Wrapping(x(b)?.as_int()?)).0,
-        )),
-        Peg::Div([a, b]) => {
-            let d = x(b)?.as_int()?;
-            if d == 0 {
-                Some(Peg::Error)
-            } else {
-                Some(Peg::Num(x(a)?.as_int()? / d))
-            }
-        }
+        Peg::Long(_) | Peg::Num(_) | Peg::Bool(_) => Some(enode.clone()),
+        Peg::Add([a, b]) => Peg::plus(&x(a)?, &x(b)?),
+        Peg::Sub([a, b]) => Peg::minus(&x(a)?, &x(b)?),
+        Peg::Mul([a, b]) => Peg::mult(&x(a)?, &x(b)?),
+        Peg::Div([a, b]) => Peg::div(&x(a)?, &x(b)?),
 
-        Peg::Neg(a) => Some(Peg::Num(-x(a)?.as_int()?)),
+        Peg::Neg(a) => Peg::neg(&x(a)?),
+
+        // Binary Ops
+        Peg::BinAnd([a, b]) => Peg::bin_and(&x(a)?, &x(b)?),
+        Peg::BinOr([a, b]) => Peg::bin_or(&x(a)?, &x(b)?),
+        Peg::Xor([a, b]) => Peg::xor(&x(a)?, &x(b)?),
+
+        // Shifts
+        Peg::SRShift([a, b]) => Peg::srshift(&x(a)?, &x(b)?),
+        Peg::LShift([a, b]) => Peg::lshift(&x(a)?, &x(b)?),
 
         // Comparison
-        Peg::Gte([a, b]) => Some(Peg::Bool(x(a)?.as_int()? >= x(b)?.as_int()?)),
-        Peg::Gt([a, b]) => Some(Peg::Bool(x(a)?.as_int()? > x(b)?.as_int()?)),
-        Peg::Lte([a, b]) => Some(Peg::Bool(x(a)?.as_int()? <= x(b)?.as_int()?)),
-        Peg::Lt([a, b]) => Some(Peg::Bool(x(a)?.as_int()? < x(b)?.as_int()?)),
+        Peg::Gte([a, b]) => Peg::ge(&x(a)?, &x(b)?),
+        Peg::Gt([a, b]) => Peg::gt(&x(a)?, &x(b)?),
+        Peg::Lte([a, b]) => Peg::le(&x(a)?, &x(b)?),
+        Peg::Lt([a, b]) => Peg::lt(&x(a)?, &x(b)?),
 
         Peg::Equ([a, b]) => {
             // To check for equality,

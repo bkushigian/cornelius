@@ -82,6 +82,10 @@ public abstract class PegNode {
         return Optional.empty();
     }
 
+    public Optional<Long> asLong() {
+        return Optional.empty();
+    }
+
     public Optional<Boolean> asBoolean() {
         return Optional.empty();
     }
@@ -186,6 +190,53 @@ public abstract class PegNode {
 
     }
 
+    public final static class LongLit extends PegNode {
+        public final long value;
+        private LongLit(long value) {
+            this.value = value;
+            idLookup.put(this.id, this);
+            litLookup.put(value, this);
+        }
+
+        @Override
+        public boolean isIntLit() {
+            return true;
+        }
+
+        @Override
+        public Optional<Long> asLong() {
+            return Optional.of(value);
+        }
+
+        @Override
+        public <R, A> R accept(PegVisitor<R, A> visitor, A arg) {
+            return visitor.visit(this, arg);
+        }
+
+        @Override
+        public boolean isConst() {
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%dl", value);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            IntLit intLit = (IntLit) o;
+            return value == intLit.value;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(value);
+        }
+
+    }
     public final static class BoolLit extends PegNode {
         public final boolean value;
         private BoolLit(boolean value) {
@@ -591,6 +642,13 @@ public abstract class PegNode {
         return litLookup.get(n);
     }
 
+    public static PegNode longLit(long n) {
+        if (!litLookup.containsKey(n)) {
+            return new LongLit(n);
+        }
+        return litLookup.get(n);
+    }
+
     public static PegNode boolLit(boolean b) {
         if (!litLookup.containsKey(b)) {
             return new BoolLit(b);
@@ -685,6 +743,9 @@ public abstract class PegNode {
         return opNode("new", stringLit(type).id, actuals, heap);
     }
 
+    public static PegNode instanceOf(final Integer val, final String objName) {
+        return opNode("instanceof", val, stringLit(objName).id);
+    }
 
     /**
      * Pass node for a theta node

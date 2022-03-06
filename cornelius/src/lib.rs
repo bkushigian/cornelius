@@ -7,6 +7,7 @@ pub mod rewrites;
 pub mod subjects;
 mod tests;
 pub mod util;
+pub mod primitives;
 
 #[macro_use]
 extern crate log;

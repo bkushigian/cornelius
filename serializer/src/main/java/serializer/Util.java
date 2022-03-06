@@ -204,6 +204,27 @@ public class Util {
   }
 
 
+  /**
+   * Decode a long string. Handles Decimal, hex and octal formats.
+   *
+   * TODO handle binary "[+-]?0bn+" formats
+   * @param s
+   * @return
+   */
+  public static Optional<Long> parseLong(String s) {
+    if (s == null) return Optional.empty();
+    s = s.toLowerCase();
+    if (s.endsWith("l")) {
+      s = s.substring(0, s.length() - 1);
+    }
+    try {
+      return Optional.of(Long.decode(s));
+    } catch (NumberFormatException e) {
+      return Optional.empty();
+    }
+  }
+
+
 
   /**
    * Recursively visit a directory structure and collect all Java files

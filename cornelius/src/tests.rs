@@ -5,6 +5,7 @@ use crate::rewrites::RewriteSystem;
 use crate::util::EqRel;
 use egg::*;
 use std::env;
+use crate::primitives::{JavaInt, JavaLong};
 
 use crate::delta::dd;
 use std::time::Instant;
@@ -20,12 +21,18 @@ mod const_prop {
         assert!(ensure_const_prop_i32("(+ 1 2)", 3));
         assert!(!ensure_const_prop_i32("(+ 1 2)", 4));
         assert!(ensure_const_prop_i32("(+ 1 (+ 2 3))", 6));
+
+        assert!(ensure_const_prop_i64("(+ 1l (+ 2 3))", 6));
+        assert!(ensure_const_prop_i64("(+ 1 (+ 2l 3))", 6));
     }
 
     #[test]
     fn sub() {
         assert!(ensure_const_prop_i32("(- 1 2)", -1));
         assert!(ensure_const_prop_i32("(- 1 (- 2 3))", 1 - (2 - 3)));
+
+        assert!(ensure_const_prop_i64("(- 1l (+ 2 3))", 1 - (2 + 3)));
+        assert!(ensure_const_prop_i64("(- 1 (+ 2 3l))", 1 - (2 + 3)));
     }
 
     #[test]
@@ -36,6 +43,8 @@ mod const_prop {
         assert!(ensure_const_prop_i32("(* 11 (* 2 3))", 66));
         assert!(ensure_const_prop_i32("(* (* 4 5) (* 2 3))", 4 * 5 * 2 * 3));
         assert!(ensure_const_prop_i32("(* 0 2)", 0));
+
+        assert!(ensure_const_prop_i64("(* (* 4 5L) (* 2l 3))", 4 * 5 * 2 * 3));
     }
 
     #[test]
@@ -43,6 +52,22 @@ mod const_prop {
         assert!(ensure_const_prop_i32("(/ 1 2)", 0));
         assert!(ensure_const_prop_i32("(/ 4 2)", 2));
         assert!(ensure_is_error("(/ 4 0)"));
+
+        assert!(ensure_const_prop_i64("(/ 4l 2)", 2));
+        assert!(ensure_const_prop_i64("(/ 4 2l)", 2));
+        assert!(ensure_const_prop_i64("(/ 4L 2l)", 2));
+    }
+
+    #[test]
+    fn bin_or() {
+        assert!(ensure_const_prop_i32("(| 2 4)", 6));
+        assert!(ensure_const_prop_i32("(| 2 3)", 3));
+    }
+
+    #[test]
+    fn bin_xor() {
+        assert!(ensure_const_prop_i32("(^ 2 4)", 6));
+        assert!(ensure_const_prop_i32("(^ 1 3)", 2));
     }
 
     // The following tests ensure that Cornelius doesn't employ constant
@@ -145,10 +170,25 @@ mod const_prop {
         let rules: Box<RewriteSystem> = crate::rewrites::rw_rules();
         let runner = Runner::default().with_egraph(egraph).run(rules.iter());
         match runner.egraph[id].data.constant {
-            Some(Peg::Num(result)) => expected == result,
+            Some(Peg::Num(result)) => JavaInt::from(expected) == result,
             _ => false,
         }
     }
+
+    fn ensure_const_prop_i64(start: &str, expected: i64) -> bool {
+        let start_expr = start.parse().unwrap();
+        // let mut expected_expr: RecExpr<Peg> = RecExpr::default();
+        //expected_expr.add(Peg::Num(expected));
+        let mut egraph = EGraph::default();
+        let id = egraph.add_expr(&start_expr);
+        let rules: Box<RewriteSystem> = crate::rewrites::rw_rules();
+        let runner = Runner::default().with_egraph(egraph).run(rules.iter());
+        match runner.egraph[id].data.constant {
+            Some(Peg::Long(result)) => JavaLong::from(expected) == result,
+            _ => false,
+        }
+    }
+
 
     fn ensure_is_error(start: &str) -> bool {
         let start_expr = start.parse().unwrap();

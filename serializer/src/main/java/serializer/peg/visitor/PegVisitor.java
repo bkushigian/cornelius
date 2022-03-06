@@ -102,6 +102,16 @@ public class PegVisitor<R, A> {
     return table.get(node);
   }
 
+  public R visit(final PegNode.LongLit node, final A arg) {
+    if (table.containsKey(node)) {
+      return table.get(node);
+    }
+    preVisit(node, arg);
+
+    table.put(node, combine(node, arg));
+    return table.get(node);
+  }
+
   public R visit(final PegNode.BoolLit node, final A arg) {
     if (table.containsKey(node)) {
       return table.get(node);
@@ -139,6 +149,7 @@ public class PegVisitor<R, A> {
   protected void preVisit(final PegNode.ThetaNode node, final A arg) {}
   protected void preVisit(final PegNode.PhiNode node, final A arg) {}
   protected void preVisit(final PegNode.IntLit node, final A arg) {}
+  protected void preVisit(final PegNode.LongLit node, final A arg) {}
   protected void preVisit(final PegNode.BoolLit node, final A arg) {}
   protected void preVisit(final PegNode.StringLit node, final A arg) {}
 
@@ -159,6 +170,10 @@ public class PegVisitor<R, A> {
   }
 
   protected R combine(final PegNode.IntLit node, final A arg) {
+    return null;
+  }
+
+  protected R combine(final PegNode.LongLit node, final A arg) {
     return null;
   }
 

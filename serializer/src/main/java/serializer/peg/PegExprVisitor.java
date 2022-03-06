@@ -3,6 +3,7 @@ package serializer.peg;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.*;
+import com.github.javaparser.ast.type.ReferenceType;
 import serializer.Util;
 
 import java.util.ArrayList;
@@ -293,6 +294,13 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     }
 
     @Override
+    public ExpressionResult visit(LongLiteralExpr n, PegContext arg) {
+        Optional<Long> parsed = Util.parseLong(String.format("%s", n.getValue()));
+        if (parsed.isPresent()) return PegNode.longLit(parsed.get()).exprResult(arg);
+        throw new IllegalStateException("Invalid long literal: " + n.getValue());
+    }
+
+    @Override
     public ExpressionResult visit(StringLiteralExpr n, PegContext arg) {
         return PegNode.stringLit(n.getValue()).exprResult(arg);
     }
@@ -431,6 +439,13 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     }
 
     @Override
+    public ExpressionResult visit(InstanceOfExpr n, PegContext arg) {
+        ExpressionResult exprResult = n.getExpression().accept(this, arg);
+        ReferenceType type = n.getType();
+        return exprResult.withPeg(PegNode.instanceOf(exprResult.peg.id, type.toString()));
+    }
+
+    @Override
     public ExpressionResult visit(ClassExpr n, PegContext arg) {
         throw new RuntimeException("ClassExpr");
     }
@@ -446,11 +461,6 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     }
 
     @Override
-    public ExpressionResult visit(LongLiteralExpr n, PegContext arg) {
-        throw new RuntimeException("LongLiteralExpr");
-    }
-
-    @Override
     public ExpressionResult visit(CharLiteralExpr n, PegContext arg) {
         throw new RuntimeException("CharLiteralExpr");
     }
@@ -458,11 +468,6 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
     @Override
     public ExpressionResult visit(DoubleLiteralExpr n, PegContext arg) {
         throw new RuntimeException("DoubleLiteralExpr");
-    }
-
-    @Override
-    public ExpressionResult visit(InstanceOfExpr n, PegContext arg) {
-        throw new RuntimeException("InstanceOf");
     }
 
     @Override

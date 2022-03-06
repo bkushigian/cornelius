@@ -50,6 +50,7 @@ pub fn rw_rules() -> Box<RewriteSystem> {
         rw!("bin-or-ident";      "(| ?a 0)"   => "?a"),
         rw!("bin-and-bot";       "(& ?a 0)"   => "0"),
         rw!("bin-or-bot";        "(| ?a -1)"  => "-1"),
+
         // Ops Distr over Phi
         rw!("plus-over-phi";      "(+ (phi ?c ?t ?e) ?rhs)"  => "(phi ?c (+ ?t ?rhs) (+ ?e ?rhs))"),
         rw!("gt-left-over-phi";   "(> ?a (phi ?c ?t ?e))"    => "(phi ?c (> ?a ?t) (> ?a ?e))"),
@@ -97,6 +98,7 @@ pub fn rw_rules() -> Box<RewriteSystem> {
         /***                       Type-Guided Rewrites                       ***/
         rw!("array-length"; "(< (rd (path (var ?v \"Array\") (derefs (length))) ?h) 0)" => "false"),
         rw!("collection-size"; "(< (invoke->peg (invoke ?hp (var ?v \"Collection\") (size) (actuals))) 0)" => "false"),
+        //rw!("string-length"; "(< (invoke->peg (invoke ?hp (var ?v \"String\") (length) (actuals))) 0)" => "false"),
     ];
     Box::new(rules)
 }
