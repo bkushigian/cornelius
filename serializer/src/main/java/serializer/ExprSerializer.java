@@ -443,7 +443,13 @@ public class ExprSerializer {
         if (td.isArray()) {
           typeMap.put(k, PegNode.stringLit("Array"));
         } else if (td.isCollection()) {
-          typeMap.put(k, PegNode.stringLit("Collection"));
+          typeMap.put(k, PegNode.stringLit("java.util.Collection"));
+        } else if (td.isString()) {
+          typeMap.put(k, PegNode.stringLit("java.lang.String"));
+        } else if (td.isReader()) {
+          typeMap.put(k, PegNode.stringLit("java.io.Reader"));
+        } else if (td.isBitSet()) {
+          typeMap.put(k, PegNode.stringLit("java.util.BitSet"));
         }
         // TODO: Currently I am just hardcoding either "ARRAY" or "COLLECTION". At some point I want to
         //       use the following line to be completely general, but this will involve updating the
@@ -551,6 +557,16 @@ public class ExprSerializer {
 
     public boolean isCollection() {
       return interfaces.contains("java.util.Collection");
+    }
+
+    public boolean isString() {
+      return "java.lang.String".equals(typeName);
+    }
+    public boolean isReader() {
+      return "java.io.Reader".equals(typeName);
+    }
+    public boolean isBitSet() {
+      return "java.util.BitSet".equals(typeName);
     }
   }
 

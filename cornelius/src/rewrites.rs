@@ -97,8 +97,24 @@ pub fn rw_rules() -> Box<RewriteSystem> {
 
         /***                       Type-Guided Rewrites                       ***/
         rw!("array-length"; "(< (rd (path (var ?v \"Array\") (derefs (length))) ?h) 0)" => "false"),
-        rw!("collection-size"; "(< (invoke->peg (invoke ?hp (var ?v \"Collection\") (size) (actuals))) 0)" => "false"),
-        //rw!("string-length"; "(< (invoke->peg (invoke ?hp (var ?v \"String\") (length) (actuals))) 0)" => "false"),
+        rw!("collection-size"; "(< (invoke->peg (invoke ?hp (var ?v \"java.util.Collection\") (size) (actuals))) 0)" => "false"),
+        rw!("string-length"; "(< (invoke->peg (invoke ?hp (var ?v \"java.lang.String\") (length) (actuals))) 0)" => "false"),
+        rw!("string-index-of"; "(< (invoke->peg (invoke ?hp (var ?v \"java.lang.String\") (indexOf) (actuals ?a1))) -1)" => "false"),
+        rw!("string-last-index-of"; "(< (invoke->peg (invoke ?hp (var ?v \"java.lang.String\") (lastIndexOf) (actuals ?a1))) -1)" => "false"),
+
+        // NOTE: This following rewrite is optimistic and is not entirely sound
+        // However, in practice this should be correct (and if it's not, there is bad code)
+        rw!("string-starts-with"; 
+            "(phi (invoke->peg (invoke ?hp (var ?v \"java.lang.String\") (startsWith) (actuals ?a)))
+                  true
+                  (invoke->peg (invoke ?hp2 (var ?v \"java.lang.String\") (startsWith) (actuals ?b))))" 
+                => 
+            "(!= (invoke->peg (invoke ?hp (var ?v \"java.lang.String\") (startsWith) (actuals ?a)))
+                 (invoke->peg (invoke ?hp2 (var ?v \"java.lang.String\") (startsWith) (actuals ?b))))"),
+        rw!("string-starts-with"; 
+            "(invoke->peg (invoke ?hp (var ?v \"java.lang.String\") (startsWith) (actuals \"\")))" 
+                => "true"),
+        
     ];
     Box::new(rules)
 }
