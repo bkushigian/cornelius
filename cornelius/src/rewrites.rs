@@ -111,7 +111,7 @@ pub fn rw_rules() -> Box<RewriteSystem> {
                 => 
             "(!= (invoke->peg (invoke ?hp (var ?v \"java.lang.String\") (startsWith) (actuals ?a)))
                  (invoke->peg (invoke ?hp2 (var ?v \"java.lang.String\") (startsWith) (actuals ?b))))"),
-        rw!("string-starts-with"; 
+        rw!("string-starts-with-empty"; 
             "(invoke->peg (invoke ?hp (var ?v \"java.lang.String\") (startsWith) (actuals \"\")))" 
                 => "true"),
         
