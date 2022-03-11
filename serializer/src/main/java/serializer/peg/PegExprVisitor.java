@@ -56,18 +56,18 @@ public class PegExprVisitor extends com.github.javaparser.ast.visitor.GenericVis
                 // The phi node should check if the lhs is true.
                 //    If it is, return true,
                 //    otherwise return the rhs
-                final PegNode phi = PegNode.phi(lhs.peg.id, PegNode.boolLit(true).id, rhs.peg.id);
+                final PegNode or = PegNode.opNode("||", lhs.peg.id, rhs.peg.id);
                 PegContext combined = PegContext.combine(lhs.context, rhs.context, lhs.peg.id);
-                return phi.exprResult(combined);
+                return or.exprResult(combined);
             }
             case AND:
             {
                 if (lb.isPresent() && rb.isPresent()) {
                     return PegNode.boolLit(lb.get() && rb.get()).exprResult(rhs.context);
                 }
-                final PegNode phi = PegNode.phi(lhs.peg.id, rhs.peg.id, PegNode.boolLit(false).id);
+                final PegNode and = PegNode.opNode("&&", lhs.peg.id, rhs.peg.id);
                 PegContext combined = PegContext.combine(rhs.context, lhs.context, lhs.peg.id);
-                return phi.exprResult(combined);
+                return and.exprResult(combined);
             }
             case BINARY_OR:
             {

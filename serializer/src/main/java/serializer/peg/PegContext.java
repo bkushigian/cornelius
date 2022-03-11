@@ -27,6 +27,17 @@ public class PegContext {
         return new PegContext(localVariableLookup, fieldNames, heap, exitConditions, rn, typeMap);
     }
 
+    /**
+     * An empty context for visiting constants
+     */
+    public static final PegContext EMPTY_CTX = new PegContext(
+            new ImmutableMap.Builder<String, PegNode>().build(),
+            new HashSet<>(),
+            PegNode.heap(PegNode.unit().id, PegNode.unit().id),
+            new ImmutableSet.Builder<PegNode>().build(),
+            PegNode.unit(),
+            new ImmutableMap.Builder<String, PegNode>().build());
+
 
     private PegContext(final ImmutableMap<String, PegNode> localVariableLookup,
                        final Set<String> fieldNames,

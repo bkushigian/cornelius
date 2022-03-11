@@ -238,7 +238,8 @@ public class ExprSerializer {
             }
             // Handle superclass annotation
           } else if (line.startsWith("superclassMap:")) {
-            if (maxExpr == null) continue;;
+            if (maxExpr == null) continue;
+            ;
             final String mapString = line.substring(line.indexOf(':') + 1).trim();
             if (mapString.isEmpty()) continue;
             for (String keyValString : mapString.split(",")) {
@@ -249,6 +250,21 @@ public class ExprSerializer {
               String key = split[0], val = split[1];
               final List<String> valList = parseList(val);
               maxExpr.typeMap.computeIfAbsent(key, k -> new TypeData()).superclasses = valList;
+            }
+            // Handle maxExpr's const map
+          } else if (line.startsWith("constMap:")) {
+            assert ns != null;
+            if (maxExpr == null) continue;
+            int idx = line.indexOf(":");
+            final String mapString = line.substring(idx + 1).trim();
+            if (mapString.contains(",")){
+              for (String keyVal : mapString.split(",")) {
+                String[] split = keyVal.split(":");
+                maxExpr.constMap.put(split[0].trim(), split[1].trim());
+              }
+            } else if (mapString.contains(":")) {
+              String[] split = mapString.split(":");
+              maxExpr.constMap.put(split[0].trim(), split[1].trim());
             }
 
             // Handle maxExpr's identMap
@@ -399,6 +415,10 @@ public class ExprSerializer {
      */
     private Map<String, String> identMap;
 
+    private Map<String, String> constMap;
+
+    private Map<String, Expression> constMap2;
+
     protected MaxExpr(String ns, String source) {
       this.ns = ns.trim();
       this.source = source.trim();
@@ -412,6 +432,8 @@ public class ExprSerializer {
         throw e;
       }
       identMap = new HashMap<>();
+      constMap = new HashMap<>();
+      constMap2 = new HashMap<>();
     }
 
     void addMutant(String m_no, String mutExpr) {
@@ -458,7 +480,15 @@ public class ExprSerializer {
 
         // typeMap.put(k, PegNode.typeAnnotationNode(td.typeName, td.interfaces, td.superclasses));
       }
-      return initContext = PegContext.initWithParams(globals, locals, typeMap);
+      PegContext ctx = PegContext.initWithParams(globals, locals, typeMap);
+      for (String ident : constMap2.keySet()) {
+        Expression v = constMap2.get(ident);
+        PegNode p = v.accept(pev, PegContext.EMPTY_CTX).peg;
+        ctx = ctx.setLocalVar(ident, p);
+
+      }
+      initContext = ctx;
+      return initContext;
     }
 
 
@@ -471,6 +501,10 @@ public class ExprSerializer {
      */
     void computePegNodes() {
         tree = StaticJavaParser.parseExpression(source);
+        for (String key: constMap.keySet()) {
+          Expression e = StaticJavaParser.parseExpression(constMap.get(key));
+          constMap2.put(key, e);
+        }
         ExpressionResult expressionResult;
         try {
           expressionResult = tree.accept(pev, getInitCtx());
