@@ -506,7 +506,7 @@ public class ExprSerializer {
             Expression e = StaticJavaParser.parseExpression(constMap.get(key));
             constMap2.put(key, e);
           } catch (ParseProblemException e) {
-            System.err.printf("Couldn't parse expression %s\n", constMap.get(key));
+            System.err.printf("In namespace %s for max expr %s:\n    Couldn't parse expression %s for key %s\n", ns, source, constMap.get(key), key);
           }
         }
         ExpressionResult expressionResult;
