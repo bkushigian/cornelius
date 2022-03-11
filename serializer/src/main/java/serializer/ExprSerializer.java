@@ -502,8 +502,12 @@ public class ExprSerializer {
     void computePegNodes() {
         tree = StaticJavaParser.parseExpression(source);
         for (String key: constMap.keySet()) {
-          Expression e = StaticJavaParser.parseExpression(constMap.get(key));
-          constMap2.put(key, e);
+          try {
+            Expression e = StaticJavaParser.parseExpression(constMap.get(key));
+            constMap2.put(key, e);
+          } catch (ParseProblemException e) {
+            System.err.printf("Couldn't parse expression %s\n", e.toString());
+          }
         }
         ExpressionResult expressionResult;
         try {

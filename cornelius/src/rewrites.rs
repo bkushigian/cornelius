@@ -105,12 +105,12 @@ pub fn rw_rules() -> Box<RewriteSystem> {
         // NOTE: This following rewrite is optimistic and is not entirely sound
         // However, in practice this should be correct (and if it's not, there is bad code)
         rw!("string-starts-with"; 
-            "(phi (invoke->peg (invoke ?hp (var ?v \"java.lang.String\") (startsWith) (actuals ?a)))
-                  true
-                  (invoke->peg (invoke ?hp2 (var ?v \"java.lang.String\") (startsWith) (actuals ?b))))" 
+            "(|| (invoke->peg (invoke ?hp1 (var ?v \"java.lang.String\") (startsWith) (actuals ?a)))
+                 (invoke->peg (invoke ?hp2 (var ?v \"java.lang.String\") (startsWith) (actuals ?b))))" 
                 => 
-            "(!= (invoke->peg (invoke ?hp (var ?v \"java.lang.String\") (startsWith) (actuals ?a)))
+            "(!= (invoke->peg (invoke ?hp1 (var ?v \"java.lang.String\") (startsWith) (actuals ?a)))
                  (invoke->peg (invoke ?hp2 (var ?v \"java.lang.String\") (startsWith) (actuals ?b))))"),
+                 
         rw!("string-starts-with-empty"; 
             "(invoke->peg (invoke ?hp (var ?v \"java.lang.String\") (startsWith) (actuals \"\")))" 
                 => "true"),
