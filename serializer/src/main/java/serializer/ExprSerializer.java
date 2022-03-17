@@ -313,7 +313,13 @@ public class ExprSerializer {
 
       for (String ns: nsToMaxExprs.keySet()) {
         for (MaxExpr maxExpr : nsToMaxExprs.get(ns)) {
-          maxExpr.computePegNodes();
+            try {
+                maxExpr.computePegNodes();
+            } catch (RuntimeException e) {
+                System.err.println("Error computing peg nodes for\nmax expression: " + maxExpr.source
+                        + "\nin namespace: " + ns);
+                System.err.println(e);
+            }
         }
       }
     }
