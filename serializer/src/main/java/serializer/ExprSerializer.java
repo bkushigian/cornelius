@@ -316,8 +316,9 @@ public class ExprSerializer {
             try {
                 maxExpr.computePegNodes();
             } catch (RuntimeException e) {
-                System.err.println("Error computing peg nodes for\nmax expression: " + maxExpr.source
-                        + "\nin namespace: " + ns);
+                System.err.println("Error computing peg nodes for\n" +
+                        "    max expression: " + maxExpr.source + "\n" +
+                        "    in namespace: " + ns);
                 System.err.println(e);
             }
         }
