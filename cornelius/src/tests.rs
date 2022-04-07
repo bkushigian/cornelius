@@ -601,6 +601,11 @@ mod misc {
             &[]
         ));
     }
+    #[test]
+    fn parse_instanceof() {
+        assert!(try_to_parse("(instanceof 1 2)"));
+        assert!(try_to_parse("(instanceof (var (key) (nil)) \"Serializable\")"));
+    }
 
     #[test]
     fn ensure_no_rewrite_2() {
@@ -831,6 +836,7 @@ mod serialization {
     }
 }
 
+#[cfg(test)]
 #[allow(dead_code)]
 fn test_straight_rewrite(start: &str, end: &str) -> bool {
     exprs_collide(start, end, &[])
@@ -1025,4 +1031,18 @@ fn ensure_no_duplicates_in_serialized(subjects_file: &str) {
         ser_size,
         egg_size
     );
+}
+
+#[allow(dead_code)]
+fn try_to_parse(expr: &str) -> bool {
+    let start_expr:Result<RecExpr<Peg>, String> = expr.parse();
+    match start_expr {
+        Ok(_) => {
+            return true;
+        }
+        Err(s) => {
+            println!("Error parsing {}: Error: {}", expr, s);
+            return false;
+        }
+    }
 }
