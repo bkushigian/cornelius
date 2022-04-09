@@ -39,7 +39,11 @@ pub struct CliArgs {
 
     #[structopt(long)]
     /// Write equivalences from a single subjects file to a single file
-    pub single_file_per_subjects: bool
+    pub single_file_per_subjects: bool,
+
+    #[structopt(long)]
+    /// Halt when an error is encountered
+    pub stop_on_error: bool
 }
 
 impl Clone for CliArgs {
@@ -54,6 +58,7 @@ impl Clone for CliArgs {
             run_details: self.run_details,
             iter_details: self.iter_details,
             single_file_per_subjects: self.single_file_per_subjects,
+            stop_on_error: self.stop_on_error
         }
     }
 }

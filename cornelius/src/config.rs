@@ -9,6 +9,7 @@ pub struct RunConfig {
     pub run_details: bool,
     pub iter_details: bool,
     pub write_equivs_to_single_file: bool,
+    pub stop_on_error: bool,
 }
 
 impl Default for RunConfig {
@@ -21,6 +22,7 @@ impl Default for RunConfig {
             run_details: false,
             iter_details: false,
             write_equivs_to_single_file: true,
+            stop_on_error: false,
         }
     }
 }
@@ -68,6 +70,11 @@ impl RunConfig {
         self.write_equivs_to_single_file = write_equivs_to_single_file;
         self
     }
+
+    pub fn with_stop_on_error(mut self, stop_on_error: bool) -> RunConfig {
+        self.stop_on_error = stop_on_error;
+        self
+    }
 }
 
 impl ToString for RunConfig {
@@ -79,14 +86,17 @@ max-time-limit: {}
 verbose: {}
 run-details: {}
 iter-details: {}
-write-equivs-to-single-file: {}",
+write-equivs-to-single-file: {}
+stop-on-error: {}",
+
             self.iter_limit,
             self.node_limit,
             self.time_limit.as_secs(),
             self.verbose,
             self.run_details,
             self.iter_details,
-            self.write_equivs_to_single_file
+            self.write_equivs_to_single_file,
+            self.stop_on_error
         )
     }
 }
@@ -101,5 +111,6 @@ impl From<CliArgs> for RunConfig {
             .with_run_details(args.run_details)
             .with_iter_details(args.iter_details)
             .with_write_to_single_file(args.single_file_per_subjects)
+            .with_stop_on_error(args.stop_on_error)
     }
 }

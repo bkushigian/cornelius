@@ -6,6 +6,7 @@ use cornelius::util::io::{write_run_details_to_file, write_subjects_to_separate_
                           write_subjects_to_single_file};
 use std::fs::{create_dir, remove_dir_all};
 use std::path::Path;
+use std::process::exit;
 use structopt::StructOpt;
 
 fn main() -> Result<(), String> {
@@ -100,7 +101,12 @@ fn main() -> Result<(), String> {
                     }
                 }
             }
-            Err(msg) => println!("Error running on subject file {}:\n    {}", subj_file, msg),
+            Err(msg) => {
+                println!("Error running on subject file {}:\n    {}", subj_file, msg);
+                if config.stop_on_error {
+                    exit(1);
+                }
+            }
         };
     }
     if args.java_files.len() > 1 {
