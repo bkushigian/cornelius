@@ -994,7 +994,7 @@ fn ensure_serialized_subject_meets_specs(
 /// were no duplications of syntactically identical pegs from serialization).
 #[allow(dead_code)]
 fn ensure_no_duplicates_in_serialized(subjects_file: &str) {
-    let subjects: crate::subjects::Subjects =
+    let mut subjects: crate::subjects::Subjects =
         crate::subjects::Subject::from_file(subjects_file.to_string()).unwrap();
     let rec_expr = subjects.compute_rec_expr().unwrap();
     let rec_expr_ref = rec_expr.as_ref();

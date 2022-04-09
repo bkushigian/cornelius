@@ -19,7 +19,8 @@ pub struct Subjects {
     #[serde(rename = "subject", default)]
     pub subjects: Vec<Subject>,
 
-    /// A `Vec` of IdTableEntries that represent the raw parsed id table
+    /// A `Vec` of IdTableEntries that represent the raw parsed id table. This table
+    /// contains 'raw ids' and don't reflect the Ids after insertion into a RecExpr
     pub id_table: IdTable,
 
     /// A table of node equivalences detected in the front end.  These usually
@@ -27,19 +28,55 @@ pub struct Subjects {
     /// being loaded into the egraph
     #[serde(default)]
     pub node_equivalences: NodeEquivalences,
+
+    #[serde(skip)]
+    pub raw_id_to_egg_id: HashMap<Id, Id>
 }
 
 impl Subjects {
-    /// Compute a `RecExpr` from `self.id_table`, storing it in
-    /// `self.rec_expr`.
-    pub fn compute_rec_expr(&self) -> Result<RecExpr<Peg>, String> {
+    /// Compute a `RecExpr` from `self.id_table`. Modifies the
+    /// `self.raw_to_egg_ids` lookup table to translate the input ids to the
+    /// indices into the RecExpr.
+    pub fn compute_rec_expr(&mut self) -> Result<RecExpr<Peg>, String> {
         info!("Computing RecExpr");
         let mut rec_expr = RecExpr::default();
-        //println!("Computing rec_expr from Subjects");
+
+        // In this loop we want to parse each PEG string as an operator and a
+        // sequence of child `Id`s. To make this more flexible/ensure we don't
+        // need our raw ids to match up with egg's ids we store a raw_to_egg_ids
+        // map taht lets us translate from raw id space to egg ids. Thus, if
+        // our input has an id of `7` and adding this to our rec_expr gives back `5`,
+        // `raw_to_egg_ids` will now map `7` to `5`
+
+        // Ensure that each new id we come across is bigger than the last
+        let mut max_raw_id = -1;
         for entry in self.id_table.entries.iter() {
-            let peg: Peg = parse_peg_from_string(entry.peg.clone())?;
-            //println!("Adding entry {} as peg {:?}", entry.peg, peg);
-            rec_expr.add(peg);
+            let raw_id = entry.id.parse::<u32>()
+                    .unwrap_or_else(|_| panic!("Couldn't parse raw id u32 {}", &entry.id))
+                    as i32;
+            if raw_id <= max_raw_id {
+                return Err(
+                    format!("Invariant violated: raw id {} <= previous raw id {}", raw_id, max_raw_id).to_string());
+            } if raw_id < 0 {
+                return Err(format!("Invariant violated: raw id {} less than 0", raw_id).to_string());
+            }
+            max_raw_id = raw_id;
+            let raw_id = Id::from(raw_id as usize);
+            
+            let mut peg: Peg = parse_peg_from_string(entry.peg.clone())?;
+            let mut children = peg.children_mut();
+            let mut i = 0;
+            while i < children.len() {
+                let raw_child = children[i];
+                if let Some(child) = self.raw_id_to_egg_id.get(&raw_child) {
+                    children[i] = *child;
+                } else {
+                    return Err(format!("Invariant violated: id {} has not been encountered yet", raw_id));
+                }
+                i += 1;
+            }
+            let egg_id = rec_expr.add(peg);
+            self.raw_id_to_egg_id.insert(raw_id, egg_id);
         }
         info!("Returning RecExpr");
         Ok(rec_expr)
@@ -110,12 +147,11 @@ fn parse_peg_from_string(peg_str: String) -> Result<Peg, String> {
     let children: Vec<_> = split_peg_str[1..]
         .iter()
         .map(|s| {
-            Id::from(
                 s.parse::<u32>()
                     .unwrap_or_else(|_| panic!("Couldn't parse u32 {} from {}", s, peg_str))
-                    as usize,
-            )
+                    as usize
         })
+        .map(|x| { Id::from(x)})
         .collect();
     Peg::from_op_str(op, children)
 }
@@ -259,12 +295,7 @@ pub fn run_on_subjects(
         node.for_each_mut(|id: &mut Id| {
             *id = {
                 let child = id_offset_map.get(id);
-                assert!(
-                    child.is_some(),
-                    "Node at idx {} has unbound child {}",
-                    idx,
-                    id
-                );
+                assert!(child.is_some(), "Node at idx {} has unbound child {}", idx, id);
                 child.unwrap().clone()
             }
         });
@@ -291,17 +322,17 @@ pub fn run_on_subjects(
                 .unwrap_or_else(|_| panic!("Couldn't parse u32 {}", equivalence.second))
                 as usize,
         );
-        match (id_offset_map.get(&fst_id), id_offset_map.get(&snd_id)) {
-            (Some(id1), Some(id2)) => {
+        let id1 = subjects.raw_id_to_egg_id.get(&fst_id);
+        let id2 = subjects.raw_id_to_egg_id.get(&snd_id);
+        if let (Some(id1), Some(id2)) = (id1, id2) {
+            if let (Some(id1), Some(id2)) = (id_offset_map.get(id1), id_offset_map.get(id2)) {
                 egraph.union(*id1, *id2);
+            } else {
+               panic!("Error! Couldn't look up equivalences {} & {} in id_offset_map", fst_id, snd_id);
             }
-            (_, _) => {
-                println!(
-                    "Error! Couldn't look up equivalences: {} {}",
-                    fst_id, snd_id
-                );
-            }
-        };
+        } else {
+            panic!("Error! Couldn't look up equivalences {} & {} in raw_id_to_egg_id", fst_id, snd_id);
+        }
     }
 
     debug!(
@@ -314,32 +345,6 @@ pub fn run_on_subjects(
         .with_iter_limit(run_config.iter_limit)
         .with_node_limit(run_config.node_limit)
         .with_time_limit(run_config.time_limit);
-    // let egraph_size = egraph.total_size();
-    // if rec_expr_size != egraph_size {
-    //     println!("rec_expr total_size: {}", rec_expr_size);
-    //     println!("egraph total_size after deserialization: {}", egraph_size);
-    //     println!("Deserialization error: Parsed RecExpr has size {} while the e-graph has size {}", rec_expr_size, egraph_size);
-    //     if log_enabled!(Level::Debug) {
-    //         let rec_expr_ref = rec_expr.as_ref();
-    //         debug!("\nRexExpr:");
-    //         debug!("--------");
-    //         for i in 0..rec_expr_ref.len(){
-    //             let v = rec_expr_ref[0..(i+1)].to_vec();
-    //             let re = RecExpr::from(v);
-    //             debug!("re {}:   {}", i, re.pretty(40));
-    //         }
-    //         debug!("\nEClasses:");
-    //         debug!("---------");
-    //         for c in egraph.classes() {
-    //             debug!("{:?}", c);
-    //             for n in &c.nodes {
-    //                 debug!("    {:?}", n);
-    //             }
-
-    //         }
-    //     }
-    //     panic!("rec-expr and e-graph are different sizes")
-    // }
 
     let runner = runner.with_scheduler(egg::SimpleScheduler);
     let runner = runner.run(rules);
@@ -379,7 +384,7 @@ pub fn run_on_subjects(
                 info!("mutant id: {}:\n{}", mid, re.pretty(80));
             }
         }
-        analyze_subject(&mut subj, egraph, &rec_expr, &id_offset_map);
+        analyze_subject(&mut subj, egraph, &rec_expr, &subjects.raw_id_to_egg_id, &id_offset_map);
 
         global_data.add_discovered_equivalences(subj.analysis_result.score);
         i += 1;
@@ -412,6 +417,7 @@ fn analyze_subject(
     subj: &mut Subject,
     egraph: &EGraph<Peg, PegAnalysis>,
     _expr: &RecExpr<Peg>,
+    raw_id_to_egg_id: &HashMap<Id, Id>,
     id_update: &HashMap<Id, Id>,
 ) {
     // Map canonical_ids (from egg) to mutant ids (from Major)
@@ -419,11 +425,20 @@ fn analyze_subject(
     let mut num_equivalences = 0;
 
     // the PEG id
+    // Recall that each PEG id is the _serialized_ id. When we deserialized and
+    // added into the RecExpr, this value may have changed: this mapping is
+    // described in `raw_id_to_egg_id`.
+    //
+    // Then, when items are added to an egraph they might combine, which again
+    // might update the Id. This second mapping is described by `id_update`.
+    //
+    // Thus, any time we look up a peg id we actually need to lookup
+    // id_update.get(raw_id_to_egg_id.get(id).unwrap()).unwrap()
+    // 
+    // This applies below in the mutant loop as well.
     let id: u32 = subj.pid.parse().unwrap();
-
-    // Get the canonical id in the egraph for the subject, and compute the
-    // set of equivalent ids (i.e., ids found to be equivalent to the subject)
     let id = Id::from(id as usize);
+    let id = raw_id_to_egg_id.get(&id).unwrap();
     let id = id_update.get(&id).unwrap().clone();
     let canonical_id = egraph.find(id);
     let equiv_ids = rev_can_id_lookup
@@ -432,9 +447,9 @@ fn analyze_subject(
     equiv_ids.insert(0);
 
     for m in &subj.mutants {
-        // PEG id
         let id: usize = m.pid.parse().unwrap();
-        let id: Id = Id::from(id);
+        let id = Id::from(id);
+        let id = raw_id_to_egg_id.get(&id).unwrap();
         let id = id_update.get(&id).unwrap();
         let canonical_id = egraph.find(*id);
 
