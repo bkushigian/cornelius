@@ -17,13 +17,14 @@ fn main() -> Result<(), String> {
     let mut total_mutants_found = 0;
     let config = RunConfig::from(args.clone());
     let mut global_data = GlobalData::default();
+    let output_directory = config.output_directory.clone();
 
     // Check if `./equiv_files/` exists. If so, delete it. Then, create
     // directory `./equiv_files/`
-    if Path::new("./equiv-files").exists() {
-        remove_dir_all("./equiv-files").map_err(|e| e.to_string())?;
+    if Path::new(&output_directory).exists() {
+        remove_dir_all(&output_directory).map_err(|e| e.to_string())?;
     }
-    create_dir("./equiv-files").map_err(|e| e.to_string())?;
+    create_dir(&output_directory).map_err(|e| e.to_string())?;
 
     if config.iter_details {
         // Check if iter-details/ exists
@@ -71,7 +72,7 @@ fn main() -> Result<(), String> {
                     equiv_file.push_str(".equiv-class");
 
                     if args.single_file_per_subjects {
-                        let mut file_name = String::from("equiv-files/");
+                        let mut file_name = String::from(format!("{}/", &output_directory));
                         let split: Vec<&str> = subj_file.split("/").collect();
 
                         file_name.push_str(split.last().unwrap());
@@ -88,7 +89,7 @@ fn main() -> Result<(), String> {
                         }
 
                     } else {
-                        match write_subjects_to_separate_files(&subjects, "equiv-files") {
+                        match write_subjects_to_separate_files(&subjects, &output_directory) {
                             Err(e) => {
                                 println!(
                                     "Error writing results of subject file {} to equiv-class file {}.",

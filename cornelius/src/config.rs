@@ -10,6 +10,7 @@ pub struct RunConfig {
     pub iter_details: bool,
     pub write_equivs_to_single_file: bool,
     pub stop_on_error: bool,
+    pub output_directory: String,
 }
 
 impl Default for RunConfig {
@@ -23,6 +24,7 @@ impl Default for RunConfig {
             iter_details: false,
             write_equivs_to_single_file: true,
             stop_on_error: false,
+            output_directory: "equiv-files".to_string(),
         }
     }
 }
@@ -75,6 +77,11 @@ impl RunConfig {
         self.stop_on_error = stop_on_error;
         self
     }
+
+    pub fn with_output_directory(mut self, output_directory: String) -> RunConfig {
+        self.output_directory = output_directory;
+        self
+    }
 }
 
 impl ToString for RunConfig {
@@ -87,7 +94,9 @@ verbose: {}
 run-details: {}
 iter-details: {}
 write-equivs-to-single-file: {}
-stop-on-error: {}",
+stop-on-error: {}
+output-directory: {}
+",
 
             self.iter_limit,
             self.node_limit,
@@ -96,7 +105,8 @@ stop-on-error: {}",
             self.run_details,
             self.iter_details,
             self.write_equivs_to_single_file,
-            self.stop_on_error
+            self.stop_on_error,
+            self.output_directory
         )
     }
 }
@@ -112,5 +122,6 @@ impl From<CliArgs> for RunConfig {
             .with_iter_details(args.iter_details)
             .with_write_to_single_file(args.single_file_per_subjects)
             .with_stop_on_error(args.stop_on_error)
+            .with_output_directory(args.output_directory)
     }
 }
