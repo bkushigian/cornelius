@@ -126,7 +126,7 @@ dependencies = [
 
 [[package]]
 name = "cornelius"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "anyhow",
  "custom_derive",
