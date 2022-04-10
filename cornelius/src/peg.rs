@@ -183,6 +183,11 @@ pub fn is_const(v1: &'static str) -> impl Fn(&mut EGraph, Id, &Subst) -> bool {
     move |egraph, _, subst| egraph[subst[v1]].data.constant.is_some()
 }
 
+pub fn is_not_const(v1: &'static str) -> impl Fn(&mut EGraph, Id, &Subst) -> bool {
+    let v1: egg::Var = v1.parse().unwrap();
+    move |egraph, _, subst| !egraph[subst[v1]].data.constant.is_some()
+}
+
 pub fn is_var(v1: &'static str) -> impl Fn(&mut EGraph, Id, &Subst) -> bool {
     let v1: egg::Var = v1.parse().unwrap();
     move |egraph, _, subst| egraph[subst[v1]].data.variable.is_some()
