@@ -13,61 +13,104 @@ use std::time::Instant;
 use std::fs::read_to_string;
 
 #[cfg(test)]
+mod parse {
+    fn parse_a_peg(expr: &str) -> Option<Peg> {
+        let expr: Result<RecExpr<Peg>, String> = expr.parse();
+        if let Ok(expr) = expr {
+            let expr_ref = expr.as_ref();
+            return Some(expr_ref[expr_ref.len() - 1].clone());
+        }
+
+        None
+    }
+
+    use super::*;
+
+    #[test]
+    fn parse_long_const() {
+        assert!(parse_a_peg("0l") == Some(Peg::Long(JavaLong::from(0))));
+        assert!(parse_a_peg("1000l") == Some(Peg::Long(JavaLong::from(1000))));
+    }
+
+    #[test]
+    fn parse_int_const() {
+        assert!(parse_a_peg("0") == Some(Peg::Num(JavaInt::from(0))));
+        assert!(parse_a_peg("1000") == Some(Peg::Num(JavaInt::from(1000))));
+    }
+
+    #[test]
+    fn parse_instanceof() {
+        assert!(try_to_parse("(instanceof 1 2)"));
+        assert!(try_to_parse("(instanceof (var (key) (nil)) \"Serializable\")"));
+    }
+
+}
+#[cfg(test)]
 mod const_prop {
     use super::*;
 
     #[test]
     fn add() {
-        assert!(ensure_const_prop_i32("(+ 1 2)", 3));
-        assert!(!ensure_const_prop_i32("(+ 1 2)", 4));
-        assert!(ensure_const_prop_i32("(+ 1 (+ 2 3))", 6));
+        assert!(ensure_const_prop("(+ 1 2)", Peg::Num(JavaInt::from(3))));
+        assert!(!ensure_const_prop("(+ 1 2)", Peg::Num(JavaInt::from(4))));
+        assert!(ensure_const_prop("(+ 1 (+ 2 3))", Peg::Num(JavaInt::from(6))));
 
-        assert!(ensure_const_prop_i64("(+ 1l (+ 2 3))", 6));
-        assert!(ensure_const_prop_i64("(+ 1 (+ 2l 3))", 6));
+        assert!(ensure_const_prop("(+ 1l (+ 2 3))", Peg::Long(JavaLong::from(6))));
+        assert!(ensure_const_prop("(+ 1 (+ 2l 3))", Peg::Long(JavaLong::from(6))));
     }
 
     #[test]
     fn sub() {
-        assert!(ensure_const_prop_i32("(- 1 2)", -1));
-        assert!(ensure_const_prop_i32("(- 1 (- 2 3))", 1 - (2 - 3)));
+        assert!(ensure_const_prop("(- 1 2)", Peg::Num(JavaInt::from(-1))));
+        assert!(ensure_const_prop("(- 1 (- 2 3))", Peg::Num(JavaInt::from(1 - (2 - 3)))));
 
-        assert!(ensure_const_prop_i64("(- 1l (+ 2 3))", 1 - (2 + 3)));
-        assert!(ensure_const_prop_i64("(- 1 (+ 2 3l))", 1 - (2 + 3)));
+        assert!(ensure_const_prop("(- 1l (+ 2 3))", Peg::Long(JavaLong::from(1 - (2 + 3)))));
+        assert!(ensure_const_prop("(- 1 (+ 2 3l))", Peg::Long(JavaLong::from(1 - (2 + 3)))));
     }
 
     #[test]
     fn mul() {
-        assert!(ensure_const_prop_i32("(* 1 2)", 2));
-        assert!(ensure_const_prop_i32("(* 1 (* 2 3))", 6));
-        assert!(ensure_const_prop_i32("(* 10 (* 2 3))", 60));
-        assert!(ensure_const_prop_i32("(* 11 (* 2 3))", 66));
-        assert!(ensure_const_prop_i32("(* (* 4 5) (* 2 3))", 4 * 5 * 2 * 3));
-        assert!(ensure_const_prop_i32("(* 0 2)", 0));
+        assert!(ensure_const_prop("(* 1 2)", Peg::Num(JavaInt::from(2))));
+        assert!(ensure_const_prop("(* 1 (* 2 3))", Peg::Num(JavaInt::from(6))));
+        assert!(ensure_const_prop("(* 10 (* 2 3))", Peg::Num(JavaInt::from(60))));
+        assert!(ensure_const_prop("(* 11 (* 2 3))", Peg::Num(JavaInt::from(66))));
+        assert!(ensure_const_prop("(* (* 4 5) (* 2 3))",Peg::Num(JavaInt::from(4 * 5 * 2 * 3)) ));
+        assert!(ensure_const_prop("(* 0 2)", Peg::Num(JavaInt::from(0))));
 
-        assert!(ensure_const_prop_i64("(* (* 4 5L) (* 2l 3))", 4 * 5 * 2 * 3));
+        assert!(ensure_const_prop("(* (* 4 5L) (* 2l 3))", Peg::Long(JavaLong::from(4 * 5 * 2 * 3))));
     }
 
     #[test]
     fn div() {
-        assert!(ensure_const_prop_i32("(/ 1 2)", 0));
-        assert!(ensure_const_prop_i32("(/ 4 2)", 2));
+        assert!(ensure_const_prop("(/ 1 2)", Peg::Num(JavaInt::from(0))));
+        assert!(ensure_const_prop("(/ 4 2)", Peg::Num(JavaInt::from(2))));
         assert!(ensure_is_error("(/ 4 0)"));
 
-        assert!(ensure_const_prop_i64("(/ 4l 2)", 2));
-        assert!(ensure_const_prop_i64("(/ 4 2l)", 2));
-        assert!(ensure_const_prop_i64("(/ 4L 2l)", 2));
+        assert!(ensure_const_prop("(/ 4l 2)",  Peg::Long(JavaLong::from(2))));
+        assert!(ensure_const_prop("(/ 4 2l)",  Peg::Long(JavaLong::from(2))));
+        assert!(ensure_const_prop("(/ 4L 2l)", Peg::Long(JavaLong::from(2))));
     }
 
     #[test]
     fn bin_or() {
-        assert!(ensure_const_prop_i32("(| 2 4)", 6));
-        assert!(ensure_const_prop_i32("(| 2 3)", 3));
+        assert!(ensure_const_prop("(| 2 4)", Peg::Num(JavaInt::from(6))));
+        assert!(ensure_const_prop("(| 2 3)", Peg::Num(JavaInt::from(3))));
     }
 
     #[test]
     fn bin_xor() {
-        assert!(ensure_const_prop_i32("(^ 2 4)", 6));
-        assert!(ensure_const_prop_i32("(^ 1 3)", 2));
+        assert!(ensure_const_prop("(^ 2 4)", Peg::Num(JavaInt::from(6))));
+        assert!(ensure_const_prop("(^ 1 3)", Peg::Num(JavaInt::from(2))));
+    }
+
+    #[test]
+    fn eq() {
+        assert!(ensure_const_prop("(== 0 0)", Peg::Bool(true)));
+        assert!(ensure_const_prop("(== 0l 0l)", Peg::Bool(true)));
+        assert!(JavaInt::from(0) == JavaLong::from(0));
+        assert!(JavaLong::from(0) == JavaInt::from(0));
+        assert!(ensure_const_prop("(== 0l 0)", Peg::Bool(true)));
+        assert!(ensure_const_prop("(== 0 0l)", Peg::Bool(true)));
     }
 
     // The following tests ensure that Cornelius doesn't employ constant
@@ -161,7 +204,7 @@ mod const_prop {
     }
 
     // Helper functions
-    fn ensure_const_prop_i32(start: &str, expected: i32) -> bool {
+    fn ensure_const_prop(start: &str, expected: Peg) -> bool {
         let start_expr = start.parse().unwrap();
         // let mut expected_expr: RecExpr<Peg> = RecExpr::default();
         //expected_expr.add(Peg::Num(expected));
@@ -169,26 +212,8 @@ mod const_prop {
         let id = egraph.add_expr(&start_expr);
         let rules: Box<RewriteSystem> = crate::rewrites::rw_rules();
         let runner = Runner::default().with_egraph(egraph).run(rules.iter());
-        match runner.egraph[id].data.constant {
-            Some(Peg::Num(result)) => JavaInt::from(expected) == result,
-            _ => false,
-        }
+        runner.egraph[id].data.constant == Some(expected)
     }
-
-    fn ensure_const_prop_i64(start: &str, expected: i64) -> bool {
-        let start_expr = start.parse().unwrap();
-        // let mut expected_expr: RecExpr<Peg> = RecExpr::default();
-        //expected_expr.add(Peg::Num(expected));
-        let mut egraph = EGraph::default();
-        let id = egraph.add_expr(&start_expr);
-        let rules: Box<RewriteSystem> = crate::rewrites::rw_rules();
-        let runner = Runner::default().with_egraph(egraph).run(rules.iter());
-        match runner.egraph[id].data.constant {
-            Some(Peg::Long(result)) => JavaLong::from(expected) == result,
-            _ => false,
-        }
-    }
-
 
     fn ensure_is_error(start: &str) -> bool {
         let start_expr = start.parse().unwrap();
@@ -600,11 +625,6 @@ mod misc {
             "false",
             &[]
         ));
-    }
-    #[test]
-    fn parse_instanceof() {
-        assert!(try_to_parse("(instanceof 1 2)"));
-        assert!(try_to_parse("(instanceof (var (key) (nil)) \"Serializable\")"));
     }
 
     #[test]

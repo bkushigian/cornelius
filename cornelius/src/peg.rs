@@ -473,6 +473,17 @@ pub struct PegAnalysisData {
 
 impl PegAnalysisData {
     pub fn or(self, a: PegAnalysisData) -> PegAnalysisData {
+        // TODO: The following lines _should_ be in place to enforce an invariant. However,
+        //       there are some subtleties so I'm turning this hard fail off for now
+
+        // if self.constant.is_some() && a.constant.is_some() && self.constant != a.constant {
+        //     panic!("Illegal state reached: trying to merge multiple constant values {:?} {:?}", self, a)
+        // }
+
+        // if self.variable.is_some() && a.variable.is_some() && self.variable != a.variable {
+        //     panic!("Illegal state reached: trying to merge multiple variable values {:?} {:?}", self, a)
+        // }
+
         PegAnalysisData {
             constant: self.constant.or(a.constant),
             variable: self.variable.or(a.variable),
@@ -515,24 +526,27 @@ fn eval(egraph: &EGraph, enode: &Peg) -> Option<Peg> {
             // To check for equality,
             let a = x(a)?;
             let b = x(b)?;
-            if a.is_const() && b.is_const() {
-                // FIXME Is this correct? In particular, will this ever return false
-                // when it should return true?
-                Some(Peg::Bool(a == b))
-            } else {
-                None
+            return match (a, b) {
+                (Peg::Num(a), Peg::Num(b)) => Some(Peg::Bool(a == b)),
+                (Peg::Num(a), Peg::Long(b)) => Some(Peg::Bool(a == b)),
+                (Peg::Long(a), Peg::Num(b))  => Some(Peg::Bool(a == b)),
+                (Peg::Long(a), Peg::Long(b)) => Some(Peg::Bool(a == b)),
+                (Peg::Bool(a), Peg::Bool(b)) => Some(Peg::Bool(a == b)),
+                _ => Some(Peg::Bool(false))
             }
+            
         }
         Peg::Neq([a, b]) => {
             // To check for equality,
             let a = x(a)?;
             let b = x(b)?;
-            if a.is_const() && b.is_const() {
-                // FIXME Is this correct? In particular, will this ever return false
-                // when it should return true?
-                Some(Peg::Bool(a != b))
-            } else {
-                None
+            return match (a, b) {
+                (Peg::Num(a), Peg::Num(b)) => Some(Peg::Bool(a != b)),
+                (Peg::Num(a), Peg::Long(b)) => Some(Peg::Bool(a != b)),
+                (Peg::Long(a), Peg::Num(b))  => Some(Peg::Bool(a != b)),
+                (Peg::Long(a), Peg::Long(b)) => Some(Peg::Bool(a != b)),
+                (Peg::Bool(a), Peg::Bool(b)) => Some(Peg::Bool(a != b)),
+                _ => Some(Peg::Bool(false))
             }
         }
 

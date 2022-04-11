@@ -13,7 +13,7 @@ pub fn rw_rules() -> Box<RewriteSystem> {
         rw!("associate-mul"; "(* ?a (* ?b ?c))"  => "(* (* ?a ?b) ?c)"),
         rw!("add-ident";     "(+ ?a 0)"          => "?a" if is_not_const("?a")),
         rw!("mul-bot";       "(* ?a 0)"          => "0" if is_not_const("?a")),
-        rw!("mul-bot";       "(* ?a 0l)"         => "0l" if is_not_const("?a")),
+        rw!("mul-bot-long";  "(* ?a 0l)"         => "0l" if is_not_const("?a")),
         rw!("mul-ident";     "(* ?a 1)"          => "?a" if is_not_const("?a")),
         rw!("neg-zero";      "(--- 0)"           => "0"),
         rw!("add-inv";       "(+ ?a (--- ?a))"   => "0" if is_not_const("?a")),
